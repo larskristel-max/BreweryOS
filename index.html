@@ -1,0 +1,261 @@
+<!DOCTYPE html><html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Brewery OS">
+<meta name="theme-color" content="#0f0d08">
+<title>Brewery OS</title>
+<link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=DM+Mono:wght@400;500&family=DM+Sans:wght@400;500&display=swap" rel="stylesheet">
+<style>
+:root{--bg:#0f0d08;--bg2:#1a1710;--bg3:#252018;--amber:#e8a020;--foam:#f0e8d0;--foam-dim:#a09070;--text:#e8dfc8;--dim:#706050;--border:#2e2818;--r:16px;--rs:10px}
+*{margin:0;padding:0;box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+body{background:var(--bg);color:var(--text);font-family:'DM Sans',sans-serif;font-size:15px;min-height:100vh;overflow-x:hidden}
+.hdr{padding:52px 20px 14px;display:flex;align-items:flex-end;justify-content:space-between;border-bottom:1px solid var(--border);background:linear-gradient(180deg,#080600,var(--bg));position:sticky;top:0;z-index:50}
+.logo{font-family:'Bebas Neue',sans-serif;font-size:30px;letter-spacing:3px;color:var(--amber);line-height:1}
+.logo small{color:var(--foam-dim);font-size:11px;font-family:'DM Mono',monospace;letter-spacing:2px;display:block;margin-bottom:2px}
+.badge{font-family:'DM Mono',monospace;font-size:10px;letter-spacing:1px;padding:4px 10px;border-radius:20px;border:1px solid var(--border);color:var(--dim);transition:all .3s}
+.badge.live{border-color:#408030;color:#60b040}.badge.err{border-color:#c03020;color:#e05040}
+.main{padding:0 16px 100px}
+.sec{font-family:'DM Mono',monospace;font-size:10px;letter-spacing:3px;color:var(--dim);text-transform:uppercase;padding:18px 4px 8px}
+.chips{display:flex;gap:10px;overflow-x:auto;padding-bottom:4px;scrollbar-width:none}
+.chips::-webkit-scrollbar{display:none}
+.chip{flex-shrink:0;background:var(--bg3);border:1px solid var(--border);border-radius:30px;padding:8px 14px;display:flex;align-items:center;gap:8px;font-size:13px}
+.pulse{width:6px;height:6px;border-radius:50%;background:var(--amber);box-shadow:0 0 6px var(--amber);animation:pu 2s infinite;flex-shrink:0}
+@keyframes pu{0%,100%{opacity:1}50%{opacity:.3}}
+.cn{color:var(--foam);font-weight:500}.cd{color:var(--dim);font-family:'DM Mono',monospace;font-size:11px}
+.grid{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-top:4px}
+.ab{background:var(--bg2);border:1px solid var(--border);border-radius:var(--r);padding:22px 16px 18px;cursor:pointer;text-align:left;position:relative;overflow:hidden;-webkit-user-select:none;transition:transform .12s}
+.ab:active{transform:scale(.95)}
+.bar{position:absolute;left:0;top:0;bottom:0;width:3px}
+.ic{font-size:26px;display:block;margin-bottom:10px}
+.lb{font-family:'Bebas Neue',sans-serif;font-size:21px;letter-spacing:2px;display:block;line-height:1}
+.sb{font-size:11px;color:var(--dim);margin-top:3px;display:block;font-family:'DM Mono',monospace}
+.brew .bar{background:var(--amber)}.brew .lb{color:var(--amber)}
+.pack .bar{background:#70c050}.pack .lb{color:#70c050}
+.sold .bar{background:#5090d0}.sold .lb{color:#5090d0}
+.issue .bar{background:#e05040}.issue .lb{color:#e05040}
+.ti{background:var(--bg2);border:1px solid var(--border);border-radius:var(--rs);padding:12px 14px;display:flex;align-items:center;gap:12px;margin-bottom:8px}
+.tdot{width:7px;height:7px;border-radius:50%;flex-shrink:0}
+.tdot.U{background:#e05040;box-shadow:0 0 6px #e05040}.tdot.H{background:var(--amber)}.tdot.M{background:#70c050}.tdot.L{background:var(--dim)}
+.tb{flex:1}.tt{font-size:13px;color:var(--foam)}.ty{font-size:10px;color:var(--dim);font-family:'DM Mono',monospace;margin-top:2px}
+.bnav{position:fixed;bottom:0;left:0;right:0;background:rgba(10,8,4,.95);backdrop-filter:blur(20px);-webkit-backdrop-filter:blur(20px);border-top:1px solid var(--border);display:flex;padding:8px 0 28px;z-index:100}
+.ni{flex:1;display:flex;flex-direction:column;align-items:center;gap:3px;padding:8px 0;cursor:pointer;color:var(--dim);-webkit-user-select:none;transition:color .15s}
+.ni.on{color:var(--amber)}.ni-ic{font-size:20px}.ni-lb{font-size:10px;font-family:'DM Mono',monospace;letter-spacing:1px}
+.mo{position:fixed;inset:0;background:rgba(0,0,0,.78);backdrop-filter:blur(6px);z-index:200;display:none;align-items:flex-end;justify-content:center}
+.mo.on{display:flex}
+.mw{background:var(--bg2);border:1px solid var(--border);border-radius:24px 24px 0 0;padding:20px 20px 48px;width:100%;max-width:500px;animation:su .22s ease;max-height:90vh;overflow-y:auto}
+@keyframes su{from{transform:translateY(100%);opacity:0}to{transform:translateY(0);opacity:1}}
+.mh{width:36px;height:4px;background:var(--border);border-radius:2px;margin:0 auto 18px}
+.mt{font-family:'Bebas Neue',sans-serif;font-size:24px;letter-spacing:2px;margin-bottom:18px}
+.mt.brew{color:var(--amber)}.mt.pack{color:#70c050}.mt.sold{color:#5090d0}.mt.issue{color:#e05040}
+.fg{margin-bottom:14px}
+.fl{font-family:'DM Mono',monospace;font-size:10px;letter-spacing:2px;color:var(--dim);text-transform:uppercase;display:block;margin-bottom:5px}
+.fi,.fs,.fta{width:100%;background:var(--bg3);border:1px solid var(--border);border-radius:var(--rs);padding:11px 13px;color:var(--text);font-family:'DM Sans',sans-serif;font-size:15px;outline:none;-webkit-appearance:none;transition:border-color .15s}
+.fi:focus,.fs:focus,.fta:focus{border-color:#a06c10}.fta{min-height:72px;resize:none}.fs option{background:var(--bg3)}
+.pills{display:flex;gap:8px;flex-wrap:wrap}
+.pl{background:var(--bg3);border:1px solid var(--border);border-radius:20px;padding:7px 13px;font-size:13px;cursor:pointer;color:var(--dim);-webkit-user-select:none;transition:all .12s}
+.pl.on{border-color:var(--amber);color:var(--amber);background:rgba(232,160,32,.08)}
+.btn{width:100%;border:none;border-radius:var(--rs);padding:15px;font-family:'Bebas Neue',sans-serif;font-size:19px;letter-spacing:2px;cursor:pointer;margin-top:6px;transition:transform .12s,opacity .12s}
+.btn:active{transform:scale(.97);opacity:.88}
+.ba{background:var(--amber);color:var(--bg)}.bg{background:#70c050;color:#0a1806}.bb{background:#5090d0;color:#020810}.br{background:#e05040;color:#100202}
+.bc{width:100%;background:transparent;color:var(--dim);border:1px solid var(--border);border-radius:var(--rs);padding:12px;font-size:14px;cursor:pointer;margin-top:8px}
+.toast{position:fixed;top:70px;left:50%;transform:translateX(-50%) translateY(-90px);background:var(--bg3);border:1px solid var(--border);border-radius:30px;padding:11px 20px;font-size:13px;color:var(--foam);z-index:500;transition:transform .28s cubic-bezier(.34,1.56,.64,1);white-space:nowrap;box-shadow:0 8px 32px rgba(0,0,0,.5);pointer-events:none}
+.toast.on{transform:translateX(-50%) translateY(0)}.toast.ok{border-color:#70c050;color:#70c050}.toast.er{border-color:#e05040;color:#e05040}
+.spin{display:flex;align-items:center;gap:6px;color:var(--dim);font-size:12px;font-family:'DM Mono',monospace;padding:10px 4px}
+.sd{width:5px;height:5px;border-radius:50%;background:#a06c10;animation:sd 1.2s infinite}
+.sd:nth-child(2){animation-delay:.2s}.sd:nth-child(3){animation-delay:.4s}
+@keyframes sd{0%,80%,100%{opacity:.2;transform:scale(.8)}40%{opacity:1;transform:scale(1)}}
+.view{display:none}.view.on{display:block}
+.card{background:var(--bg2);border:1px solid var(--border);border-radius:var(--r);padding:14px;margin-bottom:10px}
+.card h3{font-family:'Bebas Neue',sans-serif;font-size:17px;letter-spacing:1px;color:var(--amber);margin-bottom:6px}
+.row{display:flex;justify-content:space-between;padding:4px 0;border-bottom:1px solid var(--border);font-size:13px}
+.row:last-child{border:none}.rk{color:var(--dim);font-family:'DM Mono',monospace;font-size:11px}.rv{color:var(--foam)}
+.si{width:100%;background:var(--bg2);border:1px solid var(--border);border-radius:30px;padding:12px 18px;color:var(--text);font-size:14px;outline:none;font-family:'DM Sans',sans-serif;margin-top:12px;margin-bottom:4px}
+.em{color:var(--dim);font-size:13px;font-style:italic;padding:8px 4px}
+</style>
+</head>
+<body>
+<div class="hdr">
+  <div class="logo"><small>BREWERY</small>OS</div>
+  <div class="badge" id="badge">connecting…</div>
+</div>
+<div class="toast" id="toast"></div>
+<div class="main">
+  <div class="view on" id="v-home">
+    <div class="sec">Active Brews</div>
+    <div class="chips" id="brews"><div class="spin"><div class="sd"></div><div class="sd"></div><div class="sd"></div></div></div>
+    <div class="sec">Quick Actions</div>
+    <div class="grid">
+      <button class="ab brew" onclick="openM('brew')"><div class="bar"></div><span class="ic">🍺</span><span class="lb">I'm Brewing</span><span class="sb">Start a batch</span></button>
+      <button class="ab pack" onclick="openM('pack')"><div class="bar"></div><span class="ic">📦</span><span class="lb">Packaged</span><span class="sb">Create a lot</span></button>
+      <button class="ab sold" onclick="openM('sold')"><div class="bar"></div><span class="ic">🤝</span><span class="lb">Sold</span><span class="sb">Log a sale</span></button>
+      <button class="ab issue" onclick="openM('issue')"><div class="bar"></div><span class="ic">⚠️</span><span class="lb">Issue</span><span class="sb">Log a problem</span></button>
+    </div>
+    <div class="sec">Open Tasks</div>
+    <div id="tasks"><div class="spin"><div class="sd"></div><div class="sd"></div><div class="sd"></div></div></div>
+  </div>
+  <div class="view" id="v-batches">
+    <div class="sec">All Batches</div>
+    <div id="blist"><div class="spin"><div class="sd"></div><div class="sd"></div><div class="sd"></div></div></div>
+  </div>
+  <div class="view" id="v-trace">
+    <div class="sec">Traceability</div>
+    <input class="si" id="tq" placeholder="Search batch # or customer…" oninput="tDB(this.value)">
+    <div id="tout"><div class="em">Type to trace any batch or customer</div></div>
+  </div>
+</div>
+<div class="bnav">
+  <div class="ni on" id="n-home" onclick="sw('home')"><div class="ni-ic">⚡</div><div class="ni-lb">Now</div></div>
+  <div class="ni" id="n-batches" onclick="sw('batches')"><div class="ni-ic">🍺</div><div class="ni-lb">Batches</div></div>
+  <div class="ni" id="n-trace" onclick="sw('trace')"><div class="ni-ic">🔍</div><div class="ni-lb">Trace</div></div>
+</div>
+<div class="mo" id="m-brew"><div class="mw"><div class="mh"></div><div class="mt brew">🍺 Start Brewing</div>
+  <div class="fg"><label class="fl">Recipe</label><select class="fs" id="b-r"><option value="">No recipe (quick brew)</option></select></div>
+  <div class="fg"><label class="fl">Brew Date</label><input class="fi" id="b-d" type="date"></div>
+  <button class="btn ba" onclick="sBrew()">START BATCH</button><button class="bc" onclick="closeM('brew')">Cancel</button>
+</div></div>
+<div class="mo" id="m-pack"><div class="mw"><div class="mh"></div><div class="mt pack">📦 Package a Lot</div>
+  <div class="fg"><label class="fl">Batch</label><select class="fs" id="p-b"><option value="">Select batch…</option></select></div>
+  <div class="fg"><label class="fl">Volume (L)</label><input class="fi" id="p-v" type="number" placeholder="e.g. 500"></div>
+  <div class="fg"><label class="fl">Date</label><input class="fi" id="p-d" type="date"></div>
+  <button class="btn bg" onclick="sPack()">CREATE LOT</button><button class="bc" onclick="closeM('pack')">Cancel</button>
+</div></div>
+<div class="mo" id="m-sold"><div class="mw"><div class="mh"></div><div class="mt sold">🤝 Log a Sale</div>
+  <div class="fg"><label class="fl">Customer</label><input class="fi" id="s-c" placeholder="Bar or customer name…"></div>
+  <div class="fg"><label class="fl">Lot</label><select class="fs" id="s-l"><option value="">Select lot…</option></select></div>
+  <div class="fg"><label class="fl">Volume Sold (L)</label><input class="fi" id="s-v" type="number" placeholder="e.g. 50"></div>
+  <div class="fg"><label class="fl">Invoice # (optional)</label><input class="fi" id="s-i" placeholder="INV-001"></div>
+  <div class="fg"><label class="fl">Date</label><input class="fi" id="s-d" type="date"></div>
+  <button class="btn bb" onclick="sSold()">LOG SALE</button><button class="bc" onclick="closeM('sold')">Cancel</button>
+</div></div>
+<div class="mo" id="m-issue"><div class="mw"><div class="mh"></div><div class="mt issue">⚠️ Log Issue</div>
+  <div class="fg"><label class="fl">What happened?</label><input class="fi" id="i-t" placeholder="Short description…"></div>
+  <div class="fg"><label class="fl">Severity</label>
+    <div class="pills" id="i-s"><div class="pl on" onclick="pp(this,'i-s')">Low</div><div class="pl" onclick="pp(this,'i-s')">Medium</div><div class="pl" onclick="pp(this,'i-s')">High</div><div class="pl" onclick="pp(this,'i-s')">Critical</div></div>
+  </div>
+  <div class="fg"><label class="fl">Details (optional)</label><textarea class="fta" id="i-d" placeholder="More context…"></textarea></div>
+  <div class="fg"><label class="fl">Linked Batch (optional)</label><select class="fs" id="i-b"><option value="">None</option></select></div>
+  <button class="btn br" onclick="sIssue()">LOG ISSUE + CREATE TASK</button><button class="bc" onclick="closeM('issue')">Cancel</button>
+</div></div>
+<script>
+var KEY='__AIRTABLE_KEY__';
+var BASE='appslXmtOEoDI6lwp';
+var HDR={'Authorization':'Bearer '+KEY,'Content-Type':'application/json'};
+var TB={recipes:'tblgq3JTJYrG1hlkj',batches:'tblGrw6fTgMyz3ZL5',lots:'tblnzlR9To2jo3EMM',sales:'tbllv7CN0iVGdHrbT',issues:'tblk4ORT3sFmjbZlC',tasks:'tblxyLhvY6wyWogqq'};
+function sel(v){return(v&&typeof v==='object'&&v.name)?v.name:(v||'');}
+var cache={batches:[],lots:[]};
+function today(){return new Date().toISOString().split('T')[0];}
+function atGet(t,q){return fetch('https://api.airtable.com/v0/'+BASE+'/'+t+(q?'?'+q:''),{headers:HDR}).then(function(r){if(!r.ok)throw r.status;return r.json();}).then(function(d){return d.records||[];});}
+function atPost(t,f){return fetch('https://api.airtable.com/v0/'+BASE+'/'+t,{method:'POST',headers:HDR,body:JSON.stringify({fields:f})}).then(function(r){if(!r.ok)throw r.status;return r.json();});}
+function init(){
+  ['b-d','p-d','s-d'].forEach(function(id){var e=document.getElementById(id);if(e)e.value=today();});
+  Promise.all([loadBrews(),loadTasks(),loadRecipes(),loadBatches(),loadLots()])
+    .then(function(){setBadge('LIVE','live');})
+    .catch(function(e){setBadge('ERROR','err');toast('Cannot reach Airtable','er');console.error(e);});
+}
+function setBadge(t,c){var e=document.getElementById('badge');e.textContent=t;e.className='badge '+c;}
+function loadBrews(){
+  return atGet(TB.batches,'filterByFormula='+encodeURIComponent('{Status}="brewing"')+'&fields[]=Batch+ID&fields[]=Date&fields[]=Status')
+    .then(function(rows){
+      var el=document.getElementById('brews');
+      if(!rows.length){el.innerHTML='<span class="em">No active brews — start one 🍺</span>';return;}
+      el.innerHTML=rows.map(function(r){
+        var f=r.fields,num=f['Batch ID'],date=f['Date'];
+        var days=date?Math.floor((Date.now()-new Date(date))/86400000):'?';
+        return '<div class="chip"><div class="pulse"></div><span class="cn">Batch #'+num+'</span><span class="cd">Day '+days+'</span></div>';
+      }).join('');
+    });
+}
+function loadTasks(){
+  return atGet(TB.tasks,'filterByFormula='+encodeURIComponent('OR({Status}="To Do",{Status}="In Progress")')+'&fields[]=Task&fields[]=Priority&fields[]=Type&maxRecords=6')
+    .then(function(rows){
+      var el=document.getElementById('tasks');
+      if(!rows.length){el.innerHTML='<div class="em">All clear — no open tasks 🎉</div>';return;}
+      var pc={Urgent:'U',High:'H',Medium:'M',Low:'L'};
+      el.innerHTML=rows.map(function(r){
+        var f=r.fields,name=f['Task']||'(unnamed)',pri=sel(f['Priority'])||'Low',type=sel(f['Type'])||'';
+        return '<div class="ti"><div class="tdot '+(pc[pri]||'L')+'"></div><div class="tb"><div class="tt">'+name+'</div><div class="ty">'+type+'</div></div><div style="color:var(--dim)">›</div></div>';
+      }).join('');
+    });
+}
+function loadRecipes(){
+  return atGet(TB.recipes,'fields[]=Name').then(function(rows){
+    document.getElementById('b-r').innerHTML='<option value="">No recipe (quick brew)</option>'+rows.map(function(r){return '<option value="'+r.id+'">'+(r.fields['Name']||'Unnamed')+'</option>';}).join('');
+  });
+}
+function loadBatches(){
+  return atGet(TB.batches,'fields[]=Batch+ID&fields[]=Date&fields[]=Status&sort[0][field]=Batch+ID&sort[0][direction]=desc').then(function(rows){
+    cache.batches=rows;
+    var opts=rows.map(function(r){return '<option value="'+r.id+'">Batch #'+r.fields['Batch ID']+' — '+(r.fields['Date']||'no date')+'</option>';}).join('');
+    document.getElementById('p-b').innerHTML='<option value="">Select batch…</option>'+opts;
+    document.getElementById('i-b').innerHTML='<option value="">None</option>'+opts;
+  });
+}
+function loadLots(){
+  return atGet(TB.lots,'fields[]=Lot+ID&fields[]=Volume&fields[]=Date&sort[0][field]=Lot+ID&sort[0][direction]=desc').then(function(rows){
+    cache.lots=rows;
+    document.getElementById('s-l').innerHTML='<option value="">Select lot…</option>'+rows.map(function(r){var f=r.fields;return '<option value="'+r.id+'">Lot #'+f['Lot ID']+' — '+(f['Volume']||'?')+'L ('+(f['Date']||'no date')+')</option>';}).join('');
+  });
+}
+function loadAllBatches(){
+  var el=document.getElementById('blist');
+  el.innerHTML='<div class="spin"><div class="sd"></div><div class="sd"></div><div class="sd"></div></div>';
+  atGet(TB.batches,'fields[]=Batch+ID&fields[]=Date&fields[]=Status&sort[0][field]=Batch+ID&sort[0][direction]=desc').then(function(rows){
+    if(!rows.length){el.innerHTML='<div class="em">No batches yet</div>';return;}
+    el.innerHTML=rows.map(function(r){var f=r.fields,st=sel(f['Status'])||'—';return '<div class="card"><h3>Batch #'+f['Batch ID']+'</h3><div class="row"><span class="rk">Date</span><span class="rv">'+(f['Date']||'—')+'</span></div><div class="row"><span class="rk">Status</span><span class="rv">'+st+'</span></div></div>';}).join('');
+  }).catch(function(){el.innerHTML='<div class="em">Could not load</div>';});
+}
+function sBrew(){
+  var rid=document.getElementById('b-r').value,date=document.getElementById('b-d').value;
+  if(!date){toast('Pick a brew date','er');return;}
+  var f={Date:date,Status:'brewing'};if(rid)f['Recipe']=[rid];
+  atPost(TB.batches,f).then(function(){closeM('brew');toast('✅ Batch started!','ok');loadBrews();loadBatches();}).catch(function(e){toast('Error saving','er');console.error(e);});
+}
+function sPack(){
+  var bid=document.getElementById('p-b').value,vol=parseFloat(document.getElementById('p-v').value),dt=document.getElementById('p-d').value;
+  if(!bid){toast('Select a batch','er');return;}if(!vol){toast('Enter volume','er');return;}
+  atPost(TB.lots,{Volume:vol,Date:dt,Batch:[bid]}).then(function(){closeM('pack');toast('✅ Lot created!','ok');loadLots();}).catch(function(e){toast('Error saving','er');console.error(e);});
+}
+function sSold(){
+  var cust=document.getElementById('s-c').value.trim(),lid=document.getElementById('s-l').value,vol=parseFloat(document.getElementById('s-v').value),inv=document.getElementById('s-i').value.trim(),dt=document.getElementById('s-d').value;
+  if(!cust){toast('Enter customer name','er');return;}if(!lid){toast('Select a lot','er');return;}
+  var f={Customer:cust,Date:dt,Status:'Confirmed',Lot:[lid]};if(vol)f['Volume Sold']=vol;if(inv)f['Invoice Number']=inv;
+  atPost(TB.sales,f).then(function(){closeM('sold');toast('✅ Sale logged!','ok');}).catch(function(e){toast('Error saving','er');console.error(e);});
+}
+function sIssue(){
+  var title=document.getElementById('i-t').value.trim(),desc=document.getElementById('i-d').value.trim(),sevEl=document.querySelector('#i-s .pl.on'),sev=sevEl?sevEl.textContent.trim():'Medium',bid=document.getElementById('i-b').value;
+  if(!title){toast('Describe the issue','er');return;}
+  var iF={Title:title,Date:today(),Severity:sev,Status:'Open'};if(desc)iF['Description']=desc;if(bid)iF['Linked Batch']=[bid];
+  atPost(TB.issues,iF).then(function(issue){
+    var pri=sev==='Critical'?'Urgent':sev;
+    return atPost(TB.tasks,{Task:'Follow up: '+title,Priority:pri,Status:'To Do',Type:'Issue Follow-up','Linked Issue':[issue.id]});
+  }).then(function(){closeM('issue');toast('⚠️ Issue + task created','ok');loadTasks();}).catch(function(e){toast('Error saving','er');console.error(e);});
+}
+var tT;
+function tDB(q){clearTimeout(tT);if(!q.trim()){document.getElementById('tout').innerHTML='<div class="em">Type to trace any batch or customer</div>';return;}tT=setTimeout(function(){doTrace(q.trim());},400);}
+function doTrace(q){
+  var el=document.getElementById('tout');
+  el.innerHTML='<div class="spin"><div class="sd"></div><div class="sd"></div><div class="sd"></div></div>';
+  Promise.all([
+    atGet(TB.batches,'filterByFormula='+encodeURIComponent('SEARCH("'+q+'",{Batch ID})')+'&fields[]=Batch+ID&fields[]=Date&fields[]=Status&maxRecords=5'),
+    atGet(TB.sales,'filterByFormula='+encodeURIComponent('SEARCH("'+q.toLowerCase()+'",LOWER({Customer}))')+'&fields[]=Customer&fields[]=Date&fields[]=Volume+Sold&fields[]=Invoice+Number&maxRecords=5')
+  ]).then(function(res){
+    var batches=res[0],sales=res[1],html='';
+    batches.forEach(function(r){var f=r.fields,st=sel(f['Status'])||'—';html+='<div class="card"><h3>🍺 Batch #'+f['Batch ID']+'</h3><div class="row"><span class="rk">Date</span><span class="rv">'+(f['Date']||'—')+'</span></div><div class="row"><span class="rk">Status</span><span class="rv">'+st+'</span></div></div>';});
+    if(sales.length){html+='<div class="sec" style="padding-top:6px">Sales</div>';sales.forEach(function(r){var f=r.fields;html+='<div class="card"><h3>🤝 '+(f['Customer']||'?')+'</h3><div class="row"><span class="rk">Date</span><span class="rv">'+(f['Date']||'—')+'</span></div><div class="row"><span class="rk">Volume</span><span class="rv">'+(f['Volume Sold']||'—')+' L</span></div><div class="row"><span class="rk">Invoice</span><span class="rv">'+(f['Invoice Number']||'—')+'</span></div></div>';});}
+    el.innerHTML=html||'<div class="em">Nothing found for "'+q+'"</div>';
+  }).catch(function(){el.innerHTML='<div class="em">Search error</div>';});
+}
+function openM(n){document.getElementById('m-'+n).classList.add('on');}
+function closeM(n){document.getElementById('m-'+n).classList.remove('on');}
+document.querySelectorAll('.mo').forEach(function(el){el.addEventListener('click',function(e){if(e.target===el)el.classList.remove('on');});});
+function pp(el,g){document.getElementById(g).querySelectorAll('.pl').forEach(function(p){p.classList.remove('on');});el.classList.add('on');}
+function sw(n){document.querySelectorAll('.view').forEach(function(v){v.classList.remove('on');});document.querySelectorAll('.ni').forEach(function(i){i.classList.remove('on');});document.getElementById('v-'+n).classList.add('on');document.getElementById('n-'+n).classList.add('on');if(n==='batches')loadAllBatches();}
+var tTimer;
+function toast(msg,type){var el=document.getElementById('toast');el.textContent=msg;el.className='toast '+(type||'')+' on';clearTimeout(tTimer);tTimer=setTimeout(function(){el.classList.remove('on');},3200);}
+init();
+</script>
+</body>
+</html>
