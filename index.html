@@ -284,7 +284,7 @@
   <div style="padding:24px 20px; display:flex; flex-direction:column; gap:12px;">
 
     <!-- Language -->
-    <div style="background:#f9fafb; border-radius:16px; padding:18px; display:flex; justify-content:space-between; align-items:center; cursor:pointer;" onclick="showScreen('screen-language')">
+    <div style="background:#f9fafb; border-radius:16px; padding:18px; display:flex; justify-content:space-between; align-items:center; cursor:pointer;" onclick="goToLanguageFromSettings()">
       <div>
         <p style="font-size:15px; font-weight:500; color:#111827; margin:0 0 2px;" id="settings-lang-label">Language</p>
         <p style="font-size:13px; color:#9ca3af; margin:0;" id="settings-lang-current">English</p>
@@ -1090,6 +1090,7 @@ async function getReadinessConditions() {
 
     if (validateReadinessConditions(conditions)) {
       console.log('Readiness conditions loaded from Notion:', conditions.length, 'drivers');
+      console.log('[Semantic] Notion promoted: ', conditions.map(c => c.sourceKey));
       return conditions;
     }
 
@@ -1101,6 +1102,7 @@ async function getReadinessConditions() {
 
   } catch (err) {
     console.warn('Failed to load readinessConditions from Notion. Using fallback.', err);
+    console.warn('[Semantic] Fallback active. Conditions count:', SEMANTIC.readinessConditionsFallback.length);
     return SEMANTIC.readinessConditionsFallback;
   }
 }
@@ -1487,13 +1489,37 @@ function showScreen(id) {
     s.style.display = 'none';
   });
   const target = document.getElementById(id);
-  if (target) target.style.display = 'flex';
+  if (!target) return;
+  // screens that scroll as block
+  const blockScreens = ['screen-financial', 'screen-settings', 'screen-batches', 'screen-tasks', 'screen-issues'];
+  target.style.display = blockScreens.includes(id) ? 'block' : 'flex';
+  // refresh screen-specific state on navigate
+  if (id === 'screen-agenda') switchAgendaView(agendaView);
+  if (id === 'screen-financial') renderFinancialPage();
+  if (id === 'screen-settings') initSettings();
+  if (id === 'screen-home') {
+    renderWhatsNext();
+    renderAgendaPreview();
+    renderFinancialPreview();
+    applyHomeLabels();
+  }
 }
 
 function selectLanguage(lang) {
   setLanguage(lang);
   applyTranslations();
-  showScreen('screen-entry');
+  const origin = localStorage.getItem('brewos_lang_origin');
+  localStorage.removeItem('brewos_lang_origin');
+  if (origin === 'settings') {
+    showScreen('screen-settings');
+  } else {
+    showScreen('screen-entry');
+  }
+}
+
+function goToLanguageFromSettings() {
+  localStorage.setItem('brewos_lang_origin', 'settings');
+  showScreen('screen-language');
 }
 
 function applyTranslations() {
@@ -1521,6 +1547,30 @@ function applyTranslations() {
     const el = document.getElementById(id);
     if (el) el.textContent = t(key);
   });
+
+  // Agenda screen labels
+  const agendaMap = {
+    'agenda-title-label': 'agenda.title',
+    'agenda-day-btn':     'agenda.day',
+    'agenda-week-btn':    'agenda.week',
+    'quick-add-title':    'agenda.add',
+  };
+  Object.entries(agendaMap).forEach(([id, key]) => {
+    const el = document.getElementById(id);
+    if (el) el.textContent = t(key);
+  });
+
+  // Financial screen labels
+  const finMap = {
+    'fin-page-title':  'financial.title',
+    'fin-tab-today':   'financial.today',
+    'fin-tab-week':    'financial.week',
+    'fin-tab-month':   'financial.month',
+  };
+  Object.entries(finMap).forEach(([id, key]) => {
+    const el = document.getElementById(id);
+    if (el) el.textContent = t(key);
+  });
 }
 
 function startDemo() {
@@ -1529,6 +1579,9 @@ function startDemo() {
 
 function enterDemo() {
   localStorage.setItem('brewos_demo', '1');
+  if (!localStorage.getItem('brewos_role')) {
+    localStorage.setItem('brewos_role', 'owner');
+  }
   showScreen('screen-home');
 }
 
@@ -1847,11 +1900,23 @@ function openQuickAdd() {
   const sheet = document.getElementById('quick-add-sheet');
   if (sheet) sheet.style.display = 'block';
   setQuickType('task');
+  // backdrop
+  let bd = document.getElementById('quick-add-backdrop');
+  if (!bd) {
+    bd = document.createElement('div');
+    bd.id = 'quick-add-backdrop';
+    bd.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,0.2);z-index:199;';
+    bd.onclick = closeQuickAdd;
+    document.body.appendChild(bd);
+  }
+  bd.style.display = 'block';
 }
 
 function closeQuickAdd() {
   const sheet = document.getElementById('quick-add-sheet');
   if (sheet) sheet.style.display = 'none';
+  const bd = document.getElementById('quick-add-backdrop');
+  if (bd) bd.style.display = 'none';
   const input = document.getElementById('quick-add-input');
   const time = document.getElementById('quick-add-time');
   if (input) input.value = '';
