@@ -1494,7 +1494,7 @@ function showScreen(id) {
   const blockScreens = ['screen-financial', 'screen-settings', 'screen-batches', 'screen-tasks', 'screen-issues'];
   target.style.display = blockScreens.includes(id) ? 'block' : 'flex';
   // refresh screen-specific state on navigate
-  if (id === 'screen-agenda') switchAgendaView(agendaView);
+  if (id === 'screen-agenda') { switchAgendaView(agendaView); loadAgendaFromAirtable(); }
   if (id === 'screen-financial') renderFinancialPage();
   if (id === 'screen-settings') initSettings();
   if (id === 'screen-home') {
@@ -1637,6 +1637,141 @@ const LABEL_STYLES = {
   helpful:     { bg: '#eff6ff', color: '#1e40af', text: 'Helpful' },
   later:       { bg: '#f9fafb', color: '#6b7280', text: 'Later' },
 };
+
+async function fetchAgendaItems() {
+  const key = window.__AIRTABLE_KEY__;
+  const base = 'appslXmtOEoDI6lwp';
+  const table = 'tblpkSb7zxoWBcxFA';
+
+  const fields = [
+    'Title', 'Type', 'Scheduled Time', 'Is Completed',
+    'Is System Generated', 'Linked Entity Type', 'Linked Entity ID', 'Position Index'
+  ].map(f => `fields[]=${encodeURIComponent(f)}`).join('&');
+
+  const url = `https://api.airtable.com/v0/${base}/${table}?${fields}&maxRecords=100`;
+
+  const resp = await fetch(url, {
+    headers: { Authorization: `Bearer ${key}` }
+  });
+
+  if (!resp.ok) throw new Error(`Airtable agenda ${resp.status}`);
+  const data = await resp.json();
+
+  function sel(v) {
+    return (v && typeof v === 'object' && v.name) ? v.name : (v || '');
+  }
+
+  return (data.records || []).map(rec => {
+    const f = rec.fields || rec.cellValuesByFieldId || {};
+    const getF = name => f[name] ?? undefined;
+    return {
+      id:            rec.id,
+      title:         getF('Title') || '—',
+      type:          sel(getF('Type')) || 'task',
+      scheduledTime: getF('Scheduled Time') || null,
+      isCompleted:   getF('Is Completed') || false,
+      isSystem:      getF('Is System Generated') || false,
+      entityType:    sel(getF('Linked Entity Type')) || '',
+      entityId:      getF('Linked Entity ID') || '',
+      positionIndex: getF('Position Index') || 999,
+    };
+  });
+}
+
+async function loadAgendaFromAirtable() {
+  try {
+    window._agendaCache = await fetchAgendaItems();
+  } catch (err) {
+    console.error('[Agenda] fetch failed', err);
+    window._agendaCache = null;
+  }
+  renderAgendaForSelectedDay();
+}
+
+function renderAgendaForSelectedDay() {
+  const cache = window._agendaCache;
+  if (!cache) return;
+
+  const selectedDate = window._agendaSelectedDate
+    || (typeof agendaSelectedDate !== 'undefined' ? agendaSelectedDate : null)
+    || new Date().toISOString().slice(0, 10);
+
+  const dayItems = cache.filter(item => {
+    if (!item.scheduledTime) return true;
+    return item.scheduledTime.slice(0, 10) === selectedDate;
+  });
+
+  const timed = dayItems
+    .filter(i => i.scheduledTime)
+    .sort((a, b) => a.scheduledTime.localeCompare(b.scheduledTime));
+
+  const untimed = dayItems
+    .filter(i => !i.scheduledTime)
+    .sort((a, b) => a.positionIndex - b.positionIndex);
+
+  const allItems = [...timed, ...untimed];
+
+  const listEl = document.getElementById('agenda-day-list')
+    || document.querySelector('.agenda-items-list')
+    || document.querySelector('.agenda-day-items');
+
+  if (!listEl) return;
+
+  if (allItems.length === 0) {
+    listEl.innerHTML = `<div style="color:#9e9e9e;font-size:13px;padding:16px 0;text-align:center;">Nothing scheduled for this day.</div>`;
+    return;
+  }
+
+  const typeIcon  = { task: '☑', note: '✎', event: '◆' };
+  const typeColor = { task: '#1565c0', note: '#6a1b9a', event: '#2e7d32' };
+
+  listEl.innerHTML = allItems.map(item => {
+    const timeLabel = item.scheduledTime
+      ? new Date(item.scheduledTime).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
+      : '';
+    const systemMark = item.isSystem ? ' <span style="color:#f57f17;font-size:10px;">✦</span>' : '';
+    const doneStyle  = item.isCompleted ? 'opacity:0.45;text-decoration:line-through;' : '';
+    const icon       = typeIcon[item.type] || '☑';
+    const color      = typeColor[item.type] || '#1565c0';
+
+    return `
+      <div class="agenda-item" data-id="${item.id}" data-completed="${item.isCompleted}"
+        style="display:flex;align-items:flex-start;gap:12px;padding:12px 0;border-bottom:1px solid #f0f0f0;cursor:pointer;"
+        onclick="toggleAgendaItem(this, '${item.id}')">
+        <div style="min-width:44px;text-align:right;color:#9e9e9e;font-size:12px;padding-top:2px;">
+          ${timeLabel}
+        </div>
+        <div style="flex:1;${doneStyle}">
+          <div style="font-size:14px;font-weight:500;color:#212121;line-height:1.35;">
+            <span style="color:${color};font-size:12px;margin-right:4px;">${icon}</span>
+            ${item.title}${systemMark}
+          </div>
+          ${item.entityType ? `<div style="font-size:11px;color:#9e9e9e;margin-top:2px;">${item.entityType} ${item.entityId}</div>` : ''}
+        </div>
+      </div>`;
+  }).join('');
+}
+
+function toggleAgendaItem(el, id) {
+  const isDone = el.dataset.completed === 'true';
+  el.dataset.completed = (!isDone).toString();
+  const textEl = el.querySelector('[style*="font-weight"]');
+  if (textEl) {
+    textEl.parentElement.style.opacity        = isDone ? '1'           : '0.45';
+    textEl.parentElement.style.textDecoration = isDone ? 'none'        : 'line-through';
+  }
+  if (window._agendaCache) {
+    const item = window._agendaCache.find(i => i.id === id);
+    if (item) item.isCompleted = !isDone;
+  }
+  const key  = window.__AIRTABLE_KEY__;
+  const base = 'appslXmtOEoDI6lwp';
+  fetch(`https://api.airtable.com/v0/${base}/tblpkSb7zxoWBcxFA/${id}`, {
+    method:  'PATCH',
+    headers: { Authorization: `Bearer ${key}`, 'Content-Type': 'application/json' },
+    body:    JSON.stringify({ fields: { 'Is Completed': !isDone } })
+  }).catch(err => console.warn('[Agenda] patch failed', err));
+}
 
 async function renderWhatsNext() {
   const container = document.getElementById('whats-next-cards');
