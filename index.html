@@ -171,14 +171,14 @@
 <script>
 
 // ─── SEMANTIC RUNTIME CONFIG ─────────────────────────────────────────────────
-// Driven by Notion bridge-key contract. Do NOT hardcode logic outside this block.
+// AUTHORITY: Notion = semantic truth | Airtable = facts | App = computation
 // NOTION_HOOK 1 → tableToType will come from App Semantic Graph
 // NOTION_HOOK 2 → states will come from App Semantic Graph
 // NOTION_HOOK 3 → readinessConditions will come from App Semantic Links — Relational
 
 const SEMANTIC = {
 
-  // ── Object type mapping ─────────────────────────────────────────────────────
+  // ── NOTION_HOOK 1 ── Object type mapping (temporary hardcode) ───────────────
   tableToType: {
     // Brewery base
     'Batches':            'process_run',
@@ -196,69 +196,195 @@ const SEMANTIC = {
     'Transactions':       'transaction',
   },
 
-  // ── Semantic states per object type ─────────────────────────────────────────
+  // ── NOTION_HOOK 2 ── Semantic states (temporary hardcode) ───────────────────
   states: {
-    process_run:    ['planned', 'in_progress', 'completed', 'blocked', 'invalid'],
-    input_material: ['available', 'reserved', 'consumed', 'unavailable'],
-    measurement:    ['recorded', 'valid', 'invalid', 'missing'],
-    output_lot:     ['created', 'available', 'reserved', 'released', 'invalid'],
-    transaction:    ['initiated', 'in_transit', 'completed', 'failed'],
-    issue:          ['open', 'acknowledged', 'resolved', 'closed'],
-    task:           ['pending', 'active', 'completed', 'cancelled'],
+    process_run:    ['planned', 'ready_for_execution', 'in_progress', 'completed', 'blocked', 'invalid'],
+    input_material: ['available', 'reserved', 'consumed', 'expired', 'blocked'],
+    measurement:    ['pending', 'valid', 'invalid', 'missing'],
+    output_lot:     ['planned', 'created', 'validated', 'released', 'blocked'],
+    transaction:    ['pending', 'validated', 'executed', 'failed'],
+    issue:          ['open', 'diagnosed', 'resolved', 'closed'],
+    task:           ['pending', 'in_progress', 'completed', 'blocked'],
   },
 
-  // ── Readiness conditions (bridge-key contract) ───────────────────────────────
-  // sourceKey     = Source Entity Key from App Semantic Links — Relational
-  // airtableField = actual Airtable field name in Batches / Process Runs
-  // label         = what the user sees in explainability panel
+  // ── Status normalization ─────────────────────────────────────────────────────
+  // Raw Airtable values → canonical semantic states
+  // Never let raw strings become semantic truth directly
+  statusMapping: {
+    process_run: {
+      fieldByTable: {
+        'Batches':       'Status',
+        'Process Runs':  'Status',
+      },
+      values: {
+        'Planned':               'planned',
+        'Ready':                 'ready_for_execution',
+        'Ready for Execution':   'ready_for_execution',
+        'In Progress':           'in_progress',
+        'Completed':             'completed',
+        'Blocked':               'blocked',
+        'Invalid':               'invalid',
+      },
+    },
+    input_material: {
+      fieldByTable: {
+        'Ingredients':     'Status',
+        'Input Materials': 'Status',
+      },
+      values: {
+        'Available':    'available',
+        'Reserved':     'reserved',
+        'Consumed':     'consumed',
+        'Expired':      'expired',
+        'Blocked':      'blocked',
+        'Quarantined':  'blocked',
+      },
+    },
+    measurement: {
+      fieldByTable: {
+        'Brew Logs':    'Status',
+        'Measurements': 'Status',
+      },
+      values: {
+        'Pending': 'pending',
+        'Valid':   'valid',
+        'Invalid': 'invalid',
+        'Missing': 'missing',
+      },
+    },
+    output_lot: {
+      fieldByTable: {
+        'Lots':        'Status',
+        'Output Lots': 'Status',
+      },
+      values: {
+        'Planned':   'planned',
+        'Created':   'created',
+        'Validated': 'validated',
+        'Blocked':   'blocked',
+        'On Hold':   'blocked',
+        'Released':  'released',
+      },
+    },
+    transaction: {
+      fieldByTable: {
+        'Sales':        'Status',
+        'Transactions': 'Status',
+      },
+      values: {
+        'Pending':   'pending',
+        'Validated': 'validated',
+        'Executed':  'executed',
+        'Completed': 'executed',
+        'Failed':    'failed',
+      },
+    },
+    issue: {
+      fieldByTable: {
+        'Issues': 'Status',
+      },
+      values: {
+        'Open':         'open',
+        'Diagnosed':    'diagnosed',
+        'Acknowledged': 'diagnosed',
+        'Resolved':     'resolved',
+        'Closed':       'closed',
+      },
+    },
+    task: {
+      fieldByTable: {
+        'Tasks': 'Status',
+      },
+      values: {
+        'Pending':     'pending',
+        'In Progress': 'in_progress',
+        'Active':      'in_progress',
+        'Completed':   'completed',
+        'Blocked':     'blocked',
+        'Cancelled':   'blocked',
+      },
+    },
+  },
+
+  // ── NOTION_HOOK 3 ── Readiness conditions (temporary hardcode) ──────────────
+  // sourceKey     = machine bridge key (stable, matches App Semantic Links)
+  // airtableField = compatibility binding only — never shown in UI
+  // label         = user-facing explainability text only
   readinessConditions: [
     {
-      sourceKey:     'Material Availability',
+      sourceKey:     'material_availability',
       airtableField: 'Material Available?',
       label:         'Materials are available',
     },
     {
-      sourceKey:     'Process Completion State',
+      sourceKey:     'process_completion_state',
       airtableField: 'Process Complete?',
       label:         'Process is complete',
     },
     {
-      sourceKey:     'System Readiness',
+      sourceKey:     'system_readiness',
       airtableField: 'System Ready?',
       label:         'System is ready',
     },
     {
-      sourceKey:     'Measurement Reliability',
+      sourceKey:     'measurement_reliability',
       airtableField: 'Measurements Valid?',
       label:         'Measurements are valid',
     },
     {
-      sourceKey:     'Output Lot Integrity',
+      sourceKey:     'output_lot_integrity',
       airtableField: 'Output Lot Exists?',
       label:         'Output lot exists',
-      appComputed:   true,  // ← app derives this from Lots array, not Airtable field
+      appComputed:   true,
+      // ⚠️ NO WRITE-BACK — app-computed only, never PATCHed to Airtable
+      // Airtable field exists for schema compatibility only
     },
     {
-      sourceKey:     'Control Execution Validity',
+      sourceKey:     'control_execution_validity',
       airtableField: 'Controls Executed?',
       label:         'Controls have been executed',
     },
   ],
 
-  // ── Readiness engine ─────────────────────────────────────────────────────────
-  // Call this with a batch record object. Returns { ready, failing[] }
-  computeReadiness(record) {
+  // ── Status normalizer helper ──────────────────────────────────────────────────
+  normalizeStatus(tableName, rawValue) {
+    const type = this.tableToType[tableName];
+    if (!type) return rawValue;
+    const map = this.statusMapping[type];
+    if (!map) return rawValue;
+    const raw = (rawValue && typeof rawValue === 'object' && rawValue.name)
+      ? rawValue.name
+      : (rawValue || '');
+    return map.values[raw] || raw;
+  },
+
+  // ── Condition evaluator ───────────────────────────────────────────────────────
+  evaluateCondition(record, condition, context = {}) {
+    if (condition.appComputed) {
+      if (condition.sourceKey === 'output_lot_integrity') {
+        const lots = context.linkedLots || [];
+        return lots.length > 0;
+      }
+    }
+    const value = record[condition.airtableField];
+    return value === true || value === 1;
+  },
+
+  // ── Readiness engine ──────────────────────────────────────────────────────────
+  // Returns { ready: bool, failing: string[] }
+  // failing[] contains semantic labels only — never raw field names
+  computeReadiness(record, context = {}) {
     const failing = [];
     for (const condition of this.readinessConditions) {
-      const value = record[condition.airtableField];
-      const pass = value === true || value === 1;
+      const pass = this.evaluateCondition(record, condition, context);
       if (!pass) failing.push(condition.label);
     }
     return {
       ready:   failing.length === 0,
-      failing, // semantic labels of failing conditions
+      failing,
     };
   },
+
 };
 
 function getObjectType(tableName) {
