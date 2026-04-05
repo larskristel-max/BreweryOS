@@ -171,17 +171,20 @@
 <script>
 
 const SEMANTIC = {
+
+  // Canonical object type mapping
+  // NOTION_HOOK: will later come from App Semantic Graph
   tableToType: {
-    'Batches':          'process_run',
-    'Process Runs':     'process_run',
-    'Ingredients':      'input_material',
-    'Input Materials':  'input_material',
-    'Brew Logs':        'measurement',
-    'Measurements':     'measurement',
-    'Lots':             'output_lot',
-    'Output Lots':      'output_lot',
-    'Sales':            'transaction',
-    'Transactions':     'transaction',
+    'Batches':             'process_run',
+    'Process Runs':        'process_run',
+    'Ingredients':         'input_material',
+    'Input Materials':     'input_material',
+    'Brew Logs':           'measurement',
+    'Measurements':        'measurement',
+    'Lots':                'output_lot',
+    'Output Lots':         'output_lot',
+    'Sales':               'transaction',
+    'Transactions':        'transaction',
     'Recipe Ingredients':  'template_input',
     'Template Inputs':     'template_input',
     'Batch Ingredients':   'run_input',
@@ -191,21 +194,45 @@ const SEMANTIC = {
     'Issues':              'issue',
     'Tasks':               'task'
   },
+
+  // Semantic states per object type
+  // NOTION_HOOK: will later come from App Semantic Links — Relational
+  // Join keys: Source Entity Key / Target Entity Key
   states: {
     process_run: [
-      'Execution Readiness','Material Availability','Process Completion State',
-      'System Readiness','Measurement Reliability'
+      'Execution Readiness',
+      'Material Availability',
+      'Process Completion State',
+      'System Readiness',
+      'Measurement Reliability',
+      'Output Lot Existence',
+      'Controls Execution'
     ],
-    output_lot:   ['Packaging Status','Quality Verified'],
-    transaction:  ['Invoice Status','Delivery Status'],
-    measurement:  ['Log Completeness','Data Validity']
+    output_lot: [
+      'Packaging Status',
+      'Quality Verified'
+    ],
+    transaction: [
+      'Invoice Status',
+      'Delivery Status'
+    ],
+    measurement: [
+      'Log Completeness',
+      'Data Validity'
+    ]
   },
+
+  // 6-condition readiness model — corrected per semantic layer
+  // NOTION_HOOK: field list will later be driven by
+  // App Semantic Links — Relational (Source Entity Key / Target Entity Key)
   readinessFields: {
     process_run: [
-      { field: 'Material Available?', label: 'Material Available', state: 'Material Availability' },
-      { field: 'Process Complete?',   label: 'Process Complete',   state: 'Process Completion State' },
-      { field: 'System Ready?',       label: 'System Ready',       state: 'System Readiness' },
-      { field: 'Measurements Valid?', label: 'Measurements Valid', state: 'Measurement Reliability' }
+      { field: 'Material Available?',  label: 'Material Available',  state: 'Material Availability' },
+      { field: 'Process Complete?',    label: 'Process Complete',    state: 'Process Completion State' },
+      { field: 'System Ready?',        label: 'System Ready',        state: 'System Readiness' },
+      { field: 'Measurements Valid?',  label: 'Measurements Valid',  state: 'Measurement Reliability' },
+      { field: 'Output Lot Exists?',   label: 'Output Lot Exists',   state: 'Output Lot Existence' },
+      { field: 'Controls Executed?',   label: 'Controls Executed',   state: 'Controls Execution' }
     ]
   }
 };
