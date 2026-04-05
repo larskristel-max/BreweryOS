@@ -108,6 +108,45 @@
 </div>
 <div id="toast" class="toast"></div>
 
+<div id="screen-language" style="display:none; position:fixed; inset:0; background:#fff; z-index:9999; display:flex; flex-direction:column; align-items:center; justify-content:center; padding:48px 32px; gap:16px;">
+  <p style="font-size:15px; color:#6b7280; margin-bottom:8px; letter-spacing:0.01em;" id="lang-screen-title">Choose your language</p>
+  <button onclick="selectLanguage('fr')" style="width:100%; max-width:320px; padding:16px; border:1.5px solid #e5e7eb; border-radius:14px; background:#fff; font-size:17px; font-weight:500; color:#111827; cursor:pointer; transition:background 0.15s;">Français</button>
+  <button onclick="selectLanguage('nl')" style="width:100%; max-width:320px; padding:16px; border:1.5px solid #e5e7eb; border-radius:14px; background:#fff; font-size:17px; font-weight:500; color:#111827; cursor:pointer; transition:background 0.15s;">Nederlands</button>
+  <button onclick="selectLanguage('en')" style="width:100%; max-width:320px; padding:16px; border:1.5px solid #e5e7eb; border-radius:14px; background:#fff; font-size:17px; font-weight:500; color:#111827; cursor:pointer; transition:background 0.15s;">English</button>
+  <button onclick="selectLanguage('de')" style="width:100%; max-width:320px; padding:16px; border:1.5px solid #e5e7eb; border-radius:14px; background:#fff; font-size:17px; font-weight:500; color:#111827; cursor:pointer; transition:background 0.15s;">Deutsch</button>
+</div>
+
+<div id="screen-entry" style="display:none; position:fixed; inset:0; background:#fff; z-index:9998; flex-direction:column; align-items:center; justify-content:center; padding:48px 28px; gap:0;">
+  <p style="font-size:28px; font-weight:700; color:#111827; margin-bottom:8px; text-align:center;" id="entry-welcome-title">Welcome to BrewOS</p>
+  <p style="font-size:15px; color:#6b7280; margin-bottom:40px; text-align:center;">Brasserie du Château de Durbuy</p>
+  <div style="display:flex; flex-direction:column; gap:12px; width:100%; max-width:340px;">
+    <button onclick="startDemo()" style="padding:16px; border-radius:14px; background:#111827; color:#fff; font-size:16px; font-weight:600; border:none; cursor:pointer;" id="entry-try-btn">Try BrewOS</button>
+    <button onclick="showScreen('screen-home')" style="padding:16px; border-radius:14px; background:#f3f4f6; color:#111827; font-size:16px; font-weight:500; border:none; cursor:pointer;" id="entry-account-btn">Create account</button>
+    <button onclick="showScreen('screen-home')" style="padding:16px; border-radius:14px; background:transparent; color:#6b7280; font-size:15px; border:none; cursor:pointer;" id="entry-login-btn">Log in</button>
+  </div>
+</div>
+
+<div id="screen-value" style="display:none; position:fixed; inset:0; background:#fff; z-index:9997; flex-direction:column; padding:56px 28px 40px; gap:0; overflow-y:auto;">
+  <div style="display:flex; justify-content:flex-end; margin-bottom:32px;">
+    <button onclick="enterDemo()" style="background:none; border:none; color:#9ca3af; font-size:14px; cursor:pointer;" id="value-skip-btn">Skip</button>
+  </div>
+  <div style="display:flex; flex-direction:column; gap:16px; margin-bottom:40px;">
+    <div style="background:#f9fafb; border-radius:16px; padding:20px;">
+      <p style="font-size:16px; font-weight:600; color:#111827; margin:0 0 6px;" id="value-b1-title">Know what to do next</p>
+      <p style="font-size:14px; color:#6b7280; margin:0;" id="value-b1-body">Clear guidance at every step of the brewing process.</p>
+    </div>
+    <div style="background:#f9fafb; border-radius:16px; padding:20px;">
+      <p style="font-size:16px; font-weight:600; color:#111827; margin:0 0 6px;" id="value-b2-title">Traceability made easy</p>
+      <p style="font-size:14px; color:#6b7280; margin:0;" id="value-b2-body">Every batch, ingredient, and sale — linked automatically.</p>
+    </div>
+    <div style="background:#f9fafb; border-radius:16px; padding:20px;">
+      <p style="font-size:16px; font-weight:600; color:#111827; margin:0 0 6px;" id="value-b3-title">Less admin effort</p>
+      <p style="font-size:14px; color:#6b7280; margin:0;" id="value-b3-body">Compliance and reporting without the manual work.</p>
+    </div>
+  </div>
+  <button onclick="enterDemo()" style="width:100%; padding:16px; border-radius:14px; background:#111827; color:#fff; font-size:16px; font-weight:600; border:none; cursor:pointer;" id="value-cta-btn">See BrewOS in action</button>
+</div>
+
 <!-- HOME -->
 <div id="screen-home" class="screen active">
   <div class="greeting">
@@ -169,6 +208,352 @@
   <div class="empty">Issue logging coming soon.</div>
 </div>
 <script>
+
+// ─── TRANSLATIONS ─────────────────────────────────────────────────────────────
+const TRANSLATIONS = {
+  fr: {
+    'language.select_title': 'Choisissez votre langue',
+    'language.french': 'Français',
+    'language.dutch': 'Néerlandais',
+    'language.english': 'Anglais',
+    'language.german': 'Allemand',
+    'settings.title': 'Paramètres',
+    'settings.language': 'Langue',
+    'settings.language_change': 'Changer de langue',
+    'settings.guidance_toggle': 'Afficher les conseils',
+    'home.greeting': 'Bienvenue',
+    'home.today': 'Opérations du jour',
+    'home.whats_next': 'Prochaine étape',
+    'home.active_batches': 'Cuves en cours',
+    'home.agenda': 'Agenda',
+    'home.financial': 'Finances',
+    'home.continue_batch': 'Reprendre la cuve',
+    'home.start_batch': 'Démarrer une cuve',
+    'home.view_batches': 'Voir les cuves',
+    'home.tasks': 'Tâches',
+    'home.next_recommended_action': 'Prochaine action recommandée',
+    'home.blocked_banner': 'Action requise',
+    'batch.assign_ingredients': 'Assigner les ingrédients',
+    'batch.log_process_step': "Enregistrer l'étape",
+    'batch.record_measurement': 'Enregistrer la mesure',
+    'batch.generate_output_lot': 'Générer le lot de sortie',
+    'batch.link_sale': 'Lier la vente',
+    'batch.current_execution_state': "État d'exécution actuel",
+    'batch.blocked_reason': 'Raison du blocage',
+    'readiness.title': 'Préparation',
+    'readiness.material_availability': 'Matériaux disponibles',
+    'readiness.process_completion_state': 'Processus terminé',
+    'readiness.system_readiness': 'Système prêt',
+    'readiness.measurement_reliability': 'Mesures valides',
+    'readiness.output_lot_integrity': 'Lot de sortie présent',
+    'readiness.control_execution_validity': 'Contrôles effectués',
+    'state.ready': 'Prêt',
+    'state.needs_input': 'Saisie requise',
+    'state.blocked': 'Bloqué',
+    'state.complete': 'Terminé',
+    'state.yes': 'Oui',
+    'state.no': 'Non',
+    'blocked.no_ingredient_links': 'Aucun ingrédient lié',
+    'blocked.process_incomplete': 'Processus incomplet',
+    'blocked.measurement_missing': 'Mesure manquante',
+    'blocked.output_lot_missing': 'Lot de sortie manquant',
+    'blocked.controls_missing': 'Contrôles non effectués',
+    'entry.welcome': 'Bienvenue sur BrewOS',
+    'entry.try': 'Essayer BrewOS',
+    'entry.create_account': 'Créer un compte',
+    'entry.login': 'Se connecter',
+    'entry.benefit_1_title': 'Savoir quoi faire ensuite',
+    'entry.benefit_1_body': 'Guidance claire à chaque étape du brassage.',
+    'entry.benefit_2_title': 'Traçabilité sans effort',
+    'entry.benefit_2_body': 'Chaque lot, chaque ingrédient, chaque vente — lié automatiquement.',
+    'entry.benefit_3_title': "Moins d'administration",
+    'entry.benefit_3_body': 'Conformité et rapports sans le travail manuel.',
+    'entry.cta': 'Voir BrewOS en action',
+    'entry.skip': 'Passer',
+    'agenda.title': 'Agenda',
+    'agenda.day': 'Jour',
+    'agenda.week': 'Semaine',
+    'agenda.add': 'Ajouter',
+    'agenda.task': 'Tâche',
+    'agenda.note': 'Note',
+    'agenda.event': 'Événement',
+    'agenda.untimed': 'Sans horaire',
+    'agenda.see_more': 'Voir plus',
+    'financial.title': 'Finances',
+    'financial.revenue': 'Revenus',
+    'financial.costs': 'Coûts',
+    'financial.margin': 'Marge',
+    'financial.safe_to_spend': 'Disponible',
+    'financial.safe_to_spend_label': 'Après TVA, accises et paiements prévus',
+    'financial.money_flow': 'Flux de trésorerie',
+    'financial.cost_pressure': 'Pression des coûts',
+    'financial.obligations': 'Obligations',
+    'financial.today': "Aujourd'hui",
+    'financial.week': 'Semaine',
+    'financial.month': 'Mois',
+  },
+  nl: {
+    'language.select_title': 'Kies uw taal',
+    'language.french': 'Frans',
+    'language.dutch': 'Nederlands',
+    'language.english': 'Engels',
+    'language.german': 'Duits',
+    'settings.title': 'Instellingen',
+    'settings.language': 'Taal',
+    'settings.language_change': 'Taal wijzigen',
+    'settings.guidance_toggle': 'Toon begeleiding',
+    'home.greeting': 'Welkom',
+    'home.today': 'Dagelijkse operaties',
+    'home.whats_next': 'Volgende stap',
+    'home.active_batches': 'Actieve batches',
+    'home.agenda': 'Agenda',
+    'home.financial': 'Financiën',
+    'home.continue_batch': 'Batch hervatten',
+    'home.start_batch': 'Nieuwe batch starten',
+    'home.view_batches': 'Batches bekijken',
+    'home.tasks': 'Taken',
+    'home.next_recommended_action': 'Volgende aanbevolen actie',
+    'home.blocked_banner': 'Actie vereist',
+    'batch.assign_ingredients': 'Ingrediënten toewijzen',
+    'batch.log_process_step': 'Processtap vastleggen',
+    'batch.record_measurement': 'Meting vastleggen',
+    'batch.generate_output_lot': 'Uitvoerlot aanmaken',
+    'batch.link_sale': 'Verkoop koppelen',
+    'batch.current_execution_state': 'Huidige uitvoeringsstatus',
+    'batch.blocked_reason': 'Reden voor blokkering',
+    'readiness.title': 'Gereedheid',
+    'readiness.material_availability': 'Materialen beschikbaar',
+    'readiness.process_completion_state': 'Proces voltooid',
+    'readiness.system_readiness': 'Systeem gereed',
+    'readiness.measurement_reliability': 'Metingen geldig',
+    'readiness.output_lot_integrity': 'Uitvoerlot aanwezig',
+    'readiness.control_execution_validity': 'Controles uitgevoerd',
+    'state.ready': 'Gereed',
+    'state.needs_input': 'Invoer vereist',
+    'state.blocked': 'Geblokkeerd',
+    'state.complete': 'Voltooid',
+    'state.yes': 'Ja',
+    'state.no': 'Nee',
+    'blocked.no_ingredient_links': 'Geen ingrediënten gekoppeld',
+    'blocked.process_incomplete': 'Proces niet afgerond',
+    'blocked.measurement_missing': 'Meting ontbreekt',
+    'blocked.output_lot_missing': 'Uitvoerlot ontbreekt',
+    'blocked.controls_missing': 'Controles niet uitgevoerd',
+    'entry.welcome': 'Welkom bij BrewOS',
+    'entry.try': 'BrewOS proberen',
+    'entry.create_account': 'Account aanmaken',
+    'entry.login': 'Inloggen',
+    'entry.benefit_1_title': 'Weet wat je moet doen',
+    'entry.benefit_1_body': 'Duidelijke begeleiding bij elke brouwerijstap.',
+    'entry.benefit_2_title': 'Traceerbaarheid zonder moeite',
+    'entry.benefit_2_body': 'Elke batch, elk ingrediënt, elke verkoop — automatisch gekoppeld.',
+    'entry.benefit_3_title': 'Minder administratie',
+    'entry.benefit_3_body': 'Conformiteit en rapporten zonder handmatig werk.',
+    'entry.cta': 'Zie BrewOS in actie',
+    'entry.skip': 'Overslaan',
+    'agenda.title': 'Agenda',
+    'agenda.day': 'Dag',
+    'agenda.week': 'Week',
+    'agenda.add': 'Toevoegen',
+    'agenda.task': 'Taak',
+    'agenda.note': 'Notitie',
+    'agenda.event': 'Evenement',
+    'agenda.untimed': 'Zonder tijdstip',
+    'agenda.see_more': 'Meer bekijken',
+    'financial.title': 'Financiën',
+    'financial.revenue': 'Inkomsten',
+    'financial.costs': 'Kosten',
+    'financial.margin': 'Marge',
+    'financial.safe_to_spend': 'Beschikbaar',
+    'financial.safe_to_spend_label': 'Na BTW, accijnzen en verwachte betalingen',
+    'financial.money_flow': 'Geldstroom',
+    'financial.cost_pressure': 'Kostendruk',
+    'financial.obligations': 'Verplichtingen',
+    'financial.today': 'Vandaag',
+    'financial.week': 'Week',
+    'financial.month': 'Maand',
+  },
+  en: {
+    'language.select_title': 'Choose your language',
+    'language.french': 'French',
+    'language.dutch': 'Dutch',
+    'language.english': 'English',
+    'language.german': 'German',
+    'settings.title': 'Settings',
+    'settings.language': 'Language',
+    'settings.language_change': 'Change language',
+    'settings.guidance_toggle': 'Show in-app guidance',
+    'home.greeting': 'Welcome',
+    'home.today': "Today's operations",
+    'home.whats_next': "What's next",
+    'home.active_batches': 'Active batches',
+    'home.agenda': 'Agenda',
+    'home.financial': 'Financial',
+    'home.continue_batch': 'Continue batch',
+    'home.start_batch': 'Start batch',
+    'home.view_batches': 'View batches',
+    'home.tasks': 'Tasks',
+    'home.next_recommended_action': 'Next recommended action',
+    'home.blocked_banner': 'Action required',
+    'batch.assign_ingredients': 'Assign ingredients',
+    'batch.log_process_step': 'Log process step',
+    'batch.record_measurement': 'Record measurement',
+    'batch.generate_output_lot': 'Generate output lot',
+    'batch.link_sale': 'Link sale',
+    'batch.current_execution_state': 'Current execution state',
+    'batch.blocked_reason': 'Blocked reason',
+    'readiness.title': 'Readiness',
+    'readiness.material_availability': 'Materials available',
+    'readiness.process_completion_state': 'Process complete',
+    'readiness.system_readiness': 'System ready',
+    'readiness.measurement_reliability': 'Measurements valid',
+    'readiness.output_lot_integrity': 'Output lot exists',
+    'readiness.control_execution_validity': 'Controls executed',
+    'state.ready': 'Ready',
+    'state.needs_input': 'Needs input',
+    'state.blocked': 'Blocked',
+    'state.complete': 'Complete',
+    'state.yes': 'Yes',
+    'state.no': 'No',
+    'blocked.no_ingredient_links': 'No ingredient links',
+    'blocked.process_incomplete': 'Process incomplete',
+    'blocked.measurement_missing': 'Measurement missing',
+    'blocked.output_lot_missing': 'Output lot missing',
+    'blocked.controls_missing': 'Controls not executed',
+    'entry.welcome': 'Welcome to BrewOS',
+    'entry.try': 'Try BrewOS',
+    'entry.create_account': 'Create account',
+    'entry.login': 'Log in',
+    'entry.benefit_1_title': 'Know what to do next',
+    'entry.benefit_1_body': 'Clear guidance at every step of the brewing process.',
+    'entry.benefit_2_title': 'Traceability made easy',
+    'entry.benefit_2_body': 'Every batch, ingredient, and sale — linked automatically.',
+    'entry.benefit_3_title': 'Less admin effort',
+    'entry.benefit_3_body': 'Compliance and reporting without the manual work.',
+    'entry.cta': 'See BrewOS in action',
+    'entry.skip': 'Skip',
+    'agenda.title': 'Agenda',
+    'agenda.day': 'Day',
+    'agenda.week': 'Week',
+    'agenda.add': 'Add',
+    'agenda.task': 'Task',
+    'agenda.note': 'Note',
+    'agenda.event': 'Event',
+    'agenda.untimed': 'No time set',
+    'agenda.see_more': 'See more',
+    'financial.title': 'Financial',
+    'financial.revenue': 'Revenue',
+    'financial.costs': 'Costs',
+    'financial.margin': 'Margin',
+    'financial.safe_to_spend': 'Safe to spend',
+    'financial.safe_to_spend_label': 'After VAT, excise, and expected payments',
+    'financial.money_flow': 'Money flow',
+    'financial.cost_pressure': 'Cost pressure',
+    'financial.obligations': 'Obligations',
+    'financial.today': 'Today',
+    'financial.week': 'Week',
+    'financial.month': 'Month',
+  },
+  de: {
+    'language.select_title': 'Sprache wählen',
+    'language.french': 'Französisch',
+    'language.dutch': 'Niederländisch',
+    'language.english': 'Englisch',
+    'language.german': 'Deutsch',
+    'settings.title': 'Einstellungen',
+    'settings.language': 'Sprache',
+    'settings.language_change': 'Sprache ändern',
+    'settings.guidance_toggle': 'Hinweise anzeigen',
+    'home.greeting': 'Willkommen',
+    'home.today': 'Tagesbetrieb',
+    'home.whats_next': 'Nächster Schritt',
+    'home.active_batches': 'Aktive Chargen',
+    'home.agenda': 'Agenda',
+    'home.financial': 'Finanzen',
+    'home.continue_batch': 'Charge fortsetzen',
+    'home.start_batch': 'Neue Charge starten',
+    'home.view_batches': 'Chargen anzeigen',
+    'home.tasks': 'Aufgaben',
+    'home.next_recommended_action': 'Nächste empfohlene Aktion',
+    'home.blocked_banner': 'Aktion erforderlich',
+    'batch.assign_ingredients': 'Zutaten zuweisen',
+    'batch.log_process_step': 'Prozessschritt erfassen',
+    'batch.record_measurement': 'Messung erfassen',
+    'batch.generate_output_lot': 'Ausgabelos erstellen',
+    'batch.link_sale': 'Verkauf verknüpfen',
+    'batch.current_execution_state': 'Aktueller Ausführungsstatus',
+    'batch.blocked_reason': 'Grund der Blockierung',
+    'readiness.title': 'Bereitschaft',
+    'readiness.material_availability': 'Materialien verfügbar',
+    'readiness.process_completion_state': 'Prozess abgeschlossen',
+    'readiness.system_readiness': 'System bereit',
+    'readiness.measurement_reliability': 'Messungen gültig',
+    'readiness.output_lot_integrity': 'Ausgabelos vorhanden',
+    'readiness.control_execution_validity': 'Kontrollen durchgeführt',
+    'state.ready': 'Bereit',
+    'state.needs_input': 'Eingabe erforderlich',
+    'state.blocked': 'Blockiert',
+    'state.complete': 'Abgeschlossen',
+    'state.yes': 'Ja',
+    'state.no': 'Nein',
+    'blocked.no_ingredient_links': 'Keine Zutaten verknüpft',
+    'blocked.process_incomplete': 'Prozess nicht abgeschlossen',
+    'blocked.measurement_missing': 'Messung fehlt',
+    'blocked.output_lot_missing': 'Ausgabelos fehlt',
+    'blocked.controls_missing': 'Kontrollen nicht durchgeführt',
+    'entry.welcome': 'Willkommen bei BrewOS',
+    'entry.try': 'BrewOS testen',
+    'entry.create_account': 'Konto erstellen',
+    'entry.login': 'Anmelden',
+    'entry.benefit_1_title': 'Wissen, was als nächstes zu tun ist',
+    'entry.benefit_1_body': 'Klare Orientierung bei jedem Schritt des Brauprozesses.',
+    'entry.benefit_2_title': 'Rückverfolgbarkeit leicht gemacht',
+    'entry.benefit_2_body': 'Jede Charge, jede Zutat, jeder Verkauf — automatisch verknüpft.',
+    'entry.benefit_3_title': 'Weniger Verwaltungsaufwand',
+    'entry.benefit_3_body': 'Compliance und Berichte ohne manuelle Arbeit.',
+    'entry.cta': 'BrewOS in Aktion sehen',
+    'entry.skip': 'Überspringen',
+    'agenda.title': 'Agenda',
+    'agenda.day': 'Tag',
+    'agenda.week': 'Woche',
+    'agenda.add': 'Hinzufügen',
+    'agenda.task': 'Aufgabe',
+    'agenda.note': 'Notiz',
+    'agenda.event': 'Ereignis',
+    'agenda.untimed': 'Kein Zeitplan',
+    'agenda.see_more': 'Mehr anzeigen',
+    'financial.title': 'Finanzen',
+    'financial.revenue': 'Einnahmen',
+    'financial.costs': 'Kosten',
+    'financial.margin': 'Marge',
+    'financial.safe_to_spend': 'Verfügbar',
+    'financial.safe_to_spend_label': 'Nach MwSt., Verbrauchssteuer und erwarteten Zahlungen',
+    'financial.money_flow': 'Geldfluss',
+    'financial.cost_pressure': 'Kostendruck',
+    'financial.obligations': 'Verpflichtungen',
+    'financial.today': 'Heute',
+    'financial.week': 'Woche',
+    'financial.month': 'Monat',
+  },
+};
+
+let currentLang = localStorage.getItem('brewos_lang') || 'en';
+
+function t(key) {
+  return (TRANSLATIONS[currentLang] && TRANSLATIONS[currentLang][key])
+    || (TRANSLATIONS['en'] && TRANSLATIONS['en'][key])
+    || key;
+}
+
+function setLanguage(lang) {
+  if (!['fr','nl','en','de'].includes(lang)) return;
+  currentLang = lang;
+  localStorage.setItem('brewos_lang', lang);
+}
+
+function hasChosenLanguage() {
+  return !!localStorage.getItem('brewos_lang');
+}
 
 // ─── SEMANTIC RUNTIME CONFIG ─────────────────────────────────────────────────
 // AUTHORITY: Notion = semantic truth | Airtable = facts | App = computation
@@ -902,6 +1287,54 @@ async function loadTasks() {
   }).join('');
 }
 
+function showScreen(id) {
+  document.querySelectorAll('[id^="screen-"]').forEach(s => {
+    s.style.display = 'none';
+  });
+  const target = document.getElementById(id);
+  if (target) target.style.display = 'flex';
+}
+
+function selectLanguage(lang) {
+  setLanguage(lang);
+  applyTranslations();
+  showScreen('screen-entry');
+}
+
+function applyTranslations() {
+  document.getElementById('lang-screen-title').textContent = t('language.select_title');
+  document.getElementById('entry-welcome-title').textContent = t('entry.welcome');
+  document.getElementById('entry-try-btn').textContent = t('entry.try');
+  document.getElementById('entry-account-btn').textContent = t('entry.create_account');
+  document.getElementById('entry-login-btn').textContent = t('entry.login');
+  document.getElementById('value-skip-btn').textContent = t('entry.skip');
+  document.getElementById('value-b1-title').textContent = t('entry.benefit_1_title');
+  document.getElementById('value-b1-body').textContent = t('entry.benefit_1_body');
+  document.getElementById('value-b2-title').textContent = t('entry.benefit_2_title');
+  document.getElementById('value-b2-body').textContent = t('entry.benefit_2_body');
+  document.getElementById('value-b3-title').textContent = t('entry.benefit_3_title');
+  document.getElementById('value-b3-body').textContent = t('entry.benefit_3_body');
+  document.getElementById('value-cta-btn').textContent = t('entry.cta');
+}
+
+function startDemo() {
+  showScreen('screen-value');
+}
+
+function enterDemo() {
+  localStorage.setItem('brewos_demo', '1');
+  showScreen('screen-home');
+}
+
+function bootFlow() {
+  applyTranslations();
+  if (!hasChosenLanguage()) {
+    showScreen('screen-language');
+  } else {
+    showScreen('screen-entry');
+  }
+}
+
 async function init() {
   await loadHomeBatches();
   const batchData = await airtable(TABLES.batches, '?sort[0][field]=Date&sort[0][direction]=desc');
@@ -911,6 +1344,7 @@ async function init() {
       `<option value="${r.id}">Batch #${r.fields['Batch ID']} — ${Array.isArray(r.fields.Recipe)?r.fields.Recipe[0]:''}</option>`
     ).join('');
   loadTasks();
+  bootFlow();
 }
 
 init();
