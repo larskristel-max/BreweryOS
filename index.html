@@ -1510,6 +1510,17 @@ function applyTranslations() {
   document.getElementById('value-b3-title').textContent = t('entry.benefit_3_title');
   document.getElementById('value-b3-body').textContent = t('entry.benefit_3_body');
   document.getElementById('value-cta-btn').textContent = t('entry.cta');
+  const navLabels = {
+    'nav-home': 'home.today',
+    'nav-batches': 'home.active_batches',
+    'nav-agenda': 'agenda.title',
+    'nav-tasks': 'home.tasks',
+    'nav-financial': 'financial.title',
+  };
+  Object.entries(navLabels).forEach(([id, key]) => {
+    const el = document.getElementById(id);
+    if (el) el.textContent = t(key);
+  });
 }
 
 function startDemo() {
@@ -1615,6 +1626,11 @@ function renderHomeBatches(batches) {
   }).join('');
 }
 
+function openBatchDetail(recordId) {
+  showScreen('screen-batch-detail');
+  if (typeof loadBatchDetail === 'function') loadBatchDetail(recordId);
+}
+
 // ── AGENDA PREVIEW ───────────────────────────────────────────────────────────
 const AGENDA_DEMO = [
   { time: '08:00', title: 'Check mash temperature — Batch 4', system: true },
@@ -1641,6 +1657,11 @@ const FINANCIAL_DEMO = {
 };
 
 function renderFinancialPreview() {
+  const role = localStorage.getItem('brewos_role') || 'owner';
+  const permitted = ['admin','owner','finance'].includes(role);
+  const section = document.getElementById('home-financial-section');
+  if (section) section.style.display = permitted ? 'block' : 'none';
+  if (!permitted) return;
   const d = FINANCIAL_DEMO;
   const arrow = (curr, prev) => curr >= prev ? '↑' : '↓';
   const arrowColor = (curr, prev) => curr >= prev ? '#059669' : '#dc2626';
@@ -2015,6 +2036,7 @@ async function init() {
     (batchData.records||[]).map(r =>
       `<option value="${r.id}">Batch #${r.fields['Batch ID']} — ${Array.isArray(r.fields.Recipe)?r.fields.Recipe[0]:''}</option>`
     ).join('');
+  renderHomeBatches(batchData.records || []);
   loadTasks();
   applyHomeLabels();
   initSettings();
@@ -2029,5 +2051,27 @@ async function init() {
 
 init();
 </script>
+<div style="position:fixed; bottom:0; left:0; right:0; background:#fff; border-top:1px solid #f3f4f6; display:flex; justify-content:space-around; align-items:center; padding:8px 0 20px; z-index:500;">
+  <button onclick="showScreen('screen-home')" style="background:none; border:none; display:flex; flex-direction:column; align-items:center; gap:2px; cursor:pointer; color:#6b7280; font-size:10px;">
+    <span style="font-size:22px;">🏠</span>
+    <span id="nav-home">Home</span>
+  </button>
+  <button onclick="showScreen('screen-batches')" style="background:none; border:none; display:flex; flex-direction:column; align-items:center; gap:2px; cursor:pointer; color:#6b7280; font-size:10px;">
+    <span style="font-size:22px;">🍺</span>
+    <span id="nav-batches">Batches</span>
+  </button>
+  <button onclick="showScreen('screen-agenda')" style="background:none; border:none; display:flex; flex-direction:column; align-items:center; gap:2px; cursor:pointer; color:#6b7280; font-size:10px;">
+    <span style="font-size:22px;">📅</span>
+    <span id="nav-agenda">Agenda</span>
+  </button>
+  <button onclick="showScreen('screen-tasks')" style="background:none; border:none; display:flex; flex-direction:column; align-items:center; gap:2px; cursor:pointer; color:#6b7280; font-size:10px;">
+    <span style="font-size:22px;">✅</span>
+    <span id="nav-tasks">Tasks</span>
+  </button>
+  <button onclick="showScreen('screen-financial')" style="background:none; border:none; display:flex; flex-direction:column; align-items:center; gap:2px; cursor:pointer; color:#6b7280; font-size:10px;">
+    <span style="font-size:22px;">💰</span>
+    <span id="nav-financial">Financial</span>
+  </button>
+</div>
 </body>
 </html>
