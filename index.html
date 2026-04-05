@@ -170,71 +170,95 @@
 </div>
 <script>
 
+// ─── SEMANTIC RUNTIME CONFIG ─────────────────────────────────────────────────
+// Driven by Notion bridge-key contract. Do NOT hardcode logic outside this block.
+// NOTION_HOOK 1 → tableToType will come from App Semantic Graph
+// NOTION_HOOK 2 → states will come from App Semantic Graph
+// NOTION_HOOK 3 → readinessConditions will come from App Semantic Links — Relational
+
 const SEMANTIC = {
 
-  // Canonical object type mapping
-  // NOTION_HOOK: will later come from App Semantic Graph
+  // ── Object type mapping ─────────────────────────────────────────────────────
   tableToType: {
-    'Batches':             'process_run',
-    'Process Runs':        'process_run',
-    'Ingredients':         'input_material',
-    'Input Materials':     'input_material',
-    'Brew Logs':           'measurement',
-    'Measurements':        'measurement',
-    'Lots':                'output_lot',
-    'Output Lots':         'output_lot',
-    'Sales':               'transaction',
-    'Transactions':        'transaction',
-    'Recipe Ingredients':  'template_input',
-    'Template Inputs':     'template_input',
-    'Batch Ingredients':   'run_input',
-    'Run Inputs':          'run_input',
-    'Recipes':             'process_template',
-    'Process Templates':   'process_template',
-    'Issues':              'issue',
-    'Tasks':               'task'
+    // Brewery base
+    'Batches':            'process_run',
+    'Ingredients':        'input_material',
+    'Brew Logs':          'measurement',
+    'Lots':               'output_lot',
+    'Sales':              'transaction',
+    'Issues':             'issue',
+    'Tasks':              'task',
+    // Generic base
+    'Process Runs':       'process_run',
+    'Input Materials':    'input_material',
+    'Measurements':       'measurement',
+    'Output Lots':        'output_lot',
+    'Transactions':       'transaction',
   },
 
-  // Semantic states per object type
-  // NOTION_HOOK: will later come from App Semantic Links — Relational
-  // Join keys: Source Entity Key / Target Entity Key
+  // ── Semantic states per object type ─────────────────────────────────────────
   states: {
-    process_run: [
-      'Execution Readiness',
-      'Material Availability',
-      'Process Completion State',
-      'System Readiness',
-      'Measurement Reliability',
-      'Output Lot Existence',
-      'Controls Execution'
-    ],
-    output_lot: [
-      'Packaging Status',
-      'Quality Verified'
-    ],
-    transaction: [
-      'Invoice Status',
-      'Delivery Status'
-    ],
-    measurement: [
-      'Log Completeness',
-      'Data Validity'
-    ]
+    process_run:    ['planned', 'in_progress', 'completed', 'blocked', 'invalid'],
+    input_material: ['available', 'reserved', 'consumed', 'unavailable'],
+    measurement:    ['recorded', 'valid', 'invalid', 'missing'],
+    output_lot:     ['created', 'available', 'reserved', 'released', 'invalid'],
+    transaction:    ['initiated', 'in_transit', 'completed', 'failed'],
+    issue:          ['open', 'acknowledged', 'resolved', 'closed'],
+    task:           ['pending', 'active', 'completed', 'cancelled'],
   },
 
-  // 6-condition readiness model — corrected per semantic layer
-  // NOTION_HOOK: field list will later be driven by
-  // App Semantic Links — Relational (Source Entity Key / Target Entity Key)
-  readinessFields: {
-    process_run: [
-      { field: 'Material Available?',  label: 'Material Available',  state: 'Material Availability' },
-      { field: 'Process Complete?',    label: 'Process Complete',    state: 'Process Completion State' },
-      { field: 'System Ready?',        label: 'System Ready',        state: 'System Readiness' },
-      { field: 'Measurements Valid?',  label: 'Measurements Valid',  state: 'Measurement Reliability' },
-      { field: 'Output Lot Exists?',   label: 'Output Lot Exists',   state: 'Output Lot Existence' },
-      { field: 'Controls Executed?',   label: 'Controls Executed',   state: 'Controls Execution' }
-    ]
-  }
+  // ── Readiness conditions (bridge-key contract) ───────────────────────────────
+  // sourceKey     = Source Entity Key from App Semantic Links — Relational
+  // airtableField = actual Airtable field name in Batches / Process Runs
+  // label         = what the user sees in explainability panel
+  readinessConditions: [
+    {
+      sourceKey:     'Material Availability',
+      airtableField: 'Material Available?',
+      label:         'Materials are available',
+    },
+    {
+      sourceKey:     'Process Completion State',
+      airtableField: 'Process Complete?',
+      label:         'Process is complete',
+    },
+    {
+      sourceKey:     'System Readiness',
+      airtableField: 'System Ready?',
+      label:         'System is ready',
+    },
+    {
+      sourceKey:     'Measurement Reliability',
+      airtableField: 'Measurements Valid?',
+      label:         'Measurements are valid',
+    },
+    {
+      sourceKey:     'Output Lot Integrity',
+      airtableField: 'Output Lot Exists?',
+      label:         'Output lot exists',
+      appComputed:   true,  // ← app derives this from Lots array, not Airtable field
+    },
+    {
+      sourceKey:     'Control Execution Validity',
+      airtableField: 'Controls Executed?',
+      label:         'Controls have been executed',
+    },
+  ],
+
+  // ── Readiness engine ─────────────────────────────────────────────────────────
+  // Call this with a batch record object. Returns { ready, failing[] }
+  computeReadiness(record) {
+    const failing = [];
+    for (const condition of this.readinessConditions) {
+      const value = record[condition.airtableField];
+      const pass = value === true || value === 1;
+      if (!pass) failing.push(condition.label);
+    }
+    return {
+      ready:   failing.length === 0,
+      failing, // semantic labels of failing conditions
+    };
+  },
 };
 
 function getObjectType(tableName) {
@@ -253,45 +277,29 @@ function setCurrentRecord(tableName, recordId) {
   APP_STATE.currentObjectType = getObjectType(tableName);
 }
 
-function computeReadiness(fields, objectType) {
-  const config = SEMANTIC.readinessFields[objectType];
-  if (!config) return { ready: null, checks: [], blockedReasons: [] };
-  const checks = config.map(c => ({
-    field: c.field, label: c.label, state: c.state, passed: !!fields[c.field]
-  }));
-  const ready = checks.every(c => c.passed);
-  const blockedReasons = checks.filter(c => !c.passed).map(c => c.label);
-  return { ready, checks, blockedReasons };
-}
-
-function explainBlocked(blockedReasons) {
-  if (!blockedReasons.length) return '';
-  if (blockedReasons.length === 1) return `Blocked: ${blockedReasons[0]} not confirmed`;
-  const last = blockedReasons[blockedReasons.length - 1];
-  const rest = blockedReasons.slice(0, -1).join(', ');
-  return `Blocked: ${rest} and ${last} not confirmed`;
-}
-
 function readinessBadge(fields, objectType) {
-  const { ready } = computeReadiness(fields, objectType);
-  if (ready === null) return '';
+  if (objectType !== 'process_run') return '';
+  const { ready } = SEMANTIC.computeReadiness(fields);
   return ready
     ? '<span class="badge badge-ready">✓ READY</span>'
     : '<span class="badge badge-blocked">✗ BLOCKED</span>';
 }
 
 function readinessPanel(fields, objectType) {
-  const { ready, checks, blockedReasons } = computeReadiness(fields, objectType);
-  if (ready === null) return '';
+  if (objectType !== 'process_run') return '';
+  const { ready, failing } = SEMANTIC.computeReadiness(fields);
   const cls   = ready ? 'ready' : 'blocked';
   const title = ready ? '✓ Ready for Execution' : '✗ Execution Blocked';
-  const rows  = checks.map(c => `
+  const rows  = SEMANTIC.readinessConditions.map(c => {
+    const passed = !failing.includes(c.label);
+    return `
     <div class="readiness-check">
-      <div class="dot ${c.passed ? 'dot-pass' : 'dot-fail'}">${c.passed ? '✓' : '✗'}</div>
-      <span class="check-label ${c.passed ? '' : 'fail'}">${c.label}</span>
-    </div>`).join('');
-  const explanation = !ready
-    ? `<div class="blocked-reason"><strong>Why blocked:</strong>${explainBlocked(blockedReasons)}</div>`
+      <div class="dot ${passed ? 'dot-pass' : 'dot-fail'}">${passed ? '✓' : '✗'}</div>
+      <span class="check-label ${passed ? '' : 'fail'}">${c.label}</span>
+    </div>`;
+  }).join('');
+  const explanation = failing.length
+    ? `<div class="blocked-reason"><strong>Why blocked:</strong> ${failing.join(', ')}</div>`
     : '';
   return `
     <div class="readiness-panel ${cls}">
