@@ -224,6 +224,9 @@ const SEMANTIC = {
         'Completed':             'completed',
         'Blocked':               'blocked',
         'Invalid':               'invalid',
+        // live brewery compatibility
+        'Brewing':               'in_progress',
+        'Done':                  'completed',
       },
     },
     input_material: {
@@ -242,14 +245,20 @@ const SEMANTIC = {
     },
     measurement: {
       fieldByTable: {
-        'Brew Logs':    'Status',
+        'Brew Logs':    'Log Status',
         'Measurements': 'Status',
       },
       values: {
-        'Pending': 'pending',
-        'Valid':   'valid',
-        'Invalid': 'invalid',
-        'Missing': 'missing',
+        'Pending':      'pending',
+        'Valid':        'valid',
+        'Invalid':      'invalid',
+        'Missing':      'missing',
+        // live brewery compatibility
+        'Mashing':      'pending',
+        'Boiling':      'pending',
+        'Fermenting':   'pending',
+        'Bottling':     'pending',
+        'Complete':     'valid',
       },
     },
     output_lot: {
@@ -272,11 +281,14 @@ const SEMANTIC = {
         'Transactions': 'Status',
       },
       values: {
-        'Pending':   'pending',
-        'Validated': 'validated',
-        'Executed':  'executed',
-        'Completed': 'executed',
-        'Failed':    'failed',
+        'Pending':      'pending',
+        'Validated':    'validated',
+        'Executed':     'executed',
+        'Completed':    'executed',
+        'Failed':       'failed',
+        // live brewery compatibility
+        'Confirmed':    'validated',
+        'Delivered':    'executed',
       },
     },
     issue: {
@@ -289,6 +301,8 @@ const SEMANTIC = {
         'Acknowledged': 'diagnosed',
         'Resolved':     'resolved',
         'Closed':       'closed',
+        // live brewery compatibility
+        'In Progress':  'diagnosed',
       },
     },
     task: {
@@ -302,6 +316,10 @@ const SEMANTIC = {
         'Completed':   'completed',
         'Blocked':     'blocked',
         'Cancelled':   'blocked',
+        // live brewery compatibility
+        'To Do':       'pending',
+        'Done':        'completed',
+        'Skipped':     'blocked',
       },
     },
   },
