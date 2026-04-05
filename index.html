@@ -1495,7 +1495,7 @@ function showScreen(id) {
   target.style.display = blockScreens.includes(id) ? 'block' : 'flex';
   // refresh screen-specific state on navigate
   if (id === 'screen-agenda') { switchAgendaView(agendaView); loadAgendaFromAirtable(); }
-  if (id === 'screen-financial') renderFinancialPage();
+  if (id === 'screen-financial') { renderFinancialPage(); loadFinancialFromAirtable(); }
   if (id === 'screen-settings') initSettings();
   if (id === 'screen-home') {
     renderWhatsNext();
@@ -1637,6 +1637,221 @@ const LABEL_STYLES = {
   helpful:     { bg: '#eff6ff', color: '#1e40af', text: 'Helpful' },
   later:       { bg: '#f9fafb', color: '#6b7280', text: 'Later' },
 };
+
+async function fetchFinancialSnapshot(periodType) {
+  const key  = window.__AIRTABLE_KEY__;
+  const base = 'appslXmtOEoDI6lwp';
+
+  const fields = [
+    'Period Label','Date','Period Type','Revenue','Costs','Margin',
+    'Previous Period Revenue','Previous Period Costs','Previous Period Margin',
+    'VAT Reserve Estimate','Excise Reserve Estimate','Tax Reserve Estimate',
+    'Total Reserve Estimate','Safe To Spend'
+  ].map(f => `fields[]=${encodeURIComponent(f)}`).join('&');
+
+  const formula = encodeURIComponent(`{Period Type}='${periodType}'`);
+  const url = `https://api.airtable.com/v0/${base}/tbltrrs047wZJv0SB?${fields}&filterByFormula=${formula}&maxRecords=5&sort[0][field]=Date&sort[0][direction]=desc`;
+
+  const resp = await fetch(url, { headers: { Authorization: `Bearer ${key}` } });
+  if (!resp.ok) throw new Error(`Financial snapshot ${resp.status}`);
+  const data = await resp.json();
+
+  function sel(v) { return (v && typeof v==='object' && v.name) ? v.name : (v||''); }
+
+  return (data.records || []).map(rec => {
+    const f = rec.fields || rec.cellValuesByFieldId || {};
+    const g = n => f[n] ?? null;
+    return {
+      periodLabel:   g('Period Label') || '',
+      date:          g('Date') || '',
+      periodType:    sel(g('Period Type')),
+      revenue:       g('Revenue') || 0,
+      costs:         g('Costs') || 0,
+      margin:        g('Margin') || 0,
+      prevRevenue:   g('Previous Period Revenue') || null,
+      prevCosts:     g('Previous Period Costs') || null,
+      prevMargin:    g('Previous Period Margin') || null,
+      vatReserve:    g('VAT Reserve Estimate') || 0,
+      exciseReserve: g('Excise Reserve Estimate') || 0,
+      taxReserve:    g('Tax Reserve Estimate') || 0,
+      totalReserve:  g('Total Reserve Estimate') || 0,
+      safeToSpend:   g('Safe To Spend') || 0,
+    };
+  });
+}
+
+async function fetchCostBreakdown() {
+  const key  = window.__AIRTABLE_KEY__;
+  const base = 'appslXmtOEoDI6lwp';
+
+  const fields = ['Description','Cost Category','Amount','Date','Linked Batch ID']
+    .map(f => `fields[]=${encodeURIComponent(f)}`).join('&');
+
+  const url = `https://api.airtable.com/v0/${base}/tblVpdYdza5mWgT0K?${fields}&maxRecords=50&sort[0][field]=Date&sort[0][direction]=desc`;
+
+  const resp = await fetch(url, { headers: { Authorization: `Bearer ${key}` } });
+  if (!resp.ok) throw new Error(`Cost breakdown ${resp.status}`);
+  const data = await resp.json();
+
+  function sel(v) { return (v && typeof v==='object' && v.name) ? v.name : (v||''); }
+
+  return (data.records || []).map(rec => {
+    const f = rec.fields || rec.cellValuesByFieldId || {};
+    return {
+      id:          rec.id,
+      description: f['Description'] || '—',
+      category:    sel(f['Cost Category']) || 'Other',
+      amount:      f['Amount'] || 0,
+      date:        f['Date'] || '',
+      batchId:     f['Linked Batch ID'] || '',
+    };
+  });
+}
+
+async function fetchObligations() {
+  const key  = window.__AIRTABLE_KEY__;
+  const base = 'appslXmtOEoDI6lwp';
+
+  const fields = ['Title','Type','Due Date','Status','Notes']
+    .map(f => `fields[]=${encodeURIComponent(f)}`).join('&');
+
+  const url = `https://api.airtable.com/v0/${base}/tblL6qs7uKCUJA10L?${fields}&maxRecords=20&sort[0][field]=Due Date&sort[0][direction]=asc`;
+
+  const resp = await fetch(url, { headers: { Authorization: `Bearer ${key}` } });
+  if (!resp.ok) throw new Error(`Obligations ${resp.status}`);
+  const data = await resp.json();
+
+  function sel(v) { return (v && typeof v==='object' && v.name) ? v.name : (v||''); }
+
+  return (data.records || []).map(rec => {
+    const f = rec.fields || rec.cellValuesByFieldId || {};
+    return {
+      id:      rec.id,
+      title:   f['Title'] || '—',
+      type:    sel(f['Type']) || '',
+      dueDate: f['Due Date'] || '',
+      status:  sel(f['Status']) || 'upcoming',
+      notes:   f['Notes'] || '',
+    };
+  });
+}
+
+async function loadFinancialFromAirtable() {
+  const periodType = window._financialPeriod
+    || (typeof financialPeriod !== 'undefined' ? financialPeriod : 'month');
+
+  const periodMap = { today: 'day', week: 'week', month: 'month' };
+  const atPeriod  = periodMap[periodType] || 'month';
+
+  try {
+    const [snapshots, costs, obligations] = await Promise.all([
+      fetchFinancialSnapshot(atPeriod),
+      fetchCostBreakdown(),
+      fetchObligations(),
+    ]);
+
+    window._financialCache = { snapshots, costs, obligations, periodType: atPeriod };
+    renderFinancialFromCache();
+  } catch (err) {
+    console.error('[Financial] fetch failed', err);
+  }
+}
+
+function renderFinancialFromCache() {
+  const cache = window._financialCache;
+  if (!cache) return;
+
+  const snap = cache.snapshots[0] || null;
+  const costs = cache.costs;
+  const obligations = cache.obligations;
+
+  const stsEl = document.getElementById('financial-safe-to-spend')
+    || document.querySelector('.financial-safe-to-spend .amount')
+    || document.querySelector('[data-financial="safe-to-spend"]');
+  if (stsEl && snap) stsEl.textContent = `€${snap.safeToSpend.toLocaleString('fr-BE')}`;
+
+  const revEl = document.getElementById('financial-revenue')
+    || document.querySelector('[data-financial="revenue"]');
+  if (revEl && snap) revEl.textContent = `€${snap.revenue.toLocaleString('fr-BE')}`;
+
+  const costsEl = document.getElementById('financial-costs')
+    || document.querySelector('[data-financial="costs"]');
+  if (costsEl && snap) costsEl.textContent = `€${snap.costs.toLocaleString('fr-BE')}`;
+
+  const marginEl = document.getElementById('financial-margin')
+    || document.querySelector('[data-financial="margin"]');
+  if (marginEl && snap) marginEl.textContent = `€${snap.margin.toLocaleString('fr-BE')}`;
+
+  const vatEl    = document.getElementById('financial-vat-reserve')    || document.querySelector('[data-financial="vat-reserve"]');
+  const exciseEl = document.getElementById('financial-excise-reserve') || document.querySelector('[data-financial="excise-reserve"]');
+  const taxEl    = document.getElementById('financial-tax-reserve')    || document.querySelector('[data-financial="tax-reserve"]');
+  const totalEl  = document.getElementById('financial-total-reserve')  || document.querySelector('[data-financial="total-reserve"]');
+  if (snap) {
+    if (vatEl)    vatEl.textContent    = `€${snap.vatReserve.toLocaleString('fr-BE')}`;
+    if (exciseEl) exciseEl.textContent = `€${snap.exciseReserve.toLocaleString('fr-BE')}`;
+    if (taxEl)    taxEl.textContent    = `€${snap.taxReserve.toLocaleString('fr-BE')}`;
+    if (totalEl)  totalEl.textContent  = `€${snap.totalReserve.toLocaleString('fr-BE')}`;
+  }
+
+  if (!snap) {
+    const noDataEl = document.getElementById('financial-no-data')
+      || document.querySelector('.financial-empty');
+    if (noDataEl) noDataEl.style.display = 'block';
+  }
+
+  const costListEl = document.getElementById('financial-cost-list')
+    || document.querySelector('.financial-cost-breakdown')
+    || document.querySelector('[data-financial="cost-list"]');
+
+  if (costListEl) {
+    if (costs.length === 0) {
+      costListEl.innerHTML = `<div style="color:#9e9e9e;font-size:13px;padding:8px 0;">No cost entries recorded yet.</div>`;
+    } else {
+      const maxAmt = Math.max(...costs.map(c => c.amount), 1);
+      costListEl.innerHTML = costs.map(c => `
+        <div style="margin-bottom:10px;">
+          <div style="display:flex;justify-content:space-between;font-size:13px;color:#212121;margin-bottom:3px;">
+            <span>${c.description}</span>
+            <span style="font-weight:500;">€${c.amount.toLocaleString('fr-BE')}</span>
+          </div>
+          <div style="background:#f0f0f0;border-radius:4px;height:5px;overflow:hidden;">
+            <div style="background:#1565c0;height:100%;width:${Math.round((c.amount/maxAmt)*100)}%;border-radius:4px;"></div>
+          </div>
+          <div style="font-size:11px;color:#9e9e9e;margin-top:2px;">${c.category}${c.batchId ? ' · Batch '+c.batchId : ''}</div>
+        </div>`).join('');
+    }
+  }
+
+  const oblListEl = document.getElementById('financial-obligations')
+    || document.querySelector('.financial-obligations')
+    || document.querySelector('[data-financial="obligations"]');
+
+  if (oblListEl) {
+    const statusColor = { upcoming: '#f57f17', overdue: '#d32f2f', done: '#2e7d32', paid: '#2e7d32' };
+    const today = new Date(); today.setHours(0,0,0,0);
+
+    oblListEl.innerHTML = obligations.map(o => {
+      const color = statusColor[o.status] || '#9e9e9e';
+      let dueLabel = '';
+      if (o.dueDate) {
+        const due  = new Date(o.dueDate); due.setHours(0,0,0,0);
+        const diff = Math.round((due - today) / 86400000);
+        if (diff < 0)        dueLabel = `<span style="color:#d32f2f;">Overdue ${Math.abs(diff)}d</span>`;
+        else if (diff === 0) dueLabel = `<span style="color:#f57f17;">Due today</span>`;
+        else                 dueLabel = `<span style="color:#757575;">Due ${o.dueDate}</span>`;
+      }
+      return `
+        <div style="display:flex;justify-content:space-between;align-items:center;padding:10px 0;border-bottom:1px solid #f0f0f0;">
+          <div>
+            <div style="font-size:13px;font-weight:500;color:#212121;">${o.title}</div>
+            <div style="font-size:11px;margin-top:2px;">${dueLabel}</div>
+            ${o.notes ? `<div style="font-size:11px;color:#9e9e9e;margin-top:2px;">${o.notes}</div>` : ''}
+          </div>
+          <span style="font-size:11px;font-weight:600;color:${color};text-transform:uppercase;letter-spacing:0.3px;">${o.status}</span>
+        </div>`;
+    }).join('') || `<div style="color:#9e9e9e;font-size:13px;padding:8px 0;">No obligations recorded.</div>`;
+  }
+}
 
 async function fetchAgendaItems() {
   const key = window.__AIRTABLE_KEY__;
@@ -2310,6 +2525,7 @@ function setFinPeriod(period) {
     btn.style.color = p === period ? '#fff' : '#6b7280';
   });
   renderFinancialPage();
+  loadFinancialFromAirtable();
 }
 
 function renderFinancialPage() {
