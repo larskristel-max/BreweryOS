@@ -328,7 +328,7 @@ const SEMANTIC = {
   // sourceKey     = machine bridge key (stable, matches App Semantic Links)
   // airtableField = compatibility binding only — never shown in UI
   // label         = user-facing explainability text only
-  readinessConditions: [
+  readinessConditionsFallback: [
     {
       sourceKey:     'material_availability',
       airtableField: 'Material Available?',
@@ -391,9 +391,9 @@ const SEMANTIC = {
   // ── Readiness engine ──────────────────────────────────────────────────────────
   // Returns { ready: bool, failing: string[] }
   // failing[] contains semantic labels only — never raw field names
-  computeReadiness(record, context = {}) {
+  computeReadiness(record, context = {}, readinessConditions = this.readinessConditionsFallback) {
     const failing = [];
-    for (const condition of this.readinessConditions) {
+    for (const condition of readinessConditions) {
       const pass = this.evaluateCondition(record, condition, context);
       if (!pass) failing.push(condition.label);
     }
@@ -405,9 +405,128 @@ const SEMANTIC = {
 
 };
 
+// ─── NOTION SEMANTIC LOADER ───────────────────────────────────────────────────
+// Loads readinessConditions from Notion App Semantic Graph + App Semantic Links
+// Falls back to SEMANTIC.readinessConditionsFallback if Notion is unavailable
+// or returns incomplete data.
+// Do NOT change statusMapping, normalizeStatus, evaluateCondition, or output shape.
+
+async function loadSemanticGraphDrivers() {
+  const response = await fetch('https://api.anthropic.com/v1/messages', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({
+      model: 'claude-sonnet-4-20250514',
+      max_tokens: 1000,
+      mcp_servers: [
+        { type: 'url', url: 'https://mcp.notion.com/mcp', name: 'notion-mcp' }
+      ],
+      messages: [{
+        role: 'user',
+        content: `Query the Notion data source at collection://e979f681-d893-484c-b946-71b081a4d74d.
+Return ONLY a JSON array of rows where "Is Readiness Driver" is checked/true.
+Each row must have exactly these fields:
+- entityKey (from "Entity Key")
+- displayLabel (from "Display Label")
+- airtableFieldName (from "Airtable Field Name")
+- appComputed (from "App Computed", boolean)
+Return ONLY the JSON array. No explanation. No markdown.`
+      }]
+    })
+  });
+  const data = await response.json();
+  const text = data.content.filter(b => b.type === 'text').map(b => b.text).join('');
+  const clean = text.replace(/```json|```/g, '').trim();
+  return JSON.parse(clean);
+}
+
+async function loadExecutionReadinessEdges() {
+  const response = await fetch('https://api.anthropic.com/v1/messages', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({
+      model: 'claude-sonnet-4-20250514',
+      max_tokens: 1000,
+      mcp_servers: [
+        { type: 'url', url: 'https://mcp.notion.com/mcp', name: 'notion-mcp' }
+      ],
+      messages: [{
+        role: 'user',
+        content: `Query the Notion data source at collection://3a20437a-298c-4dc5-b13e-7222066fe391.
+Return ONLY a JSON array of rows where "Target Entity Key" equals "execution_readiness".
+Each row must have exactly these fields:
+- sourceEntityKey (from "Source Entity Key")
+- targetEntityKey (from "Target Entity Key")
+- relationType (from "Relation Type")
+Return ONLY the JSON array. No explanation. No markdown.`
+      }]
+    })
+  });
+  const data = await response.json();
+  const text = data.content.filter(b => b.type === 'text').map(b => b.text).join('');
+  const clean = text.replace(/```json|```/g, '').trim();
+  return JSON.parse(clean);
+}
+
+function buildReadinessConditions(drivers, edges) {
+  const edgeSourceKeys = edges
+    .filter(e => e.targetEntityKey === 'execution_readiness')
+    .map(e => e.sourceEntityKey);
+
+  return drivers
+    .filter(d => edgeSourceKeys.includes(d.entityKey))
+    .map(d => ({
+      sourceKey:     d.entityKey,
+      airtableField: d.airtableFieldName,
+      label:         d.displayLabel,
+      appComputed:   d.appComputed === true,
+    }));
+}
+
+function validateReadinessConditions(conditions) {
+  if (!Array.isArray(conditions)) return false;
+  if (conditions.length !== 6) return false;
+  for (const c of conditions) {
+    if (!c.sourceKey)     return false;
+    if (!c.airtableField) return false;
+    if (!c.label)         return false;
+  }
+  return true;
+}
+
+async function getReadinessConditions() {
+  try {
+    const [drivers, edges] = await Promise.all([
+      loadSemanticGraphDrivers(),
+      loadExecutionReadinessEdges()
+    ]);
+    const conditions = buildReadinessConditions(drivers, edges);
+
+    if (validateReadinessConditions(conditions)) {
+      console.log('Readiness conditions loaded from Notion:', conditions.length, 'drivers');
+      return conditions;
+    }
+
+    console.warn(
+      'Notion readinessConditions failed validation.',
+      'Got:', conditions.length, 'conditions. Using fallback.'
+    );
+    return SEMANTIC.readinessConditionsFallback;
+
+  } catch (err) {
+    console.warn('Failed to load readinessConditions from Notion. Using fallback.', err);
+    return SEMANTIC.readinessConditionsFallback;
+  }
+}
+
 function getObjectType(tableName) {
   return SEMANTIC.tableToType[tableName] || 'unknown';
 }
+
+let APP_READINESS_CONDITIONS = SEMANTIC.readinessConditionsFallback;
+(async () => {
+  APP_READINESS_CONDITIONS = await getReadinessConditions();
+})();
 
 const APP_STATE = {
   currentObjectType: null,
@@ -423,7 +542,7 @@ function setCurrentRecord(tableName, recordId) {
 
 function readinessBadge(fields, objectType) {
   if (objectType !== 'process_run') return '';
-  const { ready } = SEMANTIC.computeReadiness(fields);
+  const { ready } = SEMANTIC.computeReadiness(fields, {}, APP_READINESS_CONDITIONS);
   return ready
     ? '<span class="badge badge-ready">✓ READY</span>'
     : '<span class="badge badge-blocked">✗ BLOCKED</span>';
@@ -431,10 +550,10 @@ function readinessBadge(fields, objectType) {
 
 function readinessPanel(fields, objectType) {
   if (objectType !== 'process_run') return '';
-  const { ready, failing } = SEMANTIC.computeReadiness(fields);
+  const { ready, failing } = SEMANTIC.computeReadiness(fields, {}, APP_READINESS_CONDITIONS);
   const cls   = ready ? 'ready' : 'blocked';
   const title = ready ? '✓ Ready for Execution' : '✗ Execution Blocked';
-  const rows  = SEMANTIC.readinessConditions.map(c => {
+  const rows  = APP_READINESS_CONDITIONS.map(c => {
     const passed = !failing.includes(c.label);
     return `
     <div class="readiness-check">
