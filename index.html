@@ -147,6 +147,165 @@
   <button onclick="enterDemo()" style="width:100%; padding:16px; border-radius:14px; background:#111827; color:#fff; font-size:16px; font-weight:600; border:none; cursor:pointer;" id="value-cta-btn">See BrewOS in action</button>
 </div>
 
+<div id="screen-agenda" style="display:none; flex-direction:column; height:100vh; overflow:hidden; background:#fff;">
+
+  <!-- Header -->
+  <div style="padding:20px 20px 0; display:flex; justify-content:space-between; align-items:center;">
+    <button onclick="showScreen('screen-home')" style="background:none; border:none; font-size:22px; color:#6b7280; cursor:pointer;">‹</button>
+    <p style="font-size:17px; font-weight:600; color:#111827; margin:0;" id="agenda-title-label">Agenda</p>
+    <div style="width:32px;"></div>
+  </div>
+
+  <!-- Day / Week toggle -->
+  <div style="padding:12px 20px 0; display:flex; gap:0;">
+    <button id="agenda-tab-day" onclick="switchAgendaView('day')"
+      style="flex:1; padding:8px; border:1.5px solid #e5e7eb; border-radius:10px 0 0 10px; background:#111827; color:#fff; font-size:14px; font-weight:500; cursor:pointer;">Day</button>
+    <button id="agenda-tab-week" onclick="switchAgendaView('week')"
+      style="flex:1; padding:8px; border:1.5px solid #e5e7eb; border-left:none; border-radius:0 10px 10px 0; background:#fff; color:#6b7280; font-size:14px; font-weight:500; cursor:pointer;">Week</button>
+  </div>
+
+  <!-- Day header -->
+  <div id="agenda-day-header" style="padding:12px 20px 0; display:flex; justify-content:space-between; align-items:center;">
+    <p style="font-size:15px; font-weight:600; color:#111827; margin:0;" id="agenda-date-label">Mon 5 Apr</p>
+    <button id="agenda-today-pill" onclick="goAgendaToday()"
+      style="display:none; background:#111827; color:#fff; border:none; border-radius:20px; padding:5px 14px; font-size:12px; cursor:pointer;">Today</button>
+  </div>
+
+  <!-- Current time line + item list -->
+  <div id="agenda-list" style="flex:1; overflow-y:auto; padding:12px 20px 80px;">
+    <!-- populated by renderAgendaDay() -->
+  </div>
+
+  <!-- Week view (hidden by default) -->
+  <div id="agenda-week-view" style="display:none; flex:1; overflow-y:auto; padding:12px 20px 80px;">
+    <div id="agenda-week-grid" style="display:grid; grid-template-columns:repeat(7,1fr); gap:4px; text-align:center;"></div>
+  </div>
+
+  <!-- FAB add button -->
+  <button onclick="openQuickAdd()" style="position:fixed; bottom:90px; right:20px; width:52px; height:52px; border-radius:50%; background:#111827; color:#fff; font-size:24px; border:none; cursor:pointer; box-shadow:0 4px 12px rgba(0,0,0,0.15); z-index:100;">+</button>
+
+  <!-- Quick add sheet -->
+  <div id="quick-add-sheet" style="display:none; position:fixed; bottom:0; left:0; right:0; background:#fff; border-radius:20px 20px 0 0; padding:24px 20px 40px; box-shadow:0 -4px 24px rgba(0,0,0,0.1); z-index:200;">
+    <p style="font-size:16px; font-weight:600; color:#111827; margin:0 0 16px;" id="quick-add-title">Add</p>
+    <div style="display:flex; gap:8px; margin-bottom:16px;">
+      <button onclick="setQuickType('task')" id="qtype-task" style="flex:1; padding:10px; border-radius:10px; border:1.5px solid #111827; background:#111827; color:#fff; font-size:14px; cursor:pointer;">Task</button>
+      <button onclick="setQuickType('note')" id="qtype-note" style="flex:1; padding:10px; border-radius:10px; border:1.5px solid #e5e7eb; background:#fff; color:#6b7280; font-size:14px; cursor:pointer;">Note</button>
+      <button onclick="setQuickType('event')" id="qtype-event" style="flex:1; padding:10px; border-radius:10px; border:1.5px solid #e5e7eb; background:#fff; color:#6b7280; font-size:14px; cursor:pointer;">Event</button>
+    </div>
+    <input id="quick-add-input" type="text" placeholder="Title" style="width:100%; padding:12px; border:1.5px solid #e5e7eb; border-radius:10px; font-size:15px; box-sizing:border-box; margin-bottom:10px;" />
+    <input id="quick-add-time" type="time" style="width:100%; padding:12px; border:1.5px solid #e5e7eb; border-radius:10px; font-size:15px; box-sizing:border-box; margin-bottom:16px;" />
+    <div style="display:flex; gap:8px;">
+      <button onclick="closeQuickAdd()" style="flex:1; padding:12px; border-radius:10px; border:1.5px solid #e5e7eb; background:#fff; color:#6b7280; font-size:15px; cursor:pointer;">Cancel</button>
+      <button onclick="saveQuickAdd()" style="flex:1; padding:12px; border-radius:10px; border:none; background:#111827; color:#fff; font-size:15px; font-weight:600; cursor:pointer;">Save</button>
+    </div>
+  </div>
+
+</div>
+
+<div id="screen-financial" style="display:none; flex-direction:column; height:100vh; overflow-y:auto; background:#fff;">
+
+  <!-- Header -->
+  <div style="padding:20px 20px 0; display:flex; justify-content:space-between; align-items:center; position:sticky; top:0; background:#fff; z-index:10;">
+    <button onclick="showScreen('screen-home')" style="background:none; border:none; font-size:22px; color:#6b7280; cursor:pointer;">‹</button>
+    <p style="font-size:17px; font-weight:600; color:#111827; margin:0;" id="fin-page-title">Financial</p>
+    <div style="width:32px;"></div>
+  </div>
+
+  <!-- Period filter -->
+  <div style="padding:12px 20px 0; display:flex; gap:0;">
+    <button onclick="setFinPeriod('today')" id="fin-tab-today"
+      style="flex:1; padding:8px; border:1.5px solid #e5e7eb; border-radius:10px 0 0 10px; background:#111827; color:#fff; font-size:14px; font-weight:500; cursor:pointer;">Today</button>
+    <button onclick="setFinPeriod('week')" id="fin-tab-week"
+      style="flex:1; padding:8px; border:1.5px solid #e5e7eb; border-left:none; border-radius:0; background:#fff; color:#6b7280; font-size:14px; font-weight:500; cursor:pointer;">Week</button>
+    <button onclick="setFinPeriod('month')" id="fin-tab-month"
+      style="flex:1; padding:8px; border:1.5px solid #e5e7eb; border-left:none; border-radius:0 10px 10px 0; background:#fff; color:#6b7280; font-size:14px; font-weight:500; cursor:pointer;">Month</button>
+  </div>
+
+  <!-- 1. Today -->
+  <div style="padding:20px 20px 0;">
+    <p style="font-size:13px; font-weight:600; color:#9ca3af; letter-spacing:0.06em; text-transform:uppercase; margin:0 0 12px;">Today</p>
+    <div style="background:#f9fafb; border-radius:16px; padding:18px; display:flex; justify-content:space-around;">
+      <div style="text-align:center;">
+        <p style="font-size:11px; color:#9ca3af; margin:0 0 4px;" id="fp-rev-label">Revenue</p>
+        <p style="font-size:20px; font-weight:700; color:#111827; margin:0;" id="fp-rev-val">—</p>
+        <p style="font-size:12px; margin:0;" id="fp-rev-arrow"></p>
+      </div>
+      <div style="text-align:center;">
+        <p style="font-size:11px; color:#9ca3af; margin:0 0 4px;" id="fp-costs-label">Costs</p>
+        <p style="font-size:20px; font-weight:700; color:#111827; margin:0;" id="fp-costs-val">—</p>
+        <p style="font-size:12px; margin:0;" id="fp-costs-arrow"></p>
+      </div>
+      <div style="text-align:center;">
+        <p style="font-size:11px; color:#9ca3af; margin:0 0 4px;" id="fp-margin-label">Margin</p>
+        <p style="font-size:20px; font-weight:700; color:#111827; margin:0;" id="fp-margin-val">—</p>
+        <p style="font-size:12px; margin:0;" id="fp-margin-arrow"></p>
+      </div>
+    </div>
+  </div>
+
+  <!-- 2. What this means -->
+  <div style="padding:20px 20px 0;">
+    <p style="font-size:13px; font-weight:600; color:#9ca3af; letter-spacing:0.06em; text-transform:uppercase; margin:0 0 12px;">What this means</p>
+    <div style="background:#f0fdf4; border-radius:16px; padding:18px;">
+      <p style="font-size:22px; font-weight:700; color:#111827; margin:0 0 4px;" id="fp-safe-val">—</p>
+      <p style="font-size:13px; font-weight:600; color:#065f46; margin:0 0 6px;" id="fp-safe-label">Safe to spend</p>
+      <p style="font-size:12px; color:#6b7280; margin:0;" id="fp-safe-sub">After VAT, excise, and expected payments</p>
+    </div>
+  </div>
+
+  <!-- 3. Money flow -->
+  <div style="padding:20px 20px 0;">
+    <p style="font-size:13px; font-weight:600; color:#9ca3af; letter-spacing:0.06em; text-transform:uppercase; margin:0 0 12px;" id="fp-flow-label">Money flow</p>
+    <div id="fp-money-flow" style="display:flex; flex-direction:column; gap:8px;"></div>
+  </div>
+
+  <!-- 4. Cost pressure -->
+  <div style="padding:20px 20px 0;">
+    <p style="font-size:13px; font-weight:600; color:#9ca3af; letter-spacing:0.06em; text-transform:uppercase; margin:0 0 12px;" id="fp-cost-label">Cost pressure</p>
+    <div id="fp-cost-breakdown" style="background:#f9fafb; border-radius:16px; padding:16px; display:flex; flex-direction:column; gap:10px;"></div>
+  </div>
+
+  <!-- 5. Obligations -->
+  <div style="padding:20px 20px 32px;">
+    <p style="font-size:13px; font-weight:600; color:#9ca3af; letter-spacing:0.06em; text-transform:uppercase; margin:0 0 12px;" id="fp-oblig-label">Obligations</p>
+    <div id="fp-obligations" style="display:flex; flex-direction:column; gap:8px;"></div>
+  </div>
+
+</div>
+
+<div id="screen-settings" style="display:none; flex-direction:column; height:100vh; background:#fff;">
+
+  <div style="padding:20px 20px 0; display:flex; justify-content:space-between; align-items:center;">
+    <button onclick="showScreen('screen-home')" style="background:none; border:none; font-size:22px; color:#6b7280; cursor:pointer;">‹</button>
+    <p style="font-size:17px; font-weight:600; color:#111827; margin:0;" id="settings-title-label">Settings</p>
+    <div style="width:32px;"></div>
+  </div>
+
+  <div style="padding:24px 20px; display:flex; flex-direction:column; gap:12px;">
+
+    <!-- Language -->
+    <div style="background:#f9fafb; border-radius:16px; padding:18px; display:flex; justify-content:space-between; align-items:center; cursor:pointer;" onclick="showScreen('screen-language')">
+      <div>
+        <p style="font-size:15px; font-weight:500; color:#111827; margin:0 0 2px;" id="settings-lang-label">Language</p>
+        <p style="font-size:13px; color:#9ca3af; margin:0;" id="settings-lang-current">English</p>
+      </div>
+      <span style="color:#9ca3af;">›</span>
+    </div>
+
+    <!-- In-app guidance toggle -->
+    <div style="background:#f9fafb; border-radius:16px; padding:18px; display:flex; justify-content:space-between; align-items:center;">
+      <p style="font-size:15px; font-weight:500; color:#111827; margin:0;" id="settings-guidance-label">Show in-app guidance</p>
+      <label style="position:relative; display:inline-block; width:44px; height:26px;">
+        <input type="checkbox" id="guidance-toggle" onchange="toggleGuidance(this.checked)"
+          style="opacity:0; width:0; height:0;" />
+        <span id="guidance-toggle-track" style="position:absolute; inset:0; background:#d1d5db; border-radius:13px; transition:background 0.2s; cursor:pointer;"></span>
+        <span id="guidance-toggle-thumb" style="position:absolute; top:3px; left:3px; width:20px; height:20px; background:#fff; border-radius:50%; transition:transform 0.2s; box-shadow:0 1px 3px rgba(0,0,0,0.2);"></span>
+      </label>
+    </div>
+
+  </div>
+</div>
+
 <!-- HOME -->
 <div id="screen-home" class="screen active">
 <!-- Header -->
@@ -1515,6 +1674,339 @@ function applyHomeLabels() {
   setEl('home-financial-label', 'home.financial');
 }
 
+// ── SETTINGS ─────────────────────────────────────────────────────────────────
+function initSettings() {
+  const langNames = { fr: 'Français', nl: 'Nederlands', en: 'English', de: 'Deutsch' };
+  const el = document.getElementById('settings-lang-current');
+  if (el) el.textContent = langNames[currentLang] || 'English';
+  const toggle = document.getElementById('guidance-toggle');
+  const track = document.getElementById('guidance-toggle-track');
+  const thumb = document.getElementById('guidance-toggle-thumb');
+  const isOn = localStorage.getItem('brewos_show_guidance') !== '0';
+  if (toggle) toggle.checked = isOn;
+  if (track) track.style.background = isOn ? '#111827' : '#d1d5db';
+  if (thumb) thumb.style.transform = isOn ? 'translateX(18px)' : 'translateX(0)';
+  const setEl = (id, key) => { const el = document.getElementById(id); if (el) el.textContent = t(key); };
+  setEl('settings-title-label', 'settings.title');
+  setEl('settings-lang-label', 'settings.language');
+  setEl('settings-guidance-label', 'settings.guidance_toggle');
+}
+
+function toggleGuidance(on) {
+  localStorage.setItem('brewos_show_guidance', on ? '1' : '0');
+  const track = document.getElementById('guidance-toggle-track');
+  const thumb = document.getElementById('guidance-toggle-thumb');
+  if (track) track.style.background = on ? '#111827' : '#d1d5db';
+  if (thumb) thumb.style.transform = on ? 'translateX(18px)' : 'translateX(0)';
+  const helper = document.getElementById('guidance-helper');
+  if (helper) helper.style.display = on ? 'flex' : 'none';
+}
+
+// ── AGENDA ───────────────────────────────────────────────────────────────────
+let agendaView = localStorage.getItem('brewos_agenda_view') || 'day';
+let agendaDate = new Date();
+
+const AGENDA_ITEMS_DEMO = [
+  { id: 1, time: '08:00', title: 'Check mash temperature — Batch 4', system: true,  done: false, type: 'task'  },
+  { id: 2, time: '11:00', title: 'Transfer to fermenter',             system: false, done: false, type: 'task'  },
+  { id: 3, time: '14:00', title: 'Excise declaration due Apr 20',    system: true,  done: false, type: 'event' },
+  { id: 4, time: null,    title: 'Call Brasserie Dupont — hop order', system: false, done: false, type: 'note'  },
+  { id: 5, time: null,    title: 'Review Q1 cost summary',            system: false, done: false, type: 'note'  },
+];
+
+let agendaItems = [...AGENDA_ITEMS_DEMO];
+let quickAddType = 'task';
+
+function switchAgendaView(view) {
+  agendaView = view;
+  localStorage.setItem('brewos_agenda_view', view);
+  const dayTab = document.getElementById('agenda-tab-day');
+  const weekTab = document.getElementById('agenda-tab-week');
+  const dayList = document.getElementById('agenda-list');
+  const weekGrid = document.getElementById('agenda-week-view');
+  if (view === 'day') {
+    if (dayTab)  { dayTab.style.background = '#111827'; dayTab.style.color = '#fff'; }
+    if (weekTab) { weekTab.style.background = '#fff'; weekTab.style.color = '#6b7280'; }
+    if (dayList)  dayList.style.display = 'block';
+    if (weekGrid) weekGrid.style.display = 'none';
+    renderAgendaDay();
+  } else {
+    if (dayTab)  { dayTab.style.background = '#fff'; dayTab.style.color = '#6b7280'; }
+    if (weekTab) { weekTab.style.background = '#111827'; weekTab.style.color = '#fff'; }
+    if (dayList)  dayList.style.display = 'none';
+    if (weekGrid) weekGrid.style.display = 'block';
+    renderAgendaWeek();
+  }
+}
+
+function formatAgendaDate(d) {
+  return d.toLocaleDateString('en-GB', { weekday:'short', day:'numeric', month:'short' });
+}
+
+function goAgendaToday() {
+  agendaDate = new Date();
+  renderAgendaDay();
+}
+
+function renderAgendaDay() {
+  const header = document.getElementById('agenda-date-label');
+  if (header) header.textContent = formatAgendaDate(agendaDate);
+  const todayPill = document.getElementById('agenda-today-pill');
+  const isToday = agendaDate.toDateString() === new Date().toDateString();
+  if (todayPill) todayPill.style.display = isToday ? 'none' : 'inline-block';
+
+  const timed = agendaItems.filter(i => i.time).sort((a,b) => a.time.localeCompare(b.time));
+  const untimed = agendaItems.filter(i => !i.time);
+  const now = new Date();
+  const nowStr = now.getHours().toString().padStart(2,'0') + ':' + now.getMinutes().toString().padStart(2,'0');
+
+  let html = '';
+  let injectedNow = false;
+
+  timed.forEach(item => {
+    if (!injectedNow && isToday && item.time > nowStr) {
+      html += `<div style="display:flex; align-items:center; gap:8px; margin:6px 0;">
+        <div style="flex:1; height:1px; background:#ef4444; opacity:0.4;"></div>
+        <span style="font-size:10px; color:#ef4444;">${nowStr}</span>
+      </div>`;
+      injectedNow = true;
+    }
+    html += renderAgendaItem(item);
+  });
+
+  if (untimed.length) {
+    html += `<p style="font-size:12px; color:#9ca3af; margin:16px 0 8px; text-transform:uppercase; letter-spacing:0.06em;">No time set</p>`;
+    untimed.forEach(item => { html += renderAgendaItem(item); });
+  }
+
+  const list = document.getElementById('agenda-list');
+  if (list) list.innerHTML = html;
+}
+
+function renderAgendaItem(item) {
+  const fade = item.done ? 'opacity:0.45;' : '';
+  const done = item.done ? 'text-decoration:line-through; color:#9ca3af;' : 'color:#111827;';
+  const systemIcon = item.system ? '<span style="font-size:11px; color:#9ca3af;" title="System">✦</span>' : '<span style="min-width:14px; display:inline-block;"></span>';
+  return `<div onclick="toggleAgendaDone(${item.id})"
+    style="background:#fff; border:1.5px solid #f3f4f6; border-radius:12px; padding:12px 14px; display:flex; align-items:center; gap:12px; margin-bottom:8px; cursor:pointer; ${fade}">
+    <span style="font-size:12px; color:#9ca3af; min-width:36px;">${item.time || ''}</span>
+    ${systemIcon}
+    <p style="font-size:14px; margin:0; flex:1; ${done}">${item.title}</p>
+  </div>`;
+}
+
+function toggleAgendaDone(id) {
+  agendaItems = agendaItems.map(i => i.id === id ? {...i, done: !i.done} : i);
+  renderAgendaDay();
+}
+
+function renderAgendaWeek() {
+  const days = ['Mon','Tue','Wed','Thu','Fri','Sat','Sun'];
+  const grid = document.getElementById('agenda-week-grid');
+  if (!grid) return;
+  const today = new Date().getDay();
+  grid.innerHTML = days.map((d, i) => {
+    const isToday = (i + 1) % 7 === today % 7;
+    return `<div onclick="selectAgendaWeekDay(${i})"
+      style="padding:8px 4px; border-radius:10px; cursor:pointer; background:${isToday ? '#111827' : '#f9fafb'}; color:${isToday ? '#fff' : '#6b7280'};">
+      <p style="font-size:11px; margin:0 0 4px;">${d}</p>
+      <p style="font-size:16px; font-weight:600; margin:0;">${i+5}</p>
+    </div>`;
+  }).join('');
+}
+
+function selectAgendaWeekDay(index) {
+  const d = new Date();
+  d.setDate(d.getDate() - d.getDay() + 1 + index);
+  agendaDate = d;
+  switchAgendaView('day');
+}
+
+function openQuickAdd() {
+  const sheet = document.getElementById('quick-add-sheet');
+  if (sheet) sheet.style.display = 'block';
+  setQuickType('task');
+}
+
+function closeQuickAdd() {
+  const sheet = document.getElementById('quick-add-sheet');
+  if (sheet) sheet.style.display = 'none';
+  const input = document.getElementById('quick-add-input');
+  const time = document.getElementById('quick-add-time');
+  if (input) input.value = '';
+  if (time) time.value = '';
+}
+
+function setQuickType(type) {
+  quickAddType = type;
+  ['task','note','event'].forEach(t => {
+    const btn = document.getElementById('qtype-' + t);
+    if (!btn) return;
+    if (t === type) {
+      btn.style.background = '#111827';
+      btn.style.color = '#fff';
+      btn.style.borderColor = '#111827';
+    } else {
+      btn.style.background = '#fff';
+      btn.style.color = '#6b7280';
+      btn.style.borderColor = '#e5e7eb';
+    }
+  });
+}
+
+function saveQuickAdd() {
+  const input = document.getElementById('quick-add-input');
+  const timeEl = document.getElementById('quick-add-time');
+  const title = input ? input.value.trim() : '';
+  if (!title) return;
+  const newItem = {
+    id: Date.now(),
+    title,
+    time: timeEl && timeEl.value ? timeEl.value : null,
+    type: quickAddType,
+    system: false,
+    done: false,
+  };
+  agendaItems = [...agendaItems, newItem];
+  closeQuickAdd();
+  renderAgendaDay();
+  renderAgendaPreview();
+}
+
+// ── FINANCIAL PAGE ───────────────────────────────────────────────────────────
+let finPeriod = localStorage.getItem('brewos_fin_period') || 'today';
+
+const FINANCIAL_PAGE_DEMO = {
+  today:  { revenue: 6480, costs: 3240, margin: 3240, prevRevenue: 5100, prevCosts: 2890, prevMargin: 2210,
+            safeToSpend: 1756, vat: 864, excise: 120, tax: 480,
+            flow: [
+              { label: 'Unpaid invoices', value: '€1,200', note: '2 open', color: '#f59e0b' },
+              { label: 'Overdue payments', value: '€480',  note: '1 overdue', color: '#ef4444' },
+            ],
+            costs: [
+              { label: 'Raw materials', value: '€1,440', pct: 44 },
+              { label: 'Packaging',     value: '€648',   pct: 20 },
+              { label: 'Energy',        value: '€486',   pct: 15 },
+              { label: 'Labour',        value: '€486',   pct: 15 },
+              { label: 'Admin',         value: '€180',   pct: 6  },
+            ],
+            obligations: [
+              { label: 'VAT declaration Q1',            date: '25 Apr 2026', status: 'upcoming' },
+              { label: 'Quarterly excise declaration',  date: '20 Apr 2026', status: 'upcoming' },
+            ],
+          },
+  week:   { revenue: 18200, costs: 9100, margin: 9100, prevRevenue: 16400, prevCosts: 8600, prevMargin: 7800,
+            safeToSpend: 5200, vat: 2400, excise: 340, tax: 1300,
+            flow: [
+              { label: 'Unpaid invoices', value: '€3,400', note: '5 open', color: '#f59e0b' },
+            ],
+            costs: [
+              { label: 'Raw materials', value: '€4,000', pct: 44 },
+              { label: 'Packaging',     value: '€1,820', pct: 20 },
+              { label: 'Energy',        value: '€1,365', pct: 15 },
+              { label: 'Labour',        value: '€1,365', pct: 15 },
+              { label: 'Admin',         value: '€550',   pct: 6  },
+            ],
+            obligations: [
+              { label: 'VAT declaration Q1', date: '25 Apr 2026', status: 'upcoming' },
+            ],
+          },
+  month:  { revenue: 74800, costs: 37400, margin: 37400, prevRevenue: 68000, prevCosts: 34000, prevMargin: 34000,
+            safeToSpend: 21400, vat: 9800, excise: 1400, tax: 5400,
+            flow: [
+              { label: 'Unpaid invoices', value: '€12,600', note: '8 open',  color: '#f59e0b' },
+              { label: 'Overdue payments', value: '€2,400', note: '2 overdue', color: '#ef4444' },
+            ],
+            costs: [
+              { label: 'Raw materials', value: '€16,500', pct: 44 },
+              { label: 'Packaging',     value: '€7,480',  pct: 20 },
+              { label: 'Energy',        value: '€5,610',  pct: 15 },
+              { label: 'Labour',        value: '€5,610',  pct: 15 },
+              { label: 'Admin',         value: '€2,200',  pct: 6  },
+            ],
+            obligations: [
+              { label: 'VAT declaration Q1',           date: '25 Apr 2026', status: 'upcoming' },
+              { label: 'Quarterly excise declaration', date: '20 Apr 2026', status: 'upcoming' },
+            ],
+          },
+};
+
+function setFinPeriod(period) {
+  finPeriod = period;
+  localStorage.setItem('brewos_fin_period', period);
+  ['today','week','month'].forEach(p => {
+    const btn = document.getElementById('fin-tab-' + p);
+    if (!btn) return;
+    btn.style.background = p === period ? '#111827' : '#fff';
+    btn.style.color = p === period ? '#fff' : '#6b7280';
+  });
+  renderFinancialPage();
+}
+
+function renderFinancialPage() {
+  const d = FINANCIAL_PAGE_DEMO[finPeriod];
+  if (!d) return;
+  const fmt = v => `€${v.toLocaleString()}`;
+  const arrow = (curr, prev) => curr >= prev ? '↑' : '↓';
+  const arrowColor = (curr, prev) => curr >= prev ? '#059669' : '#dc2626';
+  const setEl = (id, val) => { const el = document.getElementById(id); if (el) el.textContent = val; };
+  const setStyle = (id, prop, val) => { const el = document.getElementById(id); if (el) el.style[prop] = val; };
+
+  setEl('fp-rev-val', fmt(d.revenue));
+  setEl('fp-costs-val', fmt(d.costs));
+  setEl('fp-margin-val', fmt(d.margin));
+  setEl('fp-rev-arrow', arrow(d.revenue, d.prevRevenue));
+  setEl('fp-costs-arrow', arrow(d.costs, d.prevCosts));
+  setEl('fp-margin-arrow', arrow(d.margin, d.prevMargin));
+  setStyle('fp-rev-arrow', 'color', arrowColor(d.revenue, d.prevRevenue));
+  setStyle('fp-costs-arrow', 'color', arrowColor(d.costs, d.prevCosts));
+  setStyle('fp-margin-arrow', 'color', arrowColor(d.margin, d.prevMargin));
+  setEl('fp-safe-val', fmt(d.safeToSpend));
+  setEl('fp-safe-label', t('financial.safe_to_spend'));
+  setEl('fp-safe-sub', t('financial.safe_to_spend_label'));
+
+  const flow = document.getElementById('fp-money-flow');
+  if (flow) flow.innerHTML = d.flow.map(f => `
+    <div style="background:#f9fafb; border-radius:12px; padding:14px 16px; display:flex; justify-content:space-between; align-items:center;">
+      <div>
+        <p style="font-size:14px; font-weight:500; color:#111827; margin:0 0 2px;">${f.label}</p>
+        <p style="font-size:12px; color:#9ca3af; margin:0;">${f.note}</p>
+      </div>
+      <p style="font-size:16px; font-weight:700; color:${f.color}; margin:0;">${f.value}</p>
+    </div>`).join('');
+
+  const costBreak = document.getElementById('fp-cost-breakdown');
+  if (costBreak) costBreak.innerHTML = d.costs.map(c => `
+    <div style="display:flex; justify-content:space-between; align-items:center;">
+      <p style="font-size:14px; color:#374151; margin:0;">${c.label}</p>
+      <div style="display:flex; align-items:center; gap:10px;">
+        <div style="width:80px; height:6px; background:#e5e7eb; border-radius:3px; overflow:hidden;">
+          <div style="width:${c.pct}%; height:100%; background:#111827; border-radius:3px;"></div>
+        </div>
+        <p style="font-size:13px; color:#6b7280; margin:0; min-width:60px; text-align:right;">${c.value}</p>
+      </div>
+    </div>`).join('');
+
+  const statusColors = { upcoming: '#f59e0b', due: '#ef4444', submitted: '#059669', overdue: '#ef4444' };
+  const oblig = document.getElementById('fp-obligations');
+  if (oblig) oblig.innerHTML = d.obligations.map(o => `
+    <div style="background:#f9fafb; border-radius:12px; padding:14px 16px; display:flex; justify-content:space-between; align-items:center;">
+      <div>
+        <p style="font-size:14px; font-weight:500; color:#111827; margin:0 0 2px;">${o.label}</p>
+        <p style="font-size:12px; color:#9ca3af; margin:0;">${o.date}</p>
+      </div>
+      <span style="font-size:11px; font-weight:600; color:${statusColors[o.status] || '#9ca3af'}; text-transform:capitalize;">${o.status}</span>
+    </div>`).join('');
+
+  setEl('fp-rev-label', t('financial.revenue'));
+  setEl('fp-costs-label', t('financial.costs'));
+  setEl('fp-margin-label', t('financial.margin'));
+  setEl('fin-page-title', t('financial.title'));
+  setEl('fp-flow-label', t('financial.money_flow'));
+  setEl('fp-cost-label', t('financial.cost_pressure'));
+  setEl('fp-oblig-label', t('financial.obligations'));
+}
+
 async function init() {
   await loadHomeBatches();
   const batchData = await airtable(TABLES.batches, '?sort[0][field]=Date&sort[0][direction]=desc');
@@ -1525,6 +2017,9 @@ async function init() {
     ).join('');
   loadTasks();
   applyHomeLabels();
+  initSettings();
+  renderFinancialPage();
+  switchAgendaView(agendaView);
   initGuidanceHelper();
   renderWhatsNext();
   renderAgendaPreview();
