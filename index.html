@@ -9,36 +9,20 @@
 <style>
   * { box-sizing: border-box; margin: 0; padding: 0; }
   :root {
-    --brand: #2563eb;
-    --brand-dark: #1d4ed8;
-    --bg: #f8fafc;
-    --card: #ffffff;
-    --text: #0f172a;
-    --muted: #64748b;
-    --border: #e2e8f0;
-    --green: #16a34a;
-    --red: #dc2626;
-    --orange: #ea580c;
-    --yellow: #ca8a04;
-    --ready-bg: #dcfce7;
-    --ready-text: #15803d;
-    --blocked-bg: #fee2e2;
-    --blocked-text: #b91c1c;
-    --radius: 12px;
-    --shadow: 0 1px 3px rgba(0,0,0,0.08);
+    --brand: #2563eb; --brand-dark: #1d4ed8;
+    --bg: #f8fafc; --card: #ffffff;
+    --text: #0f172a; --muted: #64748b; --border: #e2e8f0;
+    --green: #16a34a; --red: #dc2626; --orange: #ea580c; --yellow: #ca8a04;
+    --ready-bg: #dcfce7; --ready-text: #15803d;
+    --blocked-bg: #fee2e2; --blocked-text: #b91c1c;
+    --radius: 12px; --shadow: 0 1px 3px rgba(0,0,0,0.08);
   }
   body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; background: var(--bg); color: var(--text); min-height: 100vh; }
-
-  /* NAV */
   .nav { background: var(--card); border-bottom: 1px solid var(--border); padding: 16px 20px; display: flex; align-items: center; justify-content: space-between; position: sticky; top: 0; z-index: 100; }
   .nav-title { font-size: 18px; font-weight: 700; color: var(--brand); }
   .nav-back { font-size: 15px; color: var(--brand); cursor: pointer; display: flex; align-items: center; gap: 4px; }
-
-  /* SCREENS */
   .screen { display: none; padding: 20px; max-width: 600px; margin: 0 auto; }
   .screen.active { display: block; }
-
-  /* HOME */
   .greeting { margin: 8px 0 24px; }
   .greeting h1 { font-size: 24px; font-weight: 700; }
   .greeting p { color: var(--muted); font-size: 14px; margin-top: 4px; }
@@ -49,27 +33,25 @@
   .action-card .label { font-size: 15px; font-weight: 600; }
   .action-card .desc { font-size: 12px; color: var(--muted); margin-top: 3px; }
   .section-title { font-size: 13px; font-weight: 600; color: var(--muted); text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 12px; }
-
-  /* BATCH LIST */
   .batch-card { background: var(--card); border-radius: var(--radius); padding: 16px; box-shadow: var(--shadow); border: 1px solid var(--border); margin-bottom: 10px; cursor: pointer; transition: transform 0.1s; }
   .batch-card:active { transform: scale(0.98); }
   .batch-card-header { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 8px; }
   .batch-name { font-size: 16px; font-weight: 600; }
   .batch-date { font-size: 12px; color: var(--muted); }
   .batch-meta { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; }
+  .object-type-tag { font-size: 10px; color: var(--muted); font-family: monospace; background: var(--bg); border: 1px solid var(--border); padding: 2px 6px; border-radius: 4px; }
   .badge { display: inline-flex; align-items: center; font-size: 11px; font-weight: 600; padding: 3px 8px; border-radius: 20px; }
   .badge-status-brewing { background: #dbeafe; color: #1e40af; }
   .badge-status-fermenting { background: #fef3c7; color: #92400e; }
   .badge-status-complete { background: #dcfce7; color: #15803d; }
+  .badge-status-done { background: #dcfce7; color: #15803d; }
   .badge-status-planned { background: #f1f5f9; color: #475569; }
   .badge-ready { background: var(--ready-bg); color: var(--ready-text); }
   .badge-blocked { background: var(--blocked-bg); color: var(--blocked-text); }
-
-  /* READINESS PANEL */
   .readiness-panel { border-radius: var(--radius); padding: 16px; margin-bottom: 16px; border: 1px solid; }
   .readiness-panel.ready { background: var(--ready-bg); border-color: #86efac; }
   .readiness-panel.blocked { background: var(--blocked-bg); border-color: #fca5a5; }
-  .readiness-title { font-size: 15px; font-weight: 700; margin-bottom: 10px; display: flex; align-items: center; gap-8px; }
+  .readiness-title { font-size: 15px; font-weight: 700; margin-bottom: 10px; }
   .readiness-title.ready { color: var(--ready-text); }
   .readiness-title.blocked { color: var(--blocked-text); }
   .readiness-checks { display: flex; flex-direction: column; gap: 6px; }
@@ -77,10 +59,9 @@
   .readiness-check .dot { width: 18px; height: 18px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 10px; flex-shrink: 0; }
   .dot-pass { background: #bbf7d0; color: #15803d; }
   .dot-fail { background: #fecaca; color: #b91c1c; }
-  .check-label { color: var(--text); }
   .check-label.fail { color: var(--blocked-text); font-weight: 500; }
-
-  /* BATCH DETAIL */
+  .blocked-reason { margin-top: 10px; padding-top: 10px; border-top: 1px solid #fca5a5; font-size: 12px; color: var(--blocked-text); }
+  .blocked-reason strong { display: block; margin-bottom: 4px; }
   .detail-section { background: var(--card); border-radius: var(--radius); padding: 16px; box-shadow: var(--shadow); border: 1px solid var(--border); margin-bottom: 14px; }
   .detail-section h3 { font-size: 13px; font-weight: 600; color: var(--muted); text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 12px; }
   .detail-row { display: flex; justify-content: space-between; align-items: center; padding: 6px 0; border-bottom: 1px solid var(--border); }
@@ -91,18 +72,13 @@
   .val-good { color: var(--green); }
   .val-warn { color: var(--orange); }
   .val-bad { color: var(--red); }
-
-  /* BREW DAY */
   .brew-stage { background: var(--card); border-radius: var(--radius); padding: 20px; box-shadow: var(--shadow); border: 1px solid var(--border); margin-bottom: 14px; }
   .brew-stage h3 { font-size: 16px; font-weight: 700; margin-bottom: 4px; }
   .brew-stage p { font-size: 13px; color: var(--muted); margin-bottom: 16px; }
   .field-group { margin-bottom: 14px; }
   .field-label { font-size: 13px; font-weight: 500; color: var(--muted); margin-bottom: 6px; display: block; }
   .field-hint { font-size: 11px; color: var(--brand); margin-bottom: 6px; display: block; }
-  input[type="text"], input[type="number"], textarea, select {
-    width: 100%; padding: 11px 14px; border: 1px solid var(--border); border-radius: 8px;
-    font-size: 15px; background: var(--bg); color: var(--text); appearance: none;
-  }
+  input[type="text"], input[type="number"], textarea, select { width: 100%; padding: 11px 14px; border: 1px solid var(--border); border-radius: 8px; font-size: 15px; background: var(--bg); color: var(--text); appearance: none; }
   input:focus, textarea:focus, select:focus { outline: none; border-color: var(--brand); }
   textarea { resize: none; min-height: 80px; }
   .checkbox-field { display: flex; align-items: center; gap: 10px; padding: 12px 14px; border: 1px solid var(--border); border-radius: 8px; background: var(--bg); cursor: pointer; }
@@ -111,15 +87,10 @@
   .stage-tab { flex-shrink: 0; padding: 7px 14px; border-radius: 20px; font-size: 13px; font-weight: 500; cursor: pointer; border: 1px solid var(--border); background: var(--card); color: var(--muted); }
   .stage-tab.active { background: var(--brand); color: white; border-color: var(--brand); }
   .stage-tab.done { background: var(--ready-bg); color: var(--ready-text); border-color: #86efac; }
-
-  /* BTN */
   .btn { width: 100%; padding: 14px; border-radius: 10px; font-size: 16px; font-weight: 600; cursor: pointer; border: none; margin-bottom: 10px; }
   .btn-primary { background: var(--brand); color: white; }
   .btn-primary:active { background: var(--brand-dark); }
   .btn-secondary { background: var(--card); color: var(--brand); border: 1px solid var(--border); }
-  .btn-success { background: var(--green); color: white; }
-
-  /* LOADING / EMPTY */
   .loading { text-align: center; padding: 40px; color: var(--muted); }
   .empty { text-align: center; padding: 40px; color: var(--muted); font-size: 14px; }
   .spinner { display: inline-block; width: 28px; height: 28px; border: 3px solid var(--border); border-top-color: var(--brand); border-radius: 50%; animation: spin 0.8s linear infinite; }
@@ -135,7 +106,6 @@
   <div class="nav-title">🍺 Brewery OS</div>
   <div style="width:60px"></div>
 </div>
-
 <div id="toast" class="toast"></div>
 
 <!-- HOME -->
@@ -146,24 +116,16 @@
   </div>
   <div class="action-grid">
     <div class="action-card" onclick="showScreen('screen-brew')">
-      <div class="icon">🍺</div>
-      <div class="label">Brew Day</div>
-      <div class="desc">Log a brew session</div>
+      <div class="icon">🍺</div><div class="label">Brew Day</div><div class="desc">Log a brew session</div>
     </div>
     <div class="action-card" onclick="loadBatches()">
-      <div class="icon">📦</div>
-      <div class="label">Batches</div>
-      <div class="desc">View all batches</div>
+      <div class="icon">📦</div><div class="label">Batches</div><div class="desc">View all batches</div>
     </div>
     <div class="action-card" onclick="showScreen('screen-tasks')">
-      <div class="icon">✅</div>
-      <div class="label">Tasks</div>
-      <div class="desc">Open items</div>
+      <div class="icon">✅</div><div class="label">Tasks</div><div class="desc">Open items</div>
     </div>
     <div class="action-card" onclick="showScreen('screen-issues')">
-      <div class="icon">⚠️</div>
-      <div class="label">Issues</div>
-      <div class="desc">Log a problem</div>
+      <div class="icon">⚠️</div><div class="label">Issues</div><div class="desc">Log a problem</div>
     </div>
   </div>
   <div class="section-title">Recent Batches</div>
@@ -207,13 +169,118 @@
   <div class="empty">Issue logging coming soon.</div>
 </div>
 <script>
+
+const SEMANTIC = {
+  tableToType: {
+    'Batches':          'process_run',
+    'Process Runs':     'process_run',
+    'Ingredients':      'input_material',
+    'Input Materials':  'input_material',
+    'Brew Logs':        'measurement',
+    'Measurements':     'measurement',
+    'Lots':             'output_lot',
+    'Output Lots':      'output_lot',
+    'Sales':            'transaction',
+    'Transactions':     'transaction',
+    'Recipe Ingredients':  'template_input',
+    'Template Inputs':     'template_input',
+    'Batch Ingredients':   'run_input',
+    'Run Inputs':          'run_input',
+    'Recipes':             'process_template',
+    'Process Templates':   'process_template',
+    'Issues':              'issue',
+    'Tasks':               'task'
+  },
+  states: {
+    process_run: [
+      'Execution Readiness','Material Availability','Process Completion State',
+      'System Readiness','Measurement Reliability'
+    ],
+    output_lot:   ['Packaging Status','Quality Verified'],
+    transaction:  ['Invoice Status','Delivery Status'],
+    measurement:  ['Log Completeness','Data Validity']
+  },
+  readinessFields: {
+    process_run: [
+      { field: 'Material Available?', label: 'Material Available', state: 'Material Availability' },
+      { field: 'Process Complete?',   label: 'Process Complete',   state: 'Process Completion State' },
+      { field: 'System Ready?',       label: 'System Ready',       state: 'System Readiness' },
+      { field: 'Measurements Valid?', label: 'Measurements Valid', state: 'Measurement Reliability' }
+    ]
+  }
+};
+
+function getObjectType(tableName) {
+  return SEMANTIC.tableToType[tableName] || 'unknown';
+}
+
+const APP_STATE = {
+  currentObjectType: null,
+  currentRecordId: null,
+  currentTableName: null
+};
+
+function setCurrentRecord(tableName, recordId) {
+  APP_STATE.currentTableName  = tableName;
+  APP_STATE.currentRecordId   = recordId;
+  APP_STATE.currentObjectType = getObjectType(tableName);
+}
+
+function computeReadiness(fields, objectType) {
+  const config = SEMANTIC.readinessFields[objectType];
+  if (!config) return { ready: null, checks: [], blockedReasons: [] };
+  const checks = config.map(c => ({
+    field: c.field, label: c.label, state: c.state, passed: !!fields[c.field]
+  }));
+  const ready = checks.every(c => c.passed);
+  const blockedReasons = checks.filter(c => !c.passed).map(c => c.label);
+  return { ready, checks, blockedReasons };
+}
+
+function explainBlocked(blockedReasons) {
+  if (!blockedReasons.length) return '';
+  if (blockedReasons.length === 1) return `Blocked: ${blockedReasons[0]} not confirmed`;
+  const last = blockedReasons[blockedReasons.length - 1];
+  const rest = blockedReasons.slice(0, -1).join(', ');
+  return `Blocked: ${rest} and ${last} not confirmed`;
+}
+
+function readinessBadge(fields, objectType) {
+  const { ready } = computeReadiness(fields, objectType);
+  if (ready === null) return '';
+  return ready
+    ? '<span class="badge badge-ready">✓ READY</span>'
+    : '<span class="badge badge-blocked">✗ BLOCKED</span>';
+}
+
+function readinessPanel(fields, objectType) {
+  const { ready, checks, blockedReasons } = computeReadiness(fields, objectType);
+  if (ready === null) return '';
+  const cls   = ready ? 'ready' : 'blocked';
+  const title = ready ? '✓ Ready for Execution' : '✗ Execution Blocked';
+  const rows  = checks.map(c => `
+    <div class="readiness-check">
+      <div class="dot ${c.passed ? 'dot-pass' : 'dot-fail'}">${c.passed ? '✓' : '✗'}</div>
+      <span class="check-label ${c.passed ? '' : 'fail'}">${c.label}</span>
+    </div>`).join('');
+  const explanation = !ready
+    ? `<div class="blocked-reason"><strong>Why blocked:</strong>${explainBlocked(blockedReasons)}</div>`
+    : '';
+  return `
+    <div class="readiness-panel ${cls}">
+      <div class="readiness-title ${cls}">${title}</div>
+      <div class="readiness-checks">${rows}</div>
+      ${explanation}
+    </div>`;
+}
+
 const BASE = 'appslXmtOEoDI6lwp';
-const KEY = '%%AIRTABLE_KEY%%';
+const KEY  = '%%AIRTABLE_KEY%%';
 const TABLES = {
-  batches: 'tblGrw6fTgMyz3ZL5',
+  batches:  'tblGrw6fTgMyz3ZL5',
   brewLogs: 'tblF6c610KRtvFosJ',
-  tasks: 'tblxyLhvY6wyWogqq',
-  recipes: 'tblgq3JTJYrG1hlkj'
+  tasks:    'tblxyLhvY6wyWogqq',
+  recipes:  'tblgq3JTJYrG1hlkj'
 };
 
 const RECIPE_TARGETS = {
@@ -224,40 +291,6 @@ const RECIPE_TARGETS = {
 };
 
 function sel(v){ return (v && typeof v==='object' && v.name) ? v.name : (v||''); }
-
-function computeReadiness(batch) {
-  const checks = {
-    'Material Available?':  !!batch['Material Available?'],
-    'Process Complete?':    !!batch['Process Complete?'],
-    'System Ready?':        !!batch['System Ready?'],
-    'Measurements Valid?':  !!batch['Measurements Valid?']
-  };
-  const ready = Object.values(checks).every(Boolean);
-  return { ready, checks };
-}
-
-function readinessBadge(batch) {
-  const { ready } = computeReadiness(batch);
-  return ready
-    ? '<span class="badge badge-ready">✓ READY</span>'
-    : '<span class="badge badge-blocked">✗ BLOCKED</span>';
-}
-
-function readinessPanel(batch) {
-  const { ready, checks } = computeReadiness(batch);
-  const cls = ready ? 'ready' : 'blocked';
-  const title = ready ? '✓ Ready for Execution' : '✗ Blocked';
-  const rows = Object.entries(checks).map(([label, pass]) => `
-    <div class="readiness-check">
-      <div class="dot ${pass ? 'dot-pass' : 'dot-fail'}">${pass ? '✓' : '✗'}</div>
-      <span class="check-label ${pass ? '' : 'fail'}">${label}</span>
-    </div>`).join('');
-  return `
-    <div class="readiness-panel ${cls}">
-      <div class="readiness-title ${cls}">${title}</div>
-      <div class="readiness-checks">${rows}</div>
-    </div>`;
-}
 
 async function airtable(table, params='') {
   const r = await fetch(`https://api.airtable.com/v0/${BASE}/${table}${params}`, {
@@ -284,12 +317,11 @@ function showScreen(id) {
 }
 function goBack() {
   screenStack.pop();
-  const prev = screenStack[screenStack.length - 1] || 'screen-home';
+  const prev = screenStack[screenStack.length-1] || 'screen-home';
   document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
   document.getElementById(prev).classList.add('active');
   document.getElementById('navBack').style.display = screenStack.length > 1 ? 'flex' : 'none';
 }
-
 function toast(msg) {
   const t = document.getElementById('toast');
   t.textContent = msg; t.classList.add('show');
@@ -297,21 +329,15 @@ function toast(msg) {
 }
 
 function statusBadge(status) {
-  const s = status.toLowerCase().replace(/\s/g,'-');
+  const s = (status||'').toLowerCase().replace(/\s/g,'-');
   return `<span class="badge badge-status-${s}">${status}</span>`;
 }
 
-async function loadHomeBatches() {
-  const data = await airtable(TABLES.batches, '?maxRecords=3&sort[0][field]=Date&sort[0][direction]=desc');
-  const el = document.getElementById('home-batches');
-  if (!data.records?.length) { el.innerHTML = '<div class="empty">No batches yet.</div>'; return; }
-  el.innerHTML = data.records.map(r => batchCard(r)).join('');
-}
-
 function batchCard(r) {
-  const f = r.fields;
+  const f      = r.fields;
   const recipe = Array.isArray(f.Recipe) ? f.Recipe[0] : '';
   const status = sel(f.Status) || 'Unknown';
+  const type   = getObjectType('Batches');
   return `
     <div class="batch-card" onclick="loadBatchDetail('${r.id}')">
       <div class="batch-card-header">
@@ -319,12 +345,20 @@ function batchCard(r) {
           <div class="batch-name">Batch #${f['Batch ID']} — ${recipe}</div>
           <div class="batch-date">${f.Date || '—'}</div>
         </div>
-        ${readinessBadge(f)}
+        ${readinessBadge(f, type)}
       </div>
       <div class="batch-meta">
         ${statusBadge(status)}
+        <span class="object-type-tag">${type}</span>
       </div>
     </div>`;
+}
+
+async function loadHomeBatches() {
+  const data = await airtable(TABLES.batches, '?maxRecords=3&sort[0][field]=Date&sort[0][direction]=desc');
+  const el = document.getElementById('home-batches');
+  if (!data.records?.length) { el.innerHTML = '<div class="empty">No batches yet.</div>'; return; }
+  el.innerHTML = data.records.map(r => batchCard(r)).join('');
 }
 
 async function loadBatches() {
@@ -337,6 +371,7 @@ async function loadBatches() {
 
 async function loadBatchDetail(recordId) {
   showScreen('screen-batch-detail');
+  setCurrentRecord('Batches', recordId);
   const el = document.getElementById('batch-detail-content');
   el.innerHTML = '<div class="loading"><div class="spinner"></div></div>';
 
@@ -345,20 +380,18 @@ async function loadBatchDetail(recordId) {
     airtable(TABLES.brewLogs, `?filterByFormula=FIND("${recordId}",ARRAYJOIN({Batch}))`)
   ]);
 
-  const f = batchData.fields;
-  const recipe = Array.isArray(f.Recipe) ? f.Recipe[0] : '';
+  const f       = batchData.fields;
+  const recipe  = Array.isArray(f.Recipe) ? f.Recipe[0] : '';
   const targets = RECIPE_TARGETS[recipe] || {};
-  const log = logsData.records?.[0]?.fields || {};
-  const status = sel(f.Status) || 'Unknown';
+  const log     = logsData.records?.[0]?.fields || {};
+  const status  = sel(f.Status) || 'Unknown';
+  const objType = APP_STATE.currentObjectType;
 
-  function compare(actual, target, lowerBetter=false) {
+  function compare(actual, target) {
     if (!actual || !target) return `<span class="detail-value">${actual || '—'}</span>`;
-    const diff = actual - target;
-    const pct = Math.abs(diff/target*100);
-    let cls = 'val-good';
-    if (pct > 5) cls = lowerBetter ? (diff > 0 ? 'val-bad' : 'val-good') : (diff < 0 ? 'val-warn' : 'val-good');
-    if (pct > 10) cls = 'val-bad';
-    return `<span class="detail-value ${cls}">${actual} <span class="vs-target">target ${target}</span></span>`;
+    const pct = Math.abs((actual - target) / target * 100);
+    const cls = pct <= 2 ? 'val-good' : pct <= 5 ? 'val-warn' : 'val-bad';
+    return `<span class="detail-value ${cls}">${actual}<span class="vs-target"> target ${target}</span></span>`;
   }
 
   el.innerHTML = `
@@ -368,17 +401,15 @@ async function loadBatchDetail(recordId) {
       <div class="detail-row"><span class="detail-label">Recipe</span><span class="detail-value">${recipe || '—'}</span></div>
       <div class="detail-row"><span class="detail-label">Date</span><span class="detail-value">${f.Date || '—'}</span></div>
       <div class="detail-row"><span class="detail-label">Status</span>${statusBadge(status)}</div>
+      <div class="detail-row"><span class="detail-label">Object Type</span><span class="object-type-tag">${objType}</span></div>
     </div>
-
-    ${readinessPanel(f)}
-
+    ${readinessPanel(f, objType)}
     <div class="detail-section">
       <h3>Mash</h3>
       <div class="detail-row"><span class="detail-label">Temp</span>${compare(log['Mash Temp Actual'], targets.mash)}</div>
       <div class="detail-row"><span class="detail-label">pH</span><span class="detail-value">${log['Mash pH Actual'] || '—'}</span></div>
       <div class="detail-row"><span class="detail-label">Start Time</span><span class="detail-value">${log['Mash Start Time'] || '—'}</span></div>
     </div>
-
     <div class="detail-section">
       <h3>Boil</h3>
       <div class="detail-row"><span class="detail-label">Pre-boil Volume</span>${compare(log['Pre-boil Volume Actual'], targets.preboil)}</div>
@@ -386,7 +417,6 @@ async function loadBatchDetail(recordId) {
       <div class="detail-row"><span class="detail-label">Boil Confirmed</span><span class="detail-value">${log['Boil Duration Confirmed'] ? '✓ Yes' : '—'}</span></div>
       <div class="detail-row"><span class="detail-label">Hop Notes</span><span class="detail-value">${log['Hop Additions Notes'] || '—'}</span></div>
     </div>
-
     <div class="detail-section">
       <h3>Transfer & Fermentation</h3>
       <div class="detail-row"><span class="detail-label">Transfer Volume</span><span class="detail-value">${log['Transfer Volume Actual'] || '—'} L</span></div>
@@ -395,7 +425,6 @@ async function loadBatchDetail(recordId) {
       <div class="detail-row"><span class="detail-label">Fermenter</span><span class="detail-value">${log['Fermenter ID'] || '—'}</span></div>
       <div class="detail-row"><span class="detail-label">Gravity Checks</span><span class="detail-value">${log['Gravity Checks'] || '—'}</span></div>
     </div>
-
     <div class="detail-section">
       <h3>Bottling</h3>
       <div class="detail-row"><span class="detail-label">FG Actual</span>${compare(log['FG Actual'], targets.fg)}</div>
@@ -403,15 +432,12 @@ async function loadBatchDetail(recordId) {
       <div class="detail-row"><span class="detail-label">Priming Sugar</span><span class="detail-value">${log['Priming Sugar Amount'] || '—'} g</span></div>
       <div class="detail-row"><span class="detail-label">Bottling Date</span><span class="detail-value">${log['Bottling Date'] || '—'}</span></div>
     </div>
-
     ${log['Brewer Notes'] ? `
     <div class="detail-section">
       <h3>Brewer Notes</h3>
-      <p style="font-size:14px;line-height:1.6;color:var(--text)">${log['Brewer Notes']}</p>
+      <p style="font-size:14px;line-height:1.6">${log['Brewer Notes']}</p>
     </div>` : ''}
-
-    <button class="btn btn-secondary" onclick="goBack()">← Back to Batches</button>
-  `;
+    <button class="btn btn-secondary" onclick="goBack()">← Back</button>`;
 }
 
 const STAGES = ['Mash','Boil','Transfer','Ferment','Bottle'];
@@ -424,83 +450,82 @@ let currentLogFields = {};
 async function loadBrewLog() {
   const batchId = document.getElementById('brew-batch-select').value;
   if (!batchId) return;
+  setCurrentRecord('Batches', batchId);
   const batchData = await airtable(TABLES.batches, `/${batchId}`);
   currentBatchFields = batchData.fields;
   const recipe = Array.isArray(currentBatchFields.Recipe) ? currentBatchFields.Recipe[0] : '';
-  const targets = RECIPE_TARGETS[recipe] || {};
+  currentTargets = RECIPE_TARGETS[recipe] || {};
   const logsData = await airtable(TABLES.brewLogs, `?filterByFormula=FIND("${batchId}",ARRAYJOIN({Batch}))`);
   currentLogId = logsData.records?.[0]?.id || null;
-  const logFields = logsData.records?.[0]?.fields || {};
+  currentLogFields = logsData.records?.[0]?.fields || {};
   if (currentLogId) {
-    const savedStage = STAGES.findIndex(s => !isStageComplete(s, logFields));
-    currentStage = savedStage >= 0 ? savedStage : STAGES.length - 1;
+    const saved = STAGES.findIndex(s => !isStageComplete(s, currentLogFields));
+    currentStage = saved >= 0 ? saved : STAGES.length - 1;
   } else { currentStage = 0; }
-  renderBrewStage(targets, logFields);
+  renderBrewStage();
 }
 
 function isStageComplete(stage, f) {
-  if (stage === 'Mash') return f['Mash Temp Actual'] && f['Mash Start Time'];
-  if (stage === 'Boil') return f['Pre-boil Volume Actual'] && f['Boil Duration Confirmed'];
-  if (stage === 'Transfer') return f['OG Actual'] && f['Transfer Volume Actual'];
-  if (stage === 'Ferment') return f['Gravity Checks'];
-  if (stage === 'Bottle') return f['FG Actual'] && f['Bottling Volume Actual'];
+  if (stage==='Mash')     return f['Mash Temp Actual'] && f['Mash Start Time'];
+  if (stage==='Boil')     return f['Pre-boil Volume Actual'] && f['Boil Duration Confirmed'];
+  if (stage==='Transfer') return f['OG Actual'] && f['Transfer Volume Actual'];
+  if (stage==='Ferment')  return f['Gravity Checks'];
+  if (stage==='Bottle')   return f['FG Actual'] && f['Bottling Volume Actual'];
   return false;
 }
 
-function renderBrewStage(targets, logFields) {
+function renderBrewStage() {
   const tabs = STAGES.map((s,i) => {
-    let cls = i === currentStage ? 'active' : '';
-    if (i < currentStage) cls = 'done';
-    return `<div class="stage-tab ${cls}" onclick="currentStage=${i};renderBrewStage(currentTargets,currentLogFields)">${s}</div>`;
+    let cls = i === currentStage ? 'active' : i < currentStage ? 'done' : '';
+    return `<div class="stage-tab ${cls}" onclick="currentStage=${i};renderBrewStage()">${s}</div>`;
   }).join('');
-  currentTargets = targets; currentLogFields = logFields;
-  const stage = STAGES[currentStage];
+  const stage  = STAGES[currentStage];
   const recipe = Array.isArray(currentBatchFields.Recipe) ? currentBatchFields.Recipe[0] : '';
   let fields = '';
-  if (stage === 'Mash') fields = `
+  if (stage==='Mash') fields = `
     <div class="field-group"><label class="field-label">Mash Temp Actual (°C)</label>
-      ${targets.mash ? `<span class="field-hint">Target: ${targets.mash}°C</span>` : ''}
-      <input type="number" id="f-mash-temp" value="${logFields['Mash Temp Actual']||''}" step="0.1" placeholder="e.g. 65.5"></div>
+      ${currentTargets.mash ? `<span class="field-hint">Target: ${currentTargets.mash}°C</span>` : ''}
+      <input type="number" id="f-mash-temp" value="${currentLogFields['Mash Temp Actual']||''}" step="0.1" placeholder="e.g. 65.5"></div>
     <div class="field-group"><label class="field-label">Mash pH Actual</label>
-      <input type="number" id="f-mash-ph" value="${logFields['Mash pH Actual']||''}" step="0.01" placeholder="e.g. 5.4"></div>
+      <input type="number" id="f-mash-ph" value="${currentLogFields['Mash pH Actual']||''}" step="0.01" placeholder="e.g. 5.4"></div>
     <div class="field-group"><label class="field-label">Mash Start Time</label>
-      <input type="text" id="f-mash-time" value="${logFields['Mash Start Time']||''}" placeholder="e.g. 08:30"></div>`;
-  else if (stage === 'Boil') fields = `
+      <input type="text" id="f-mash-time" value="${currentLogFields['Mash Start Time']||''}" placeholder="e.g. 08:30"></div>`;
+  else if (stage==='Boil') fields = `
     <div class="field-group"><label class="field-label">Pre-boil Volume (L)</label>
-      ${targets.preboil ? `<span class="field-hint">Target: ${targets.preboil}L</span>` : ''}
-      <input type="number" id="f-preboil-vol" value="${logFields['Pre-boil Volume Actual']||''}" step="1" placeholder="e.g. 565"></div>
+      ${currentTargets.preboil ? `<span class="field-hint">Target: ${currentTargets.preboil}L</span>` : ''}
+      <input type="number" id="f-preboil-vol" value="${currentLogFields['Pre-boil Volume Actual']||''}" step="1"></div>
     <div class="field-group"><label class="field-label">Pre-boil Gravity</label>
-      <input type="number" id="f-preboil-grav" value="${logFields['Pre-boil Gravity Actual']||''}" step="0.001" placeholder="e.g. 1.048"></div>
+      <input type="number" id="f-preboil-grav" value="${currentLogFields['Pre-boil Gravity Actual']||''}" step="0.001"></div>
     <div class="field-group"><label class="checkbox-field">
-      <input type="checkbox" id="f-boil-confirmed" ${logFields['Boil Duration Confirmed']?'checked':''}>
-      Boil duration confirmed (${targets.boil||60} min)</label></div>
+      <input type="checkbox" id="f-boil-confirmed" ${currentLogFields['Boil Duration Confirmed']?'checked':''}>
+      Boil duration confirmed (${currentTargets.boil||60} min)</label></div>
     <div class="field-group"><label class="field-label">Hop Additions Notes</label>
-      <textarea id="f-hop-notes" placeholder="Times, amounts, varieties...">${logFields['Hop Additions Notes']||''}</textarea></div>`;
-  else if (stage === 'Transfer') fields = `
+      <textarea id="f-hop-notes">${currentLogFields['Hop Additions Notes']||''}</textarea></div>`;
+  else if (stage==='Transfer') fields = `
     <div class="field-group"><label class="field-label">Transfer Volume (L)</label>
-      <input type="number" id="f-transfer-vol" value="${logFields['Transfer Volume Actual']||''}" step="1" placeholder="e.g. 490"></div>
+      <input type="number" id="f-transfer-vol" value="${currentLogFields['Transfer Volume Actual']||''}" step="1"></div>
     <div class="field-group"><label class="field-label">OG Actual</label>
-      ${targets.og ? `<span class="field-hint">Target: ${targets.og}</span>` : ''}
-      <input type="number" id="f-og" value="${logFields['OG Actual']||''}" step="0.001" placeholder="e.g. 1.058"></div>
+      ${currentTargets.og ? `<span class="field-hint">Target: ${currentTargets.og}</span>` : ''}
+      <input type="number" id="f-og" value="${currentLogFields['OG Actual']||''}" step="0.001"></div>
     <div class="field-group"><label class="field-label">Transfer Temp (°C)</label>
-      <input type="number" id="f-transfer-temp" value="${logFields['Transfer Temp Actual']||''}" step="1" placeholder="e.g. 25"></div>
+      <input type="number" id="f-transfer-temp" value="${currentLogFields['Transfer Temp Actual']||''}" step="1"></div>
     <div class="field-group"><label class="field-label">Fermenter ID</label>
-      <input type="text" id="f-fermenter" value="${logFields['Fermenter ID']||''}" placeholder="e.g. FV-01"></div>`;
-  else if (stage === 'Ferment') fields = `
-    <div class="field-group"><label class="field-label">Gravity Checks (log entries)</label>
-      <textarea id="f-grav-checks" placeholder="Day 2: 1.030 / Day 4: 1.015 / Day 6: 1.010...">${logFields['Gravity Checks']||''}</textarea></div>`;
-  else if (stage === 'Bottle') fields = `
+      <input type="text" id="f-fermenter" value="${currentLogFields['Fermenter ID']||''}"></div>`;
+  else if (stage==='Ferment') fields = `
+    <div class="field-group"><label class="field-label">Gravity Checks</label>
+      <textarea id="f-grav-checks">${currentLogFields['Gravity Checks']||''}</textarea></div>`;
+  else if (stage==='Bottle') fields = `
     <div class="field-group"><label class="field-label">FG Actual</label>
-      ${targets.fg ? `<span class="field-hint">Target: ${targets.fg}</span>` : ''}
-      <input type="number" id="f-fg" value="${logFields['FG Actual']||''}" step="0.001" placeholder="e.g. 1.010"></div>
+      ${currentTargets.fg ? `<span class="field-hint">Target: ${currentTargets.fg}</span>` : ''}
+      <input type="number" id="f-fg" value="${currentLogFields['FG Actual']||''}" step="0.001"></div>
     <div class="field-group"><label class="field-label">Bottling Volume (L)</label>
-      <input type="number" id="f-bottle-vol" value="${logFields['Bottling Volume Actual']||''}" step="1" placeholder="e.g. 480"></div>
+      <input type="number" id="f-bottle-vol" value="${currentLogFields['Bottling Volume Actual']||''}" step="1"></div>
     <div class="field-group"><label class="field-label">Priming Sugar (g)</label>
-      <input type="number" id="f-priming" value="${logFields['Priming Sugar Amount']||''}" step="1" placeholder="e.g. 750"></div>
+      <input type="number" id="f-priming" value="${currentLogFields['Priming Sugar Amount']||''}" step="1"></div>
     <div class="field-group"><label class="field-label">Bottling Date</label>
-      <input type="text" id="f-bottle-date" value="${logFields['Bottling Date']||''}" placeholder="YYYY-MM-DD"></div>
+      <input type="text" id="f-bottle-date" value="${currentLogFields['Bottling Date']||''}" placeholder="YYYY-MM-DD"></div>
     <div class="field-group"><label class="field-label">Brewer Notes</label>
-      <textarea id="f-notes" placeholder="Any observations, issues, next time...">${logFields['Brewer Notes']||''}</textarea></div>`;
+      <textarea id="f-notes">${currentLogFields['Brewer Notes']||''}</textarea></div>`;
 
   document.getElementById('brew-stage-content').innerHTML = `
     <div class="stage-tabs">${tabs}</div>
@@ -517,34 +542,34 @@ async function saveStage(stage) {
   if (!batchId) { toast('Select a batch first'); return; }
   let fields = {};
   if (stage==='Mash') {
-    fields['Mash Temp Actual'] = parseFloat(document.getElementById('f-mash-temp').value)||null;
-    fields['Mash pH Actual'] = parseFloat(document.getElementById('f-mash-ph').value)||null;
-    fields['Mash Start Time'] = document.getElementById('f-mash-time').value||null;
+    fields['Mash Temp Actual']    = parseFloat(document.getElementById('f-mash-temp').value)||null;
+    fields['Mash pH Actual']      = parseFloat(document.getElementById('f-mash-ph').value)||null;
+    fields['Mash Start Time']     = document.getElementById('f-mash-time').value||null;
   } else if (stage==='Boil') {
-    fields['Pre-boil Volume Actual'] = parseFloat(document.getElementById('f-preboil-vol').value)||null;
+    fields['Pre-boil Volume Actual']  = parseFloat(document.getElementById('f-preboil-vol').value)||null;
     fields['Pre-boil Gravity Actual'] = parseFloat(document.getElementById('f-preboil-grav').value)||null;
     fields['Boil Duration Confirmed'] = document.getElementById('f-boil-confirmed').checked;
-    fields['Hop Additions Notes'] = document.getElementById('f-hop-notes').value||null;
+    fields['Hop Additions Notes']     = document.getElementById('f-hop-notes').value||null;
   } else if (stage==='Transfer') {
-    fields['Transfer Volume Actual'] = parseFloat(document.getElementById('f-transfer-vol').value)||null;
-    fields['OG Actual'] = parseFloat(document.getElementById('f-og').value)||null;
-    fields['Transfer Temp Actual'] = parseFloat(document.getElementById('f-transfer-temp').value)||null;
-    fields['Fermenter ID'] = document.getElementById('f-fermenter').value||null;
+    fields['Transfer Volume Actual']  = parseFloat(document.getElementById('f-transfer-vol').value)||null;
+    fields['OG Actual']               = parseFloat(document.getElementById('f-og').value)||null;
+    fields['Transfer Temp Actual']    = parseFloat(document.getElementById('f-transfer-temp').value)||null;
+    fields['Fermenter ID']            = document.getElementById('f-fermenter').value||null;
   } else if (stage==='Ferment') {
     fields['Gravity Checks'] = document.getElementById('f-grav-checks').value||null;
   } else if (stage==='Bottle') {
-    fields['FG Actual'] = parseFloat(document.getElementById('f-fg').value)||null;
-    fields['Bottling Volume Actual'] = parseFloat(document.getElementById('f-bottle-vol').value)||null;
-    fields['Priming Sugar Amount'] = parseFloat(document.getElementById('f-priming').value)||null;
-    fields['Bottling Date'] = document.getElementById('f-bottle-date').value||null;
-    fields['Brewer Notes'] = document.getElementById('f-notes').value||null;
+    fields['FG Actual']               = parseFloat(document.getElementById('f-fg').value)||null;
+    fields['Bottling Volume Actual']  = parseFloat(document.getElementById('f-bottle-vol').value)||null;
+    fields['Priming Sugar Amount']    = parseFloat(document.getElementById('f-priming').value)||null;
+    fields['Bottling Date']           = document.getElementById('f-bottle-date').value||null;
+    fields['Brewer Notes']            = document.getElementById('f-notes').value||null;
   }
-  Object.keys(fields).forEach(k => { if (fields[k]===null || fields[k]==='') delete fields[k]; });
+  Object.keys(fields).forEach(k => { if (fields[k]===null||fields[k]==='') delete fields[k]; });
   try {
     if (currentLogId) {
       await airtablePatch(TABLES.brewLogs, currentLogId, fields);
     } else {
-      fields['Batch'] = [batchId];
+      fields['Batch']  = [batchId];
       fields['Log ID'] = `LOG-${batchId.slice(-4)}-${Date.now()}`;
       const r = await fetch(`https://api.airtable.com/v0/${BASE}/${TABLES.brewLogs}`, {
         method: 'POST',
@@ -555,9 +580,9 @@ async function saveStage(stage) {
       currentLogId = data.id;
     }
     toast(`✓ ${stage} saved`);
-    if (currentStage < STAGES.length - 1) currentStage++;
+    if (currentStage < STAGES.length-1) currentStage++;
     currentLogFields = { ...currentLogFields, ...fields };
-    renderBrewStage(currentTargets, currentLogFields);
+    renderBrewStage();
   } catch(e) { toast('Error saving — check connection'); }
 }
 
@@ -568,12 +593,11 @@ async function loadTasks() {
   el.innerHTML = data.records.map(r => {
     const f = r.fields;
     const p = sel(f.Priority);
-    const pCls = p==='Urgent'?'val-bad':p==='High'?'val-warn':'';
     return `<div class="batch-card">
       <div class="batch-card-header">
         <div><div class="batch-name">${f.Task||'Unnamed'}</div>
         <div class="batch-date">${f['Due Date']||'No due date'}</div></div>
-        <span class="badge badge-status-brewing" style="color:inherit" class="${pCls}">${p||'Normal'}</span>
+        <span class="badge badge-status-brewing">${p||'Normal'}</span>
       </div>
       <div class="batch-meta">${sel(f.Status)||''} · ${sel(f.Type)||''}</div>
     </div>`;
