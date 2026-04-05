@@ -2,955 +2,596 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <title>Brewery OS</title>
 <style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
   :root {
-    --bg: #0f0e0c;
-    --surface: #1a1916;
-    --surface2: #242220;
-    --border: #2e2c28;
-    --amber: #d4853a;
-    --amber-dim: #8a5520;
-    --amber-glow: rgba(212,133,58,0.15);
-    --gold: #e8b84b;
-    --cream: #f0e8d8;
-    --muted: #7a7368;
-    --green: #4caf6e;
-    --red: #d45a3a;
-    --blue: #4a8fd4;
-    --purple: #9b6fd4;
-    --text: #e8e0d0;
-    --text-dim: #b0a898;
+    --brand: #2563eb;
+    --brand-dark: #1d4ed8;
+    --bg: #f8fafc;
+    --card: #ffffff;
+    --text: #0f172a;
+    --muted: #64748b;
+    --border: #e2e8f0;
+    --green: #16a34a;
+    --red: #dc2626;
+    --orange: #ea580c;
+    --yellow: #ca8a04;
+    --ready-bg: #dcfce7;
+    --ready-text: #15803d;
+    --blocked-bg: #fee2e2;
+    --blocked-text: #b91c1c;
     --radius: 12px;
-    --radius-sm: 8px;
+    --shadow: 0 1px 3px rgba(0,0,0,0.08);
   }
+  body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; background: var(--bg); color: var(--text); min-height: 100vh; }
 
-  * { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
+  /* NAV */
+  .nav { background: var(--card); border-bottom: 1px solid var(--border); padding: 16px 20px; display: flex; align-items: center; justify-content: space-between; position: sticky; top: 0; z-index: 100; }
+  .nav-title { font-size: 18px; font-weight: 700; color: var(--brand); }
+  .nav-back { font-size: 15px; color: var(--brand); cursor: pointer; display: flex; align-items: center; gap: 4px; }
 
-  body {
-    font-family: 'Georgia', serif;
-    background: var(--bg);
-    color: var(--text);
-    min-height: 100vh;
-    max-width: 430px;
-    margin: 0 auto;
-    position: relative;
-    overflow-x: hidden;
-  }
-
-  .screen { display: none; min-height: 100vh; padding-bottom: 80px; }
+  /* SCREENS */
+  .screen { display: none; padding: 20px; max-width: 600px; margin: 0 auto; }
   .screen.active { display: block; }
 
-  .header {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    padding: 16px 20px 12px;
-    border-bottom: 1px solid var(--border);
-    background: var(--bg);
-    position: sticky;
-    top: 0;
-    z-index: 100;
-  }
-  .header-title { font-size: 18px; font-weight: normal; letter-spacing: 0.5px; color: var(--cream); }
-  .live-badge {
-    display: flex; align-items: center; gap: 6px;
-    font-size: 11px; color: var(--green);
-    font-family: 'Courier New', monospace;
-    letter-spacing: 1px; text-transform: uppercase;
-  }
-  .live-dot {
-    width: 7px; height: 7px; border-radius: 50%;
-    background: var(--green); animation: pulse 2s infinite;
-  }
-  @keyframes pulse { 0%,100%{opacity:1} 50%{opacity:0.3} }
-  .back-btn {
-    background: none; border: none; color: var(--amber);
-    font-size: 15px; cursor: pointer; padding: 4px 0;
-    font-family: inherit; display: flex; align-items: center; gap: 6px;
-  }
+  /* HOME */
+  .greeting { margin: 8px 0 24px; }
+  .greeting h1 { font-size: 24px; font-weight: 700; }
+  .greeting p { color: var(--muted); font-size: 14px; margin-top: 4px; }
+  .action-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 28px; }
+  .action-card { background: var(--card); border-radius: var(--radius); padding: 20px 16px; box-shadow: var(--shadow); cursor: pointer; border: 1px solid var(--border); transition: transform 0.1s; }
+  .action-card:active { transform: scale(0.97); }
+  .action-card .icon { font-size: 28px; margin-bottom: 10px; }
+  .action-card .label { font-size: 15px; font-weight: 600; }
+  .action-card .desc { font-size: 12px; color: var(--muted); margin-top: 3px; }
+  .section-title { font-size: 13px; font-weight: 600; color: var(--muted); text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 12px; }
 
-  .nav {
-    position: fixed; bottom: 0; left: 50%; transform: translateX(-50%);
-    width: 100%; max-width: 430px;
-    background: var(--surface); border-top: 1px solid var(--border);
-    display: flex; z-index: 200;
-  }
-  .nav-btn {
-    flex: 1; padding: 12px 4px 14px;
-    background: none; border: none; color: var(--muted);
-    font-size: 10px; font-family: 'Courier New', monospace;
-    letter-spacing: 0.5px; text-transform: uppercase;
-    cursor: pointer; transition: color 0.2s;
-    display: flex; flex-direction: column; align-items: center; gap: 4px;
-  }
-  .nav-btn .nav-icon { font-size: 18px; }
-  .nav-btn.active { color: var(--amber); }
+  /* BATCH LIST */
+  .batch-card { background: var(--card); border-radius: var(--radius); padding: 16px; box-shadow: var(--shadow); border: 1px solid var(--border); margin-bottom: 10px; cursor: pointer; transition: transform 0.1s; }
+  .batch-card:active { transform: scale(0.98); }
+  .batch-card-header { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 8px; }
+  .batch-name { font-size: 16px; font-weight: 600; }
+  .batch-date { font-size: 12px; color: var(--muted); }
+  .batch-meta { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; }
+  .badge { display: inline-flex; align-items: center; font-size: 11px; font-weight: 600; padding: 3px 8px; border-radius: 20px; }
+  .badge-status-brewing { background: #dbeafe; color: #1e40af; }
+  .badge-status-fermenting { background: #fef3c7; color: #92400e; }
+  .badge-status-complete { background: #dcfce7; color: #15803d; }
+  .badge-status-planned { background: #f1f5f9; color: #475569; }
+  .badge-ready { background: var(--ready-bg); color: var(--ready-text); }
+  .badge-blocked { background: var(--blocked-bg); color: var(--blocked-text); }
 
-  .card {
-    background: var(--surface); border: 1px solid var(--border);
-    border-radius: var(--radius); padding: 16px; margin: 12px 16px;
-  }
+  /* READINESS PANEL */
+  .readiness-panel { border-radius: var(--radius); padding: 16px; margin-bottom: 16px; border: 1px solid; }
+  .readiness-panel.ready { background: var(--ready-bg); border-color: #86efac; }
+  .readiness-panel.blocked { background: var(--blocked-bg); border-color: #fca5a5; }
+  .readiness-title { font-size: 15px; font-weight: 700; margin-bottom: 10px; display: flex; align-items: center; gap-8px; }
+  .readiness-title.ready { color: var(--ready-text); }
+  .readiness-title.blocked { color: var(--blocked-text); }
+  .readiness-checks { display: flex; flex-direction: column; gap: 6px; }
+  .readiness-check { display: flex; align-items: center; gap: 8px; font-size: 13px; }
+  .readiness-check .dot { width: 18px; height: 18px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 10px; flex-shrink: 0; }
+  .dot-pass { background: #bbf7d0; color: #15803d; }
+  .dot-fail { background: #fecaca; color: #b91c1c; }
+  .check-label { color: var(--text); }
+  .check-label.fail { color: var(--blocked-text); font-weight: 500; }
 
-  .batch-card {
-    background: var(--surface); border: 1px solid var(--border);
-    border-radius: var(--radius); padding: 16px; margin: 12px 16px;
-    position: relative; overflow: hidden;
-  }
-  .batch-card::before {
-    content: ''; position: absolute; top: 0; left: 0; right: 0; height: 3px;
-    background: linear-gradient(90deg, var(--amber), var(--gold));
-  }
-  .batch-name { font-size: 18px; color: var(--cream); margin-bottom: 4px; }
-  .batch-meta { font-size: 12px; font-family: 'Courier New', monospace; color: var(--muted); margin-bottom: 12px; }
-  .batch-status {
-    display: inline-block; padding: 3px 10px; border-radius: 20px;
-    font-size: 11px; font-family: 'Courier New', monospace; letter-spacing: 0.5px;
-    background: var(--amber-glow); color: var(--amber); border: 1px solid var(--amber-dim);
-  }
-  .batch-day { float: right; font-size: 28px; font-family: 'Courier New', monospace; color: var(--amber); line-height: 1; }
-  .batch-day-label { font-size: 10px; font-family: 'Courier New', monospace; color: var(--muted); text-align: right; letter-spacing: 1px; text-transform: uppercase; }
+  /* BATCH DETAIL */
+  .detail-section { background: var(--card); border-radius: var(--radius); padding: 16px; box-shadow: var(--shadow); border: 1px solid var(--border); margin-bottom: 14px; }
+  .detail-section h3 { font-size: 13px; font-weight: 600; color: var(--muted); text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 12px; }
+  .detail-row { display: flex; justify-content: space-between; align-items: center; padding: 6px 0; border-bottom: 1px solid var(--border); }
+  .detail-row:last-child { border-bottom: none; }
+  .detail-label { font-size: 14px; color: var(--muted); }
+  .detail-value { font-size: 14px; font-weight: 500; text-align: right; }
+  .vs-target { font-size: 11px; color: var(--muted); margin-left: 4px; }
+  .val-good { color: var(--green); }
+  .val-warn { color: var(--orange); }
+  .val-bad { color: var(--red); }
 
-  .actions-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; padding: 0 16px; margin-bottom: 8px; }
-  .action-btn {
-    background: var(--surface); border: 1px solid var(--border);
-    border-radius: var(--radius); padding: 16px 14px;
-    text-align: left; cursor: pointer; transition: all 0.15s;
-    color: var(--text); font-family: inherit; position: relative; overflow: hidden;
+  /* BREW DAY */
+  .brew-stage { background: var(--card); border-radius: var(--radius); padding: 20px; box-shadow: var(--shadow); border: 1px solid var(--border); margin-bottom: 14px; }
+  .brew-stage h3 { font-size: 16px; font-weight: 700; margin-bottom: 4px; }
+  .brew-stage p { font-size: 13px; color: var(--muted); margin-bottom: 16px; }
+  .field-group { margin-bottom: 14px; }
+  .field-label { font-size: 13px; font-weight: 500; color: var(--muted); margin-bottom: 6px; display: block; }
+  .field-hint { font-size: 11px; color: var(--brand); margin-bottom: 6px; display: block; }
+  input[type="text"], input[type="number"], textarea, select {
+    width: 100%; padding: 11px 14px; border: 1px solid var(--border); border-radius: 8px;
+    font-size: 15px; background: var(--bg); color: var(--text); appearance: none;
   }
-  .action-btn:active { transform: scale(0.97); }
-  .action-btn .action-icon { font-size: 22px; display: block; margin-bottom: 8px; }
-  .action-btn .action-label { font-size: 14px; color: var(--cream); display: block; margin-bottom: 2px; }
-  .action-btn .action-sub { font-size: 11px; font-family: 'Courier New', monospace; color: var(--muted); display: block; }
-  .action-btn.primary { border-color: var(--amber-dim); background: linear-gradient(135deg, var(--surface), #1f1c17); }
-  .action-btn.primary::after {
-    content: ''; position: absolute; top: 0; right: 0;
-    width: 40px; height: 40px; background: var(--amber-glow); border-radius: 0 12px 0 40px;
-  }
+  input:focus, textarea:focus, select:focus { outline: none; border-color: var(--brand); }
+  textarea { resize: none; min-height: 80px; }
+  .checkbox-field { display: flex; align-items: center; gap: 10px; padding: 12px 14px; border: 1px solid var(--border); border-radius: 8px; background: var(--bg); cursor: pointer; }
+  .checkbox-field input[type="checkbox"] { width: 20px; height: 20px; accent-color: var(--brand); }
+  .stage-tabs { display: flex; gap: 6px; overflow-x: auto; padding-bottom: 4px; margin-bottom: 16px; }
+  .stage-tab { flex-shrink: 0; padding: 7px 14px; border-radius: 20px; font-size: 13px; font-weight: 500; cursor: pointer; border: 1px solid var(--border); background: var(--card); color: var(--muted); }
+  .stage-tab.active { background: var(--brand); color: white; border-color: var(--brand); }
+  .stage-tab.done { background: var(--ready-bg); color: var(--ready-text); border-color: #86efac; }
 
-  .task-item { display: flex; align-items: flex-start; gap: 12px; padding: 12px 0; border-bottom: 1px solid var(--border); }
-  .task-item:last-child { border-bottom: none; }
-  .task-priority { width: 8px; height: 8px; border-radius: 50%; margin-top: 5px; flex-shrink: 0; }
-  .priority-high { background: var(--red); }
-  .priority-medium { background: var(--amber); }
-  .priority-low { background: var(--muted); }
-  .task-text { font-size: 14px; color: var(--text); line-height: 1.4; }
-  .task-meta { font-size: 11px; font-family: 'Courier New', monospace; color: var(--muted); margin-top: 2px; }
+  /* BTN */
+  .btn { width: 100%; padding: 14px; border-radius: 10px; font-size: 16px; font-weight: 600; cursor: pointer; border: none; margin-bottom: 10px; }
+  .btn-primary { background: var(--brand); color: white; }
+  .btn-primary:active { background: var(--brand-dark); }
+  .btn-secondary { background: var(--card); color: var(--brand); border: 1px solid var(--border); }
+  .btn-success { background: var(--green); color: white; }
 
-  .loading { text-align: center; padding: 40px 20px; font-family: 'Courier New', monospace; color: var(--muted); font-size: 13px; letter-spacing: 1px; }
-  .spinner { display: inline-block; width: 20px; height: 20px; border: 2px solid var(--border); border-top-color: var(--amber); border-radius: 50%; animation: spin 0.8s linear infinite; margin-bottom: 12px; }
+  /* LOADING / EMPTY */
+  .loading { text-align: center; padding: 40px; color: var(--muted); }
+  .empty { text-align: center; padding: 40px; color: var(--muted); font-size: 14px; }
+  .spinner { display: inline-block; width: 28px; height: 28px; border: 3px solid var(--border); border-top-color: var(--brand); border-radius: 50%; animation: spin 0.8s linear infinite; }
   @keyframes spin { to { transform: rotate(360deg); } }
-
-  .brew-stage-nav { display: flex; padding: 12px 16px 0; gap: 0; overflow-x: auto; scrollbar-width: none; }
-  .brew-stage-nav::-webkit-scrollbar { display: none; }
-  .stage-tab {
-    flex-shrink: 0; padding: 8px 14px;
-    font-size: 11px; font-family: 'Courier New', monospace;
-    letter-spacing: 0.5px; text-transform: uppercase; color: var(--muted);
-    border-bottom: 2px solid transparent; cursor: pointer;
-    background: none; border-top: none; border-left: none; border-right: none;
-    transition: all 0.2s; white-space: nowrap;
-  }
-  .stage-tab.active { color: var(--amber); border-bottom-color: var(--amber); }
-  .stage-tab.done { color: var(--green); }
-  .stage-tab.done::after { content: ' ✓'; }
-
-  .brew-stage { display: none; padding: 4px 0; animation: fadeIn 0.2s ease; }
-  .brew-stage.active { display: block; }
-  @keyframes fadeIn { from{opacity:0;transform:translateY(4px)} to{opacity:1;transform:translateY(0)} }
-
-  .brew-field { margin: 0 16px 4px; padding: 14px 0; border-bottom: 1px solid var(--border); }
-  .brew-field:last-of-type { border-bottom: none; }
-  .field-row { display: flex; align-items: center; justify-content: space-between; gap: 12px; }
-  .field-label-group { flex: 1; }
-  .field-label { font-size: 14px; color: var(--text-dim); margin-bottom: 1px; }
-  .field-target { font-size: 11px; font-family: 'Courier New', monospace; color: var(--amber); letter-spacing: 0.3px; }
-
-  .field-input {
-    background: var(--surface2); border: 1px solid var(--border);
-    border-radius: var(--radius-sm); color: var(--cream);
-    font-size: 18px; font-family: 'Courier New', monospace;
-    text-align: right; padding: 8px 10px; width: 110px;
-    transition: border-color 0.2s; -webkit-appearance: none;
-  }
-  .field-input:focus { outline: none; border-color: var(--amber); background: #1e1c17; }
-  .field-input.good { border-color: var(--green); color: var(--green); }
-  .field-input.warn { border-color: var(--amber); color: var(--amber); }
-  .field-input.bad { border-color: var(--red); color: var(--red); }
-  .field-unit { font-size: 11px; font-family: 'Courier New', monospace; color: var(--muted); margin-left: 4px; min-width: 24px; }
-  .field-input-wrap { display: flex; align-items: center; flex-shrink: 0; }
-
-  .brew-checkbox { display: flex; align-items: center; gap: 14px; padding: 14px 16px; border-bottom: 1px solid var(--border); cursor: pointer; }
-  .brew-checkbox-box { width: 28px; height: 28px; border: 2px solid var(--border); border-radius: 6px; display: flex; align-items: center; justify-content: center; flex-shrink: 0; font-size: 16px; transition: all 0.15s; }
-  .brew-checkbox.checked .brew-checkbox-box { background: var(--green); border-color: var(--green); }
-  .brew-checkbox-label { font-size: 15px; color: var(--text); }
-
-  .brew-textarea {
-    width: 100%; background: var(--surface2); border: 1px solid var(--border);
-    border-radius: var(--radius-sm); color: var(--text); font-size: 14px;
-    font-family: 'Georgia', serif; padding: 12px; resize: none; min-height: 80px;
-    margin-top: 8px; transition: border-color 0.2s;
-  }
-  .brew-textarea:focus { outline: none; border-color: var(--amber); }
-
-  .stage-btn-wrap { padding: 16px; }
-  .stage-btn {
-    width: 100%; padding: 16px;
-    background: linear-gradient(135deg, var(--amber-dim), #6b3e18);
-    border: 1px solid var(--amber-dim); border-radius: var(--radius);
-    color: var(--cream); font-size: 15px; font-family: inherit;
-    cursor: pointer; transition: all 0.15s; letter-spacing: 0.5px;
-  }
-  .stage-btn:active { transform: scale(0.98); opacity: 0.9; }
-  .stage-btn.complete { background: linear-gradient(135deg, #2a6b3a, #1a4525); border-color: #3a8b4a; }
-
-  .delta { font-size: 11px; font-family: 'Courier New', monospace; margin-top: 3px; }
-  .delta.positive { color: var(--green); }
-  .delta.negative { color: var(--red); }
-  .delta.neutral { color: var(--muted); }
-
-  .batch-select-list { padding: 0; }
-  .batch-select-item { display: flex; align-items: center; justify-content: space-between; padding: 16px; border-bottom: 1px solid var(--border); cursor: pointer; transition: background 0.15s; }
-  .batch-select-item:last-child { border-bottom: none; }
-  .batch-select-item:active { background: var(--surface2); }
-  .batch-select-name { font-size: 16px; color: var(--cream); }
-  .batch-select-meta { font-size: 12px; font-family: 'Courier New', monospace; color: var(--muted); margin-top: 2px; }
-  .batch-select-arrow { color: var(--muted); font-size: 18px; }
-
-  .brew-progress { height: 3px; background: var(--border); margin: 0 16px; border-radius: 2px; overflow: hidden; }
-  .brew-progress-fill { height: 100%; background: linear-gradient(90deg, var(--amber), var(--gold)); border-radius: 2px; transition: width 0.4s ease; }
-
-  .toast {
-    position: fixed; bottom: 90px; left: 50%;
-    transform: translateX(-50%) translateY(20px);
-    background: var(--surface2); border: 1px solid var(--border);
-    border-radius: var(--radius); padding: 12px 20px;
-    font-size: 14px; color: var(--text); opacity: 0;
-    transition: all 0.3s; z-index: 999; white-space: nowrap;
-    max-width: 320px; text-align: center;
-  }
-  .toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
-  .toast.success { border-color: var(--green); color: var(--green); }
-  .toast.error { border-color: var(--red); color: var(--red); }
-
-  .section-label { font-size: 11px; font-family: 'Courier New', monospace; letter-spacing: 1.5px; text-transform: uppercase; color: var(--muted); padding: 16px 16px 6px; }
-
-  .empty { text-align: center; padding: 40px 30px; color: var(--muted); font-size: 14px; line-height: 1.6; }
-  .empty-icon { font-size: 36px; margin-bottom: 12px; opacity: 0.5; }
-
-  .grav-check-list { margin: 8px 16px 0; }
-  .grav-check-row { display: flex; gap: 8px; margin-bottom: 8px; align-items: center; }
-  .grav-date-input { flex: 1; background: var(--surface2); border: 1px solid var(--border); border-radius: var(--radius-sm); color: var(--text); font-size: 13px; font-family: 'Courier New', monospace; padding: 8px 10px; }
-  .grav-date-input:focus { outline: none; border-color: var(--amber); }
-  .grav-val-input { width: 90px; background: var(--surface2); border: 1px solid var(--border); border-radius: var(--radius-sm); color: var(--cream); font-size: 15px; font-family: 'Courier New', monospace; text-align: right; padding: 8px 10px; }
-  .grav-val-input:focus { outline: none; border-color: var(--amber); }
-  .grav-del { background: none; border: none; color: var(--muted); font-size: 18px; cursor: pointer; padding: 4px; }
-  .add-grav-btn { background: none; border: 1px dashed var(--border); border-radius: var(--radius-sm); color: var(--muted); font-size: 13px; font-family: 'Courier New', monospace; padding: 8px 14px; cursor: pointer; width: calc(100% - 32px); margin: 4px 16px; transition: all 0.15s; }
-  .add-grav-btn:active { border-color: var(--amber); color: var(--amber); }
-
-  .brew-log-existing { background: var(--surface2); border: 1px solid var(--amber-dim); border-radius: var(--radius); padding: 14px 16px; margin: 12px 16px; }
-  .brew-log-existing-title { font-size: 12px; font-family: 'Courier New', monospace; color: var(--amber); letter-spacing: 1px; text-transform: uppercase; margin-bottom: 6px; }
-  .brew-log-existing-meta { font-size: 13px; color: var(--text-dim); }
-
-  .targets-banner { background: #16140f; border: 1px solid var(--border); border-radius: var(--radius); padding: 12px 14px; margin: 12px 16px 4px; display: flex; gap: 16px; overflow-x: auto; scrollbar-width: none; }
-  .targets-banner::-webkit-scrollbar { display: none; }
-  .target-chip { flex-shrink: 0; text-align: center; }
-  .target-chip-val { font-size: 16px; font-family: 'Courier New', monospace; color: var(--amber); }
-  .target-chip-label { font-size: 10px; font-family: 'Courier New', monospace; color: var(--muted); text-transform: uppercase; letter-spacing: 0.5px; }
-  .target-divider { width: 1px; background: var(--border); flex-shrink: 0; }
-
-  .time-input { background: var(--surface2); border: 1px solid var(--border); border-radius: var(--radius-sm); color: var(--cream); font-size: 18px; font-family: 'Courier New', monospace; text-align: right; padding: 8px 10px; width: 110px; transition: border-color 0.2s; }
-  .time-input:focus { outline: none; border-color: var(--amber); }
+  .toast { position: fixed; bottom: 24px; left: 50%; transform: translateX(-50%); background: #1e293b; color: white; padding: 12px 20px; border-radius: 10px; font-size: 14px; font-weight: 500; z-index: 999; opacity: 0; transition: opacity 0.3s; pointer-events: none; white-space: nowrap; }
+  .toast.show { opacity: 1; }
 </style>
 </head>
 <body>
 
-<div class="toast" id="toast"></div>
-
-<!-- HOME -->
-<div class="screen active" id="screen-home">
-  <div class="header">
-    <div class="header-title">Brewery OS</div>
-    <div class="live-badge"><div class="live-dot"></div>LIVE</div>
-  </div>
-  <div id="home-batches"><div class="loading"><div class="spinner"></div><br>Loading...</div></div>
-  <div class="section-label">Quick Actions</div>
-  <div class="actions-grid">
-    <button class="action-btn primary" onclick="startBrewFlow()">
-      <span class="action-icon">🍺</span>
-      <span class="action-label">Brew Day</span>
-      <span class="action-sub">Start or continue</span>
-    </button>
-    <button class="action-btn" onclick="showToast('Package flow coming soon','')">
-      <span class="action-icon">📦</span>
-      <span class="action-label">Package</span>
-      <span class="action-sub">Create lot</span>
-    </button>
-    <button class="action-btn" onclick="showToast('Sales flow coming soon','')">
-      <span class="action-icon">💰</span>
-      <span class="action-label">Log Sale</span>
-      <span class="action-sub">Record sale</span>
-    </button>
-    <button class="action-btn" onclick="showToast('Issue flow coming soon','')">
-      <span class="action-icon">⚠️</span>
-      <span class="action-label">Log Issue</span>
-      <span class="action-sub">+ auto task</span>
-    </button>
-  </div>
-  <div class="section-label">Open Tasks</div>
-  <div class="card">
-    <div id="home-tasks"><div class="loading"><div class="spinner"></div></div></div>
-  </div>
+<div class="nav">
+  <div id="navBack" class="nav-back" style="display:none" onclick="goBack()">← Back</div>
+  <div class="nav-title">🍺 Brewery OS</div>
+  <div style="width:60px"></div>
 </div>
 
-<!-- BATCH SELECT -->
-<div class="screen" id="screen-batch-select">
-  <div class="header">
-    <button class="back-btn" onclick="goHome()">← Back</button>
-    <div class="header-title">Select Batch</div>
-    <div></div>
+<div id="toast" class="toast"></div>
+
+<!-- HOME -->
+<div id="screen-home" class="screen active">
+  <div class="greeting">
+    <h1>Good day, Lars</h1>
+    <p>Brasserie du Château de Durbuy</p>
   </div>
-  <div class="section-label">Which batch are you brewing?</div>
-  <div class="card" style="padding:0; overflow:hidden;">
-    <div id="batch-select-list" class="batch-select-list">
-      <div class="loading"><div class="spinner"></div></div>
+  <div class="action-grid">
+    <div class="action-card" onclick="showScreen('screen-brew')">
+      <div class="icon">🍺</div>
+      <div class="label">Brew Day</div>
+      <div class="desc">Log a brew session</div>
+    </div>
+    <div class="action-card" onclick="loadBatches()">
+      <div class="icon">📦</div>
+      <div class="label">Batches</div>
+      <div class="desc">View all batches</div>
+    </div>
+    <div class="action-card" onclick="showScreen('screen-tasks')">
+      <div class="icon">✅</div>
+      <div class="label">Tasks</div>
+      <div class="desc">Open items</div>
+    </div>
+    <div class="action-card" onclick="showScreen('screen-issues')">
+      <div class="icon">⚠️</div>
+      <div class="label">Issues</div>
+      <div class="desc">Log a problem</div>
     </div>
   </div>
+  <div class="section-title">Recent Batches</div>
+  <div id="home-batches"><div class="loading"><div class="spinner"></div></div></div>
+</div>
+
+<!-- BATCH LIST -->
+<div id="screen-batches" class="screen">
+  <div class="section-title">All Batches</div>
+  <div id="batch-list"><div class="loading"><div class="spinner"></div></div></div>
+</div>
+
+<!-- BATCH DETAIL -->
+<div id="screen-batch-detail" class="screen">
+  <div id="batch-detail-content"><div class="loading"><div class="spinner"></div></div></div>
 </div>
 
 <!-- BREW DAY -->
-<div class="screen" id="screen-brew">
-  <div class="header">
-    <button class="back-btn" onclick="showScreen('screen-batch-select')">← Back</button>
-    <div class="header-title" id="brew-title">Brew Day</div>
-    <div></div>
-  </div>
-  <div class="brew-progress" style="margin-top:8px;">
-    <div class="brew-progress-fill" id="brew-progress-fill" style="width:10%"></div>
-  </div>
-  <div id="brew-existing-notice" style="display:none;"></div>
-  <div class="targets-banner" id="brew-targets-banner">
-    <div class="loading" style="padding:4px 0;"><div class="spinner" style="width:14px;height:14px;margin:0;"></div></div>
-  </div>
-  <div class="brew-stage-nav" id="brew-stage-nav">
-    <button class="stage-tab active" data-stage="mash" onclick="switchStage('mash')">Mash</button>
-    <button class="stage-tab" data-stage="boil" onclick="switchStage('boil')">Boil</button>
-    <button class="stage-tab" data-stage="transfer" onclick="switchStage('transfer')">Transfer</button>
-    <button class="stage-tab" data-stage="ferment" onclick="switchStage('ferment')">Ferment</button>
-    <button class="stage-tab" data-stage="bottle" onclick="switchStage('bottle')">Bottle</button>
-  </div>
-
-  <!-- MASH -->
-  <div class="brew-stage active" id="stage-mash">
-    <div class="section-label">Mash</div>
-    <div class="brew-field">
-      <div class="field-row">
-        <div class="field-label-group">
-          <div class="field-label">Mash Temperature</div>
-          <div class="field-target" id="target-mash-temp">Target: —</div>
-        </div>
-        <div class="field-input-wrap">
-          <input class="field-input" type="number" inputmode="decimal" id="input-mash-temp" placeholder="—" step="0.1" oninput="evalField(this,'mash-temp')">
-          <span class="field-unit">°C</span>
-        </div>
-      </div>
-      <div class="delta" id="delta-mash-temp"></div>
-    </div>
-    <div class="brew-field">
-      <div class="field-row">
-        <div class="field-label-group">
-          <div class="field-label">Mash pH</div>
-          <div class="field-target">Target: 5.2–5.4</div>
-        </div>
-        <div class="field-input-wrap">
-          <input class="field-input" type="number" inputmode="decimal" id="input-mash-ph" placeholder="—" step="0.01" min="4" max="7">
-          <span class="field-unit">pH</span>
-        </div>
-      </div>
-    </div>
-    <div class="brew-field">
-      <div class="field-row">
-        <div class="field-label-group"><div class="field-label">Mash Start Time</div></div>
-        <div class="field-input-wrap">
-          <input class="time-input" type="time" id="input-mash-time">
-        </div>
-      </div>
-    </div>
-    <div class="stage-btn-wrap">
-      <button class="stage-btn" onclick="saveStage('mash')">Save Mash → Continue to Boil</button>
+<div id="screen-brew" class="screen">
+  <div class="section-title">Brew Day Log</div>
+  <div class="detail-section">
+    <h3>Select Batch</h3>
+    <div class="field-group">
+      <select id="brew-batch-select" onchange="loadBrewLog()">
+        <option value="">Loading batches...</option>
+      </select>
     </div>
   </div>
-
-  <!-- BOIL -->
-  <div class="brew-stage" id="stage-boil">
-    <div class="section-label">Pre-boil & Boil</div>
-    <div class="brew-field">
-      <div class="field-row">
-        <div class="field-label-group">
-          <div class="field-label">Pre-boil Volume</div>
-          <div class="field-target" id="target-preboil-vol">Target: —</div>
-        </div>
-        <div class="field-input-wrap">
-          <input class="field-input" type="number" inputmode="decimal" id="input-preboil-vol" placeholder="—" step="0.5" oninput="evalField(this,'preboil-vol')">
-          <span class="field-unit">L</span>
-        </div>
-      </div>
-      <div class="delta" id="delta-preboil-vol"></div>
-    </div>
-    <div class="brew-field">
-      <div class="field-row">
-        <div class="field-label-group">
-          <div class="field-label">Pre-boil Gravity</div>
-          <div class="field-target" id="target-preboil-grav">Target: —</div>
-        </div>
-        <div class="field-input-wrap">
-          <input class="field-input" type="number" inputmode="decimal" id="input-preboil-grav" placeholder="—" step="0.001" oninput="evalField(this,'preboil-grav')">
-          <span class="field-unit">SG</span>
-        </div>
-      </div>
-      <div class="delta" id="delta-preboil-grav"></div>
-    </div>
-    <div class="brew-checkbox" id="chk-boil-duration" onclick="toggleCheck('boil-duration')">
-      <div class="brew-checkbox-box" id="chk-boil-duration-box"></div>
-      <div class="field-label-group">
-        <div class="brew-checkbox-label">Boil duration confirmed</div>
-        <div class="field-target" id="target-boil-dur">Target: —</div>
-      </div>
-    </div>
-    <div class="brew-field" style="border-top: 1px solid var(--border); margin-top:8px;">
-      <div class="field-label" style="margin-bottom:4px;">Hop addition notes</div>
-      <textarea class="brew-textarea" id="input-hop-notes" placeholder="e.g. 60min: Magnum 50g ✓  15min: Sorachi 120g ✓  0min: Sorachi 100g ✓"></textarea>
-    </div>
-    <div class="stage-btn-wrap">
-      <button class="stage-btn" onclick="saveStage('boil')">Save Boil → Continue to Transfer</button>
-    </div>
-  </div>
-
-  <!-- TRANSFER -->
-  <div class="brew-stage" id="stage-transfer">
-    <div class="section-label">Knock-out & Transfer</div>
-    <div class="brew-field">
-      <div class="field-row">
-        <div class="field-label-group">
-          <div class="field-label">Transfer Volume</div>
-          <div class="field-target" id="target-transfer-vol">Target: —</div>
-        </div>
-        <div class="field-input-wrap">
-          <input class="field-input" type="number" inputmode="decimal" id="input-transfer-vol" placeholder="—" step="0.5" oninput="evalField(this,'transfer-vol')">
-          <span class="field-unit">L</span>
-        </div>
-      </div>
-      <div class="delta" id="delta-transfer-vol"></div>
-    </div>
-    <div class="brew-field">
-      <div class="field-row">
-        <div class="field-label-group">
-          <div class="field-label">Original Gravity</div>
-          <div class="field-target" id="target-og">Target OG: —</div>
-        </div>
-        <div class="field-input-wrap">
-          <input class="field-input" type="number" inputmode="decimal" id="input-og" placeholder="—" step="0.001" oninput="evalField(this,'og')">
-          <span class="field-unit">SG</span>
-        </div>
-      </div>
-      <div class="delta" id="delta-og"></div>
-    </div>
-    <div class="brew-field">
-      <div class="field-row">
-        <div class="field-label-group">
-          <div class="field-label">Transfer Temperature</div>
-          <div class="field-target" id="target-transfer-temp">Target: —</div>
-        </div>
-        <div class="field-input-wrap">
-          <input class="field-input" type="number" inputmode="decimal" id="input-transfer-temp" placeholder="—" step="0.5">
-          <span class="field-unit">°C</span>
-        </div>
-      </div>
-    </div>
-    <div class="brew-field">
-      <div class="field-row">
-        <div class="field-label-group"><div class="field-label">Fermenter ID</div></div>
-        <div class="field-input-wrap">
-          <input class="field-input" type="text" id="input-fermenter" placeholder="e.g. F1" style="font-size:15px; width:90px; text-align:right;">
-        </div>
-      </div>
-    </div>
-    <div class="stage-btn-wrap">
-      <button class="stage-btn" onclick="saveStage('transfer')">Save Transfer → Continue to Ferment</button>
-    </div>
-  </div>
-
-  <!-- FERMENT -->
-  <div class="brew-stage" id="stage-ferment">
-    <div class="section-label">Fermentation</div>
-    <div class="field-label" style="padding: 12px 16px 4px; color: var(--text-dim); font-size:13px;">Gravity readings (add as you measure)</div>
-    <div id="grav-check-list" class="grav-check-list"></div>
-    <button class="add-grav-btn" onclick="addGravCheck()">+ Add gravity reading</button>
-    <div class="brew-field" style="margin-top:8px;">
-      <div class="field-row">
-        <div class="field-label-group">
-          <div class="field-label">Final Gravity</div>
-          <div class="field-target" id="target-fg">Target FG: —</div>
-        </div>
-        <div class="field-input-wrap">
-          <input class="field-input" type="number" inputmode="decimal" id="input-fg" placeholder="—" step="0.001" oninput="evalField(this,'fg')">
-          <span class="field-unit">SG</span>
-        </div>
-      </div>
-      <div class="delta" id="delta-fg"></div>
-    </div>
-    <div class="brew-field">
-      <div class="field-label" style="margin-bottom:6px;">Fermentation notes</div>
-      <textarea class="brew-textarea" id="input-ferm-notes" placeholder="Yeast activity, temp variations, anything unusual..."></textarea>
-    </div>
-    <div class="stage-btn-wrap">
-      <button class="stage-btn" onclick="saveStage('ferment')">Save Fermentation → Continue to Bottle</button>
-    </div>
-  </div>
-
-  <!-- BOTTLE -->
-  <div class="brew-stage" id="stage-bottle">
-    <div class="section-label">Bottling</div>
-    <div class="brew-field">
-      <div class="field-row">
-        <div class="field-label-group"><div class="field-label">Bottling Volume</div></div>
-        <div class="field-input-wrap">
-          <input class="field-input" type="number" inputmode="decimal" id="input-bottle-vol" placeholder="—" step="0.5">
-          <span class="field-unit">L</span>
-        </div>
-      </div>
-    </div>
-    <div class="brew-field">
-      <div class="field-row">
-        <div class="field-label-group"><div class="field-label">Priming Sugar</div></div>
-        <div class="field-input-wrap">
-          <input class="field-input" type="number" inputmode="decimal" id="input-priming" placeholder="—" step="0.01">
-          <span class="field-unit">kg</span>
-        </div>
-      </div>
-    </div>
-    <div class="brew-field">
-      <div class="field-row">
-        <div class="field-label-group"><div class="field-label">Bottling Date</div></div>
-        <div class="field-input-wrap">
-          <input class="time-input" type="date" id="input-bottle-date" style="width:150px; font-size:14px;">
-        </div>
-      </div>
-    </div>
-    <div class="brew-field">
-      <div class="field-label" style="margin-bottom:6px;">Final notes</div>
-      <textarea class="brew-textarea" id="input-brew-notes" placeholder="Any observations for the record..."></textarea>
-    </div>
-    <div class="stage-btn-wrap">
-      <button class="stage-btn complete" onclick="saveStage('bottle')">✓ Complete Brew Log</button>
-    </div>
-  </div>
+  <div id="brew-stage-content"></div>
 </div>
 
-<!-- BATCHES -->
-<div class="screen" id="screen-batches">
-  <div class="header">
-    <div class="header-title">Batches</div>
-    <div class="live-badge"><div class="live-dot"></div>LIVE</div>
-  </div>
-  <div id="batches-list"><div class="loading"><div class="spinner"></div><br>Loading...</div></div>
+<!-- TASKS -->
+<div id="screen-tasks" class="screen">
+  <div class="section-title">Open Tasks</div>
+  <div id="task-list"><div class="loading"><div class="spinner"></div></div></div>
 </div>
 
-<!-- TRACE -->
-<div class="screen" id="screen-trace">
-  <div class="header">
-    <div class="header-title">Traceability</div>
-    <div class="live-badge"><div class="live-dot"></div>LIVE</div>
-  </div>
-  <div class="empty">
-    <div class="empty-icon">🔍</div>
-    <div>Trace any ingredient through to sale.<br>Coming soon.</div>
-  </div>
+<!-- ISSUES -->
+<div id="screen-issues" class="screen">
+  <div class="section-title">Issues</div>
+  <div class="empty">Issue logging coming soon.</div>
 </div>
-
-<!-- NAV -->
-<nav class="nav">
-  <button class="nav-btn active" id="nav-home" onclick="navTo('home')"><span class="nav-icon">⌂</span>Now</button>
-  <button class="nav-btn" id="nav-batches" onclick="navTo('batches')"><span class="nav-icon">🍺</span>Batches</button>
-  <button class="nav-btn" id="nav-trace" onclick="navTo('trace')"><span class="nav-icon">🔗</span>Trace</button>
-</nav>
 <script>
-const BASE_ID = 'appslXmtOEoDI6lwp';
-const API_KEY = '__AIRTABLE_KEY__';
+const BASE = 'appslXmtOEoDI6lwp';
+const KEY = '%%AIRTABLE_KEY%%';
 const TABLES = {
-  batches:  'tblGrw6fTgMyz3ZL5',
-  recipes:  'tblgq3JTJYrG1hlkj',
-  tasks:    'tblxyLhvY6wyWogqq',
-  brewLogs: 'tblF6c610KRtvFosJ'
+  batches: 'tblGrw6fTgMyz3ZL5',
+  brewLogs: 'tblF6c610KRtvFosJ',
+  tasks: 'tblxyLhvY6wyWogqq',
+  recipes: 'tblgq3JTJYrG1hlkj'
 };
 
-async function airtable(table, params='', method='GET', body=null) {
-  const url = `https://api.airtable.com/v0/${BASE_ID}/${table}${params}`;
-  const opts = { method, headers: { 'Authorization': `Bearer ${API_KEY}`, 'Content-Type': 'application/json' } };
-  if (body) opts.body = JSON.stringify(body);
-  const r = await fetch(url, opts);
-  if (!r.ok) { const e = await r.json(); throw new Error(e.error?.message || 'API error'); }
-  return r.json();
-}
+const RECIPE_TARGETS = {
+  'Blonde du Château': { og: 1.059, fg: 1.010, mash: 65, boil: 60, preboil: 570 },
+  'Ambrée/Marckloff':  { og: 1.060, fg: 1.012, mash: 67, boil: 60, preboil: 570 },
+  'IPA Sorachi':       { og: 1.052, fg: 1.008, mash: 65, boil: 60, preboil: 570 },
+  'Czech Pilsner':     { og: 1.050, fg: 1.012, mash: 63, boil: 60, preboil: 570 }
+};
+
 function sel(v){ return (v && typeof v==='object' && v.name) ? v.name : (v||''); }
 
-let state = {
-  batches: [], tasks: [],
-  selectedBatchRecord: null,
-  brewLog: null, brewLogId: null,
-  stageDone: { mash:false, boil:false, transfer:false, ferment:false, bottle:false },
-  gravChecks: [], recipeTargets: {}
-};
+function computeReadiness(batch) {
+  const checks = {
+    'Material Available?':  !!batch['Material Available?'],
+    'Process Complete?':    !!batch['Process Complete?'],
+    'System Ready?':        !!batch['System Ready?'],
+    'Measurements Valid?':  !!batch['Measurements Valid?']
+  };
+  const ready = Object.values(checks).every(Boolean);
+  return { ready, checks };
+}
 
+function readinessBadge(batch) {
+  const { ready } = computeReadiness(batch);
+  return ready
+    ? '<span class="badge badge-ready">✓ READY</span>'
+    : '<span class="badge badge-blocked">✗ BLOCKED</span>';
+}
+
+function readinessPanel(batch) {
+  const { ready, checks } = computeReadiness(batch);
+  const cls = ready ? 'ready' : 'blocked';
+  const title = ready ? '✓ Ready for Execution' : '✗ Blocked';
+  const rows = Object.entries(checks).map(([label, pass]) => `
+    <div class="readiness-check">
+      <div class="dot ${pass ? 'dot-pass' : 'dot-fail'}">${pass ? '✓' : '✗'}</div>
+      <span class="check-label ${pass ? '' : 'fail'}">${label}</span>
+    </div>`).join('');
+  return `
+    <div class="readiness-panel ${cls}">
+      <div class="readiness-title ${cls}">${title}</div>
+      <div class="readiness-checks">${rows}</div>
+    </div>`;
+}
+
+async function airtable(table, params='') {
+  const r = await fetch(`https://api.airtable.com/v0/${BASE}/${table}${params}`, {
+    headers: { Authorization: `Bearer ${KEY}` }
+  });
+  return r.json();
+}
+
+async function airtablePatch(table, id, fields) {
+  const r = await fetch(`https://api.airtable.com/v0/${BASE}/${table}/${id}`, {
+    method: 'PATCH',
+    headers: { Authorization: `Bearer ${KEY}`, 'Content-Type': 'application/json' },
+    body: JSON.stringify({ fields })
+  });
+  return r.json();
+}
+
+let screenStack = ['screen-home'];
 function showScreen(id) {
   document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
   document.getElementById(id).classList.add('active');
+  screenStack.push(id);
+  document.getElementById('navBack').style.display = screenStack.length > 1 ? 'flex' : 'none';
 }
-function navTo(page) {
-  document.querySelectorAll('.nav-btn').forEach(b => b.classList.remove('active'));
-  document.getElementById('nav-'+page).classList.add('active');
-  showScreen('screen-'+page);
-  if (page === 'batches') loadBatchesList();
+function goBack() {
+  screenStack.pop();
+  const prev = screenStack[screenStack.length - 1] || 'screen-home';
+  document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+  document.getElementById(prev).classList.add('active');
+  document.getElementById('navBack').style.display = screenStack.length > 1 ? 'flex' : 'none';
 }
-function goHome() { navTo('home'); }
 
-let toastTimer;
-function showToast(msg, type='') {
+function toast(msg) {
   const t = document.getElementById('toast');
-  t.textContent = msg;
-  t.className = 'toast show' + (type ? ' '+type : '');
-  clearTimeout(toastTimer);
-  toastTimer = setTimeout(() => { t.className = 'toast'; }, 3000);
+  t.textContent = msg; t.classList.add('show');
+  setTimeout(() => t.classList.remove('show'), 2800);
 }
 
-async function loadHome() {
-  try {
-    const bData = await airtable(TABLES.batches, '?sort%5B0%5D%5Bfield%5D=Batch+ID&sort%5B0%5D%5Bdirection%5D=desc&maxRecords=5');
-    state.batches = bData.records;
-    renderHomeBatches();
-    const tData = await airtable(TABLES.tasks, '?filterByFormula=NOT%28%7BStatus%7D%3D%22Done%22%29&sort%5B0%5D%5Bfield%5D=Priority&maxRecords=10');
-    state.tasks = tData.records;
-    renderHomeTasks();
-  } catch(e) {
-    document.getElementById('home-batches').innerHTML = '<div class="loading" style="color:var(--red)">Failed to load</div>';
-  }
+function statusBadge(status) {
+  const s = status.toLowerCase().replace(/\s/g,'-');
+  return `<span class="badge badge-status-${s}">${status}</span>`;
 }
 
-function renderHomeBatches() {
+async function loadHomeBatches() {
+  const data = await airtable(TABLES.batches, '?maxRecords=3&sort[0][field]=Date&sort[0][direction]=desc');
   const el = document.getElementById('home-batches');
-  if (!state.batches.length) { el.innerHTML = '<div class="empty"><div class="empty-icon">🍺</div>No batches yet</div>'; return; }
-  el.innerHTML = state.batches.slice(0,3).map(b => {
-    const f = b.fields;
-    const status = sel(f['Status']) || 'Unknown';
-    const brewDate = f['Date'] || '—';
-    const daysAgo = brewDate !== '—' ? Math.floor((Date.now() - new Date(brewDate)) / 86400000) : null;
-    const dayStr = daysAgo !== null ? `<span class="batch-day">${daysAgo}</span><div class="batch-day-label">days</div>` : '';
-    return `<div class="batch-card">
-      <div style="display:flex;justify-content:space-between;align-items:flex-start;">
+  if (!data.records?.length) { el.innerHTML = '<div class="empty">No batches yet.</div>'; return; }
+  el.innerHTML = data.records.map(r => batchCard(r)).join('');
+}
+
+function batchCard(r) {
+  const f = r.fields;
+  const recipe = Array.isArray(f.Recipe) ? f.Recipe[0] : '';
+  const status = sel(f.Status) || 'Unknown';
+  return `
+    <div class="batch-card" onclick="loadBatchDetail('${r.id}')">
+      <div class="batch-card-header">
         <div>
-          <div class="batch-name">Batch #${f['Batch ID']}</div>
-          <div class="batch-meta">${brewDate}</div>
-          <div class="batch-status">${status}</div>
+          <div class="batch-name">Batch #${f['Batch ID']} — ${recipe}</div>
+          <div class="batch-date">${f.Date || '—'}</div>
         </div>
-        <div style="text-align:right;">${dayStr}</div>
+        ${readinessBadge(f)}
+      </div>
+      <div class="batch-meta">
+        ${statusBadge(status)}
       </div>
     </div>`;
-  }).join('');
 }
 
-function renderHomeTasks() {
-  const el = document.getElementById('home-tasks');
-  if (!state.tasks.length) { el.innerHTML = '<div style="color:var(--muted);font-size:14px;padding:8px 0;">All clear. No open tasks.</div>'; return; }
-  const PC = { High:'priority-high', Medium:'priority-medium', Low:'priority-low' };
-  el.innerHTML = state.tasks.map(t => {
-    const f = t.fields;
-    const pri = sel(f['Priority']);
-    const due = f['Due Date'] || '';
-    return `<div class="task-item">
-      <div class="task-priority ${PC[pri]||'priority-low'}"></div>
-      <div>
-        <div class="task-text">${f['Task']||'—'}</div>
-        <div class="task-meta">${pri}${due?' · Due '+due:''}</div>
-      </div>
-    </div>`;
-  }).join('');
+async function loadBatches() {
+  showScreen('screen-batches');
+  const data = await airtable(TABLES.batches, '?sort[0][field]=Date&sort[0][direction]=desc');
+  const el = document.getElementById('batch-list');
+  if (!data.records?.length) { el.innerHTML = '<div class="empty">No batches found.</div>'; return; }
+  el.innerHTML = data.records.map(r => batchCard(r)).join('');
 }
 
-async function loadBatchesList() {
-  const el = document.getElementById('batches-list');
-  el.innerHTML = '<div class="loading"><div class="spinner"></div><br>Loading...</div>';
-  try {
-    const data = await airtable(TABLES.batches, '?sort%5B0%5D%5Bfield%5D=Batch+ID&sort%5B0%5D%5Bdirection%5D=desc');
-    if (!data.records.length) { el.innerHTML = '<div class="empty"><div class="empty-icon">🍺</div>No batches yet</div>'; return; }
-    const SC = { Brewing:'var(--amber)', Conditioning:'var(--blue)', Complete:'var(--green)', Planning:'var(--muted)' };
-    el.innerHTML = data.records.map(b => {
-      const f = b.fields;
-      const status = sel(f['Status']);
-      return `<div class="batch-card">
-        <div style="display:flex;justify-content:space-between;align-items:center;">
-          <div>
-            <div class="batch-name">Batch #${f['Batch ID']}</div>
-            <div class="batch-meta">${f['Date']||'—'}</div>
-          </div>
-          <div style="font-size:12px;font-family:Courier New,monospace;color:${SC[status]||'var(--muted)'};text-transform:uppercase;letter-spacing:1px;">${status}</div>
-        </div>
-      </div>`;
-    }).join('');
-  } catch(e) {
-    el.innerHTML = '<div class="loading" style="color:var(--red)">Failed to load</div>';
-  }
-}
-
-function startBrewFlow() {
-  showScreen('screen-batch-select');
-  loadBatchSelectList();
-}
-
-async function loadBatchSelectList() {
-  const el = document.getElementById('batch-select-list');
+async function loadBatchDetail(recordId) {
+  showScreen('screen-batch-detail');
+  const el = document.getElementById('batch-detail-content');
   el.innerHTML = '<div class="loading"><div class="spinner"></div></div>';
-  try {
-    const data = await airtable(TABLES.batches, '?sort%5B0%5D%5Bfield%5D=Batch+ID&sort%5B0%5D%5Bdirection%5D=desc');
-    if (!data.records.length) { el.innerHTML = '<div class="empty">No batches found</div>'; return; }
-    el.innerHTML = data.records.map(b => {
-      const f = b.fields;
-      return `<div class="batch-select-item" onclick="selectBatchForBrew('${b.id}')">
-        <div>
-          <div class="batch-select-name">Batch #${f['Batch ID']}</div>
-          <div class="batch-select-meta">${sel(f['Status'])} · ${f['Date']||'—'}</div>
-        </div>
-        <div class="batch-select-arrow">›</div>
-      </div>`;
-    }).join('');
-  } catch(e) {
-    el.innerHTML = '<div class="empty" style="color:var(--red)">Failed to load</div>';
+
+  const [batchData, logsData] = await Promise.all([
+    airtable(TABLES.batches, `/${recordId}`),
+    airtable(TABLES.brewLogs, `?filterByFormula=FIND("${recordId}",ARRAYJOIN({Batch}))`)
+  ]);
+
+  const f = batchData.fields;
+  const recipe = Array.isArray(f.Recipe) ? f.Recipe[0] : '';
+  const targets = RECIPE_TARGETS[recipe] || {};
+  const log = logsData.records?.[0]?.fields || {};
+  const status = sel(f.Status) || 'Unknown';
+
+  function compare(actual, target, lowerBetter=false) {
+    if (!actual || !target) return `<span class="detail-value">${actual || '—'}</span>`;
+    const diff = actual - target;
+    const pct = Math.abs(diff/target*100);
+    let cls = 'val-good';
+    if (pct > 5) cls = lowerBetter ? (diff > 0 ? 'val-bad' : 'val-good') : (diff < 0 ? 'val-warn' : 'val-good');
+    if (pct > 10) cls = 'val-bad';
+    return `<span class="detail-value ${cls}">${actual} <span class="vs-target">target ${target}</span></span>`;
   }
+
+  el.innerHTML = `
+    <div class="detail-section">
+      <h3>Batch Info</h3>
+      <div class="detail-row"><span class="detail-label">Batch ID</span><span class="detail-value">#${f['Batch ID']}</span></div>
+      <div class="detail-row"><span class="detail-label">Recipe</span><span class="detail-value">${recipe || '—'}</span></div>
+      <div class="detail-row"><span class="detail-label">Date</span><span class="detail-value">${f.Date || '—'}</span></div>
+      <div class="detail-row"><span class="detail-label">Status</span>${statusBadge(status)}</div>
+    </div>
+
+    ${readinessPanel(f)}
+
+    <div class="detail-section">
+      <h3>Mash</h3>
+      <div class="detail-row"><span class="detail-label">Temp</span>${compare(log['Mash Temp Actual'], targets.mash)}</div>
+      <div class="detail-row"><span class="detail-label">pH</span><span class="detail-value">${log['Mash pH Actual'] || '—'}</span></div>
+      <div class="detail-row"><span class="detail-label">Start Time</span><span class="detail-value">${log['Mash Start Time'] || '—'}</span></div>
+    </div>
+
+    <div class="detail-section">
+      <h3>Boil</h3>
+      <div class="detail-row"><span class="detail-label">Pre-boil Volume</span>${compare(log['Pre-boil Volume Actual'], targets.preboil)}</div>
+      <div class="detail-row"><span class="detail-label">Pre-boil Gravity</span><span class="detail-value">${log['Pre-boil Gravity Actual'] || '—'}</span></div>
+      <div class="detail-row"><span class="detail-label">Boil Confirmed</span><span class="detail-value">${log['Boil Duration Confirmed'] ? '✓ Yes' : '—'}</span></div>
+      <div class="detail-row"><span class="detail-label">Hop Notes</span><span class="detail-value">${log['Hop Additions Notes'] || '—'}</span></div>
+    </div>
+
+    <div class="detail-section">
+      <h3>Transfer & Fermentation</h3>
+      <div class="detail-row"><span class="detail-label">Transfer Volume</span><span class="detail-value">${log['Transfer Volume Actual'] || '—'} L</span></div>
+      <div class="detail-row"><span class="detail-label">OG Actual</span>${compare(log['OG Actual'], targets.og)}</div>
+      <div class="detail-row"><span class="detail-label">Transfer Temp</span><span class="detail-value">${log['Transfer Temp Actual'] || '—'} °C</span></div>
+      <div class="detail-row"><span class="detail-label">Fermenter</span><span class="detail-value">${log['Fermenter ID'] || '—'}</span></div>
+      <div class="detail-row"><span class="detail-label">Gravity Checks</span><span class="detail-value">${log['Gravity Checks'] || '—'}</span></div>
+    </div>
+
+    <div class="detail-section">
+      <h3>Bottling</h3>
+      <div class="detail-row"><span class="detail-label">FG Actual</span>${compare(log['FG Actual'], targets.fg)}</div>
+      <div class="detail-row"><span class="detail-label">Bottling Volume</span><span class="detail-value">${log['Bottling Volume Actual'] || '—'} L</span></div>
+      <div class="detail-row"><span class="detail-label">Priming Sugar</span><span class="detail-value">${log['Priming Sugar Amount'] || '—'} g</span></div>
+      <div class="detail-row"><span class="detail-label">Bottling Date</span><span class="detail-value">${log['Bottling Date'] || '—'}</span></div>
+    </div>
+
+    ${log['Brewer Notes'] ? `
+    <div class="detail-section">
+      <h3>Brewer Notes</h3>
+      <p style="font-size:14px;line-height:1.6;color:var(--text)">${log['Brewer Notes']}</p>
+    </div>` : ''}
+
+    <button class="btn btn-secondary" onclick="goBack()">← Back to Batches</button>
+  `;
 }
 
-async function selectBatchForBrew(recordId) {
-  let batch = state.batches.find(b => b.id === recordId);
-  if (!batch) {
-    try { batch = await airtable(TABLES.batches, `/${recordId}`); }
-    catch(e) { showToast('Could not load batch','error'); return; }
-  }
-  state.selectedBatchRecord = batch;
-  state.brewLog = null; state.brewLogId = null;
-  state.stageDone = { mash:false, boil:false, transfer:false, ferment:false, bottle:false };
-  state.gravChecks = [];
-  document.getElementById('brew-title').textContent = `Batch #${batch.fields['Batch ID']}`;
-  showScreen('screen-brew');
-  switchStage('mash');
-  updateProgress();
-  renderGravChecks();
-  await loadBrewTargets(batch);
-  await checkExistingBrewLog(batch.id, batch.fields['Batch ID']);
+const STAGES = ['Mash','Boil','Transfer','Ferment','Bottle'];
+let currentStage = 0;
+let currentLogId = null;
+let currentBatchFields = {};
+let currentTargets = {};
+let currentLogFields = {};
+
+async function loadBrewLog() {
+  const batchId = document.getElementById('brew-batch-select').value;
+  if (!batchId) return;
+  const batchData = await airtable(TABLES.batches, `/${batchId}`);
+  currentBatchFields = batchData.fields;
+  const recipe = Array.isArray(currentBatchFields.Recipe) ? currentBatchFields.Recipe[0] : '';
+  const targets = RECIPE_TARGETS[recipe] || {};
+  const logsData = await airtable(TABLES.brewLogs, `?filterByFormula=FIND("${batchId}",ARRAYJOIN({Batch}))`);
+  currentLogId = logsData.records?.[0]?.id || null;
+  const logFields = logsData.records?.[0]?.fields || {};
+  if (currentLogId) {
+    const savedStage = STAGES.findIndex(s => !isStageComplete(s, logFields));
+    currentStage = savedStage >= 0 ? savedStage : STAGES.length - 1;
+  } else { currentStage = 0; }
+  renderBrewStage(targets, logFields);
 }
 
-async function loadBrewTargets(batch) {
-  const banner = document.getElementById('brew-targets-banner');
-  try {
-    const recipeLinks = batch.fields['Recipe'] || [];
-    if (!recipeLinks.length) { banner.innerHTML = '<div style="font-size:12px;color:var(--muted);font-family:Courier New,monospace;">No recipe linked</div>'; return; }
-    const recipe = await airtable(TABLES.recipes, `/${recipeLinks[0]}`);
-    const rf = recipe.fields;
-    const recipeName = rf['Name'] || '';
-    const batchSize = rf['Default Batch Size'] || 500;
-    const RT = {
-      'Blonde du Château': { og:1.059, fg:1.010, mashTemp:65, boilDur:60, preBoilVol:570 },
-      'Ambree':            { og:1.060, fg:1.012, mashTemp:67, boilDur:60, preBoilVol:570 },
-      'Marckloff':         { og:1.060, fg:1.012, mashTemp:67, boilDur:60, preBoilVol:570 },
-      'IPA Sorachi':       { og:1.052, fg:1.008, mashTemp:65, boilDur:60, preBoilVol:570 },
-      'Czech Pilsner':     { og:1.050, fg:1.012, mashTemp:63, boilDur:60, preBoilVol:570 }
-    };
-    const targets = Object.entries(RT).find(([k]) => recipeName.includes(k))?.[1]
-      || { og:'—', fg:'—', mashTemp:'—', boilDur:60, preBoilVol:'—' };
-    state.recipeTargets = { ...targets, batchSize, recipeName };
-    document.getElementById('target-mash-temp').textContent = targets.mashTemp !== '—' ? `Target: ${targets.mashTemp}°C` : 'Target: —';
-    document.getElementById('target-og').textContent = targets.og !== '—' ? `Target OG: ${targets.og}` : 'Target: —';
-    document.getElementById('target-fg').textContent = targets.fg !== '—' ? `Target FG: ${targets.fg}` : 'Target: —';
-    document.getElementById('target-preboil-vol').textContent = targets.preBoilVol !== '—' ? `Target: ${targets.preBoilVol}L` : 'Target: —';
-    document.getElementById('target-transfer-vol').textContent = `Target: ${batchSize}L`;
-    document.getElementById('target-boil-dur').textContent = `Target: ${targets.boilDur} min`;
-    banner.innerHTML = `
-      <div class="target-chip"><div class="target-chip-val">${recipeName.split(' ').slice(0,2).join(' ')}</div><div class="target-chip-label">Recipe</div></div>
-      <div class="target-divider"></div>
-      <div class="target-chip"><div class="target-chip-val">${batchSize}L</div><div class="target-chip-label">Batch</div></div>
-      <div class="target-divider"></div>
-      <div class="target-chip"><div class="target-chip-val">${targets.og !== '—' ? targets.og : '—'}</div><div class="target-chip-label">OG target</div></div>
-      <div class="target-divider"></div>
-      <div class="target-chip"><div class="target-chip-val">${targets.fg !== '—' ? targets.fg : '—'}</div><div class="target-chip-label">FG target</div></div>
-      <div class="target-divider"></div>
-      <div class="target-chip"><div class="target-chip-val">${targets.mashTemp !== '—' ? targets.mashTemp+'°C' : '—'}</div><div class="target-chip-label">Mash temp</div></div>`;
-  } catch(e) {
-    banner.innerHTML = '<div style="font-size:12px;color:var(--muted);font-family:Courier New,monospace;">Could not load targets</div>';
-  }
+function isStageComplete(stage, f) {
+  if (stage === 'Mash') return f['Mash Temp Actual'] && f['Mash Start Time'];
+  if (stage === 'Boil') return f['Pre-boil Volume Actual'] && f['Boil Duration Confirmed'];
+  if (stage === 'Transfer') return f['OG Actual'] && f['Transfer Volume Actual'];
+  if (stage === 'Ferment') return f['Gravity Checks'];
+  if (stage === 'Bottle') return f['FG Actual'] && f['Bottling Volume Actual'];
+  return false;
 }
 
-async function checkExistingBrewLog(batchRecordId, batchId) {
-  const notice = document.getElementById('brew-existing-notice');
-  try {
-    const data = await airtable(TABLES.brewLogs, '?maxRecords=50');
-    const existing = data.records.find(r => (r.fields['Batch']||[]).includes(batchRecordId));
-    if (existing) {
-      state.brewLog = existing.fields; state.brewLogId = existing.id;
-      const logStatus = sel(existing.fields['Log Status']) || '';
-      notice.style.display = 'block';
-      notice.innerHTML = `<div class="brew-log-existing">
-        <div class="brew-log-existing-title">🍺 Picking up where you left off</div>
-        <div class="brew-log-existing-meta">Status: ${logStatus||'In progress'} · Started ${existing.fields['Brew Date']||'—'}</div>
-      </div>`;
-      prefillFromLog(existing.fields);
-    } else {
-      notice.style.display = 'none';
-    }
-  } catch(e) { notice.style.display = 'none'; }
-}
+function renderBrewStage(targets, logFields) {
+  const tabs = STAGES.map((s,i) => {
+    let cls = i === currentStage ? 'active' : '';
+    if (i < currentStage) cls = 'done';
+    return `<div class="stage-tab ${cls}" onclick="currentStage=${i};renderBrewStage(currentTargets,currentLogFields)">${s}</div>`;
+  }).join('');
+  currentTargets = targets; currentLogFields = logFields;
+  const stage = STAGES[currentStage];
+  const recipe = Array.isArray(currentBatchFields.Recipe) ? currentBatchFields.Recipe[0] : '';
+  let fields = '';
+  if (stage === 'Mash') fields = `
+    <div class="field-group"><label class="field-label">Mash Temp Actual (°C)</label>
+      ${targets.mash ? `<span class="field-hint">Target: ${targets.mash}°C</span>` : ''}
+      <input type="number" id="f-mash-temp" value="${logFields['Mash Temp Actual']||''}" step="0.1" placeholder="e.g. 65.5"></div>
+    <div class="field-group"><label class="field-label">Mash pH Actual</label>
+      <input type="number" id="f-mash-ph" value="${logFields['Mash pH Actual']||''}" step="0.01" placeholder="e.g. 5.4"></div>
+    <div class="field-group"><label class="field-label">Mash Start Time</label>
+      <input type="text" id="f-mash-time" value="${logFields['Mash Start Time']||''}" placeholder="e.g. 08:30"></div>`;
+  else if (stage === 'Boil') fields = `
+    <div class="field-group"><label class="field-label">Pre-boil Volume (L)</label>
+      ${targets.preboil ? `<span class="field-hint">Target: ${targets.preboil}L</span>` : ''}
+      <input type="number" id="f-preboil-vol" value="${logFields['Pre-boil Volume Actual']||''}" step="1" placeholder="e.g. 565"></div>
+    <div class="field-group"><label class="field-label">Pre-boil Gravity</label>
+      <input type="number" id="f-preboil-grav" value="${logFields['Pre-boil Gravity Actual']||''}" step="0.001" placeholder="e.g. 1.048"></div>
+    <div class="field-group"><label class="checkbox-field">
+      <input type="checkbox" id="f-boil-confirmed" ${logFields['Boil Duration Confirmed']?'checked':''}>
+      Boil duration confirmed (${targets.boil||60} min)</label></div>
+    <div class="field-group"><label class="field-label">Hop Additions Notes</label>
+      <textarea id="f-hop-notes" placeholder="Times, amounts, varieties...">${logFields['Hop Additions Notes']||''}</textarea></div>`;
+  else if (stage === 'Transfer') fields = `
+    <div class="field-group"><label class="field-label">Transfer Volume (L)</label>
+      <input type="number" id="f-transfer-vol" value="${logFields['Transfer Volume Actual']||''}" step="1" placeholder="e.g. 490"></div>
+    <div class="field-group"><label class="field-label">OG Actual</label>
+      ${targets.og ? `<span class="field-hint">Target: ${targets.og}</span>` : ''}
+      <input type="number" id="f-og" value="${logFields['OG Actual']||''}" step="0.001" placeholder="e.g. 1.058"></div>
+    <div class="field-group"><label class="field-label">Transfer Temp (°C)</label>
+      <input type="number" id="f-transfer-temp" value="${logFields['Transfer Temp Actual']||''}" step="1" placeholder="e.g. 25"></div>
+    <div class="field-group"><label class="field-label">Fermenter ID</label>
+      <input type="text" id="f-fermenter" value="${logFields['Fermenter ID']||''}" placeholder="e.g. FV-01"></div>`;
+  else if (stage === 'Ferment') fields = `
+    <div class="field-group"><label class="field-label">Gravity Checks (log entries)</label>
+      <textarea id="f-grav-checks" placeholder="Day 2: 1.030 / Day 4: 1.015 / Day 6: 1.010...">${logFields['Gravity Checks']||''}</textarea></div>`;
+  else if (stage === 'Bottle') fields = `
+    <div class="field-group"><label class="field-label">FG Actual</label>
+      ${targets.fg ? `<span class="field-hint">Target: ${targets.fg}</span>` : ''}
+      <input type="number" id="f-fg" value="${logFields['FG Actual']||''}" step="0.001" placeholder="e.g. 1.010"></div>
+    <div class="field-group"><label class="field-label">Bottling Volume (L)</label>
+      <input type="number" id="f-bottle-vol" value="${logFields['Bottling Volume Actual']||''}" step="1" placeholder="e.g. 480"></div>
+    <div class="field-group"><label class="field-label">Priming Sugar (g)</label>
+      <input type="number" id="f-priming" value="${logFields['Priming Sugar Amount']||''}" step="1" placeholder="e.g. 750"></div>
+    <div class="field-group"><label class="field-label">Bottling Date</label>
+      <input type="text" id="f-bottle-date" value="${logFields['Bottling Date']||''}" placeholder="YYYY-MM-DD"></div>
+    <div class="field-group"><label class="field-label">Brewer Notes</label>
+      <textarea id="f-notes" placeholder="Any observations, issues, next time...">${logFields['Brewer Notes']||''}</textarea></div>`;
 
-function prefillFromLog(fields) {
-  const set = (id, val) => { const el = document.getElementById(id); if (el && val != null && val !== '') el.value = val; };
-  set('input-mash-temp', fields['Mash Temp Actual']);
-  set('input-mash-ph', fields['Mash pH Actual']);
-  set('input-mash-time', fields['Mash Start Time']);
-  set('input-preboil-vol', fields['Pre-boil Volume Actual']);
-  set('input-preboil-grav', fields['Pre-boil Gravity Actual']);
-  set('input-hop-notes', fields['Hop Additions Notes']);
-  set('input-transfer-vol', fields['Transfer Volume Actual']);
-  set('input-og', fields['OG Actual']);
-  set('input-transfer-temp', fields['Transfer Temp Actual']);
-  set('input-fermenter', fields['Fermenter ID']);
-  set('input-fg', fields['FG Actual']);
-  set('input-bottle-vol', fields['Bottling Volume Actual']);
-  set('input-priming', fields['Priming Sugar Amount']);
-  set('input-bottle-date', fields['Bottling Date']);
-  set('input-brew-notes', fields['Brewer Notes']);
-  if (fields['Gravity Checks']) {
-    try { const c = JSON.parse(fields['Gravity Checks']); if (Array.isArray(c)) { state.gravChecks = c; renderGravChecks(); } } catch(e) {}
-  }
-  if (fields['Boil Duration Confirmed']) {
-    checkboxState['boil-duration'] = true;
-    document.getElementById('chk-boil-duration').classList.add('checked');
-    document.getElementById('chk-boil-duration-box').textContent = '✓';
-  }
-  const status = sel(fields['Log Status']);
-  const order = ['Mashing','Boiling','Fermenting','Bottling','Complete'];
-  const idx = order.indexOf(status);
-  const keys = ['mash','boil','transfer','ferment','bottle'];
-  keys.forEach((k,i) => { if (idx > i) state.stageDone[k] = true; });
-  updateStageTabs(); updateProgress();
-}
-
-function switchStage(stage) {
-  document.querySelectorAll('.brew-stage').forEach(s => s.classList.remove('active'));
-  document.querySelectorAll('.stage-tab').forEach(t => t.classList.remove('active'));
-  document.getElementById('stage-'+stage).classList.add('active');
-  document.querySelector(`.stage-tab[data-stage="${stage}"]`).classList.add('active');
-}
-function updateStageTabs() {
-  Object.entries(state.stageDone).forEach(([k,v]) => {
-    const tab = document.querySelector(`.stage-tab[data-stage="${k}"]`);
-    if (tab) v ? tab.classList.add('done') : tab.classList.remove('done');
-  });
-}
-function updateProgress() {
-  const done = Object.values(state.stageDone).filter(Boolean).length;
-  document.getElementById('brew-progress-fill').style.width = Math.max(10, (done/5)*100) + '%';
-}
-
-const TARGETS = {
-  'mash-temp':   { field: () => state.recipeTargets.mashTemp, tol: 2 },
-  'preboil-vol': { field: () => state.recipeTargets.preBoilVol, tol: 15 },
-  'preboil-grav':{ field: () => null, tol: 0.003 },
-  'transfer-vol':{ field: () => state.recipeTargets.batchSize, tol: 20 },
-  'og':          { field: () => state.recipeTargets.og, tol: 0.003 },
-  'fg':          { field: () => state.recipeTargets.fg, tol: 0.003 }
-};
-function evalField(input, key) {
-  const cfg = TARGETS[key]; if (!cfg) return;
-  const target = cfg.field();
-  if (!target || target === '—') return;
-  const val = parseFloat(input.value); if (isNaN(val)) { input.className = 'field-input'; return; }
-  const diff = val - target; const abs = Math.abs(diff);
-  const deltaEl = document.getElementById('delta-'+key);
-  const isVol = key.includes('vol');
-  const fmt = (n) => n.toFixed(isVol ? 1 : 3);
-  if (abs <= cfg.tol) {
-    input.className = 'field-input good';
-    if (deltaEl) { deltaEl.textContent = '✓ On target'; deltaEl.className = 'delta positive'; }
-  } else if (abs <= cfg.tol * 2.5) {
-    input.className = 'field-input warn';
-    if (deltaEl) { deltaEl.textContent = `${diff>0?'+':''}${fmt(diff)} from target`; deltaEl.className = 'delta neutral'; }
-  } else {
-    input.className = 'field-input bad';
-    if (deltaEl) { deltaEl.textContent = `⚠ ${diff>0?'+':''}${fmt(diff)} from target`; deltaEl.className = 'delta negative'; }
-  }
-}
-
-const checkboxState = {};
-function toggleCheck(id) {
-  checkboxState[id] = !checkboxState[id];
-  const el = document.getElementById('chk-'+id);
-  const box = document.getElementById('chk-'+id+'-box');
-  if (checkboxState[id]) { el.classList.add('checked'); box.textContent = '✓'; }
-  else { el.classList.remove('checked'); box.textContent = ''; }
-}
-
-function addGravCheck() { state.gravChecks.push({ date: new Date().toISOString().slice(0,10), gravity:'' }); renderGravChecks(); }
-function removeGravCheck(idx) { state.gravChecks.splice(idx,1); renderGravChecks(); }
-function renderGravChecks() {
-  const el = document.getElementById('grav-check-list');
-  if (!state.gravChecks.length) { el.innerHTML = '<div style="padding:4px 16px 8px;font-size:13px;font-family:Courier New,monospace;color:var(--muted);">No readings yet</div>'; return; }
-  el.innerHTML = state.gravChecks.map((c,i) => `<div class="grav-check-row">
-    <input class="grav-date-input" type="date" value="${c.date}" onchange="state.gravChecks[${i}].date=this.value">
-    <input class="grav-val-input" type="number" inputmode="decimal" step="0.001" placeholder="1.020" value="${c.gravity}" onchange="state.gravChecks[${i}].gravity=this.value">
-    <button class="grav-del" onclick="removeGravCheck(${i})">×</button>
-  </div>`).join('');
-}
-function getGravChecksValue() {
-  const v = state.gravChecks.filter(c => c.gravity);
-  return v.length ? JSON.stringify(v) : null;
+  document.getElementById('brew-stage-content').innerHTML = `
+    <div class="stage-tabs">${tabs}</div>
+    <div class="brew-stage">
+      <h3>${stage}</h3>
+      <p>Recipe: ${recipe || 'Select a batch above'}</p>
+      ${fields}
+      <button class="btn btn-primary" onclick="saveStage('${stage}')">Save ${stage}</button>
+    </div>`;
 }
 
 async function saveStage(stage) {
-  const btn = document.querySelector(`#stage-${stage} .stage-btn`);
-  const orig = btn.textContent; btn.textContent = 'Saving...'; btn.disabled = true;
+  const batchId = document.getElementById('brew-batch-select').value;
+  if (!batchId) { toast('Select a batch first'); return; }
+  let fields = {};
+  if (stage==='Mash') {
+    fields['Mash Temp Actual'] = parseFloat(document.getElementById('f-mash-temp').value)||null;
+    fields['Mash pH Actual'] = parseFloat(document.getElementById('f-mash-ph').value)||null;
+    fields['Mash Start Time'] = document.getElementById('f-mash-time').value||null;
+  } else if (stage==='Boil') {
+    fields['Pre-boil Volume Actual'] = parseFloat(document.getElementById('f-preboil-vol').value)||null;
+    fields['Pre-boil Gravity Actual'] = parseFloat(document.getElementById('f-preboil-grav').value)||null;
+    fields['Boil Duration Confirmed'] = document.getElementById('f-boil-confirmed').checked;
+    fields['Hop Additions Notes'] = document.getElementById('f-hop-notes').value||null;
+  } else if (stage==='Transfer') {
+    fields['Transfer Volume Actual'] = parseFloat(document.getElementById('f-transfer-vol').value)||null;
+    fields['OG Actual'] = parseFloat(document.getElementById('f-og').value)||null;
+    fields['Transfer Temp Actual'] = parseFloat(document.getElementById('f-transfer-temp').value)||null;
+    fields['Fermenter ID'] = document.getElementById('f-fermenter').value||null;
+  } else if (stage==='Ferment') {
+    fields['Gravity Checks'] = document.getElementById('f-grav-checks').value||null;
+  } else if (stage==='Bottle') {
+    fields['FG Actual'] = parseFloat(document.getElementById('f-fg').value)||null;
+    fields['Bottling Volume Actual'] = parseFloat(document.getElementById('f-bottle-vol').value)||null;
+    fields['Priming Sugar Amount'] = parseFloat(document.getElementById('f-priming').value)||null;
+    fields['Bottling Date'] = document.getElementById('f-bottle-date').value||null;
+    fields['Brewer Notes'] = document.getElementById('f-notes').value||null;
+  }
+  Object.keys(fields).forEach(k => { if (fields[k]===null || fields[k]==='') delete fields[k]; });
   try {
-    const fields = buildFieldsForStage(stage);
-    if (state.brewLogId) {
-      await airtable(TABLES.brewLogs, `/${state.brewLogId}`, 'PATCH', { fields });
+    if (currentLogId) {
+      await airtablePatch(TABLES.brewLogs, currentLogId, fields);
     } else {
-      const batchId = state.selectedBatchRecord.fields['Batch ID'];
-      fields['Batch'] = [state.selectedBatchRecord.id];
-      fields['Log ID'] = `BL-${batchId}-${new Date().toISOString().slice(0,10)}`;
-      fields['Brew Date'] = new Date().toISOString().slice(0,10);
-      const created = await airtable(TABLES.brewLogs, '', 'POST', { fields });
-      state.brewLogId = created.id;
-      state.brewLog = created.fields;
+      fields['Batch'] = [batchId];
+      fields['Log ID'] = `LOG-${batchId.slice(-4)}-${Date.now()}`;
+      const r = await fetch(`https://api.airtable.com/v0/${BASE}/${TABLES.brewLogs}`, {
+        method: 'POST',
+        headers: { Authorization: `Bearer ${KEY}`, 'Content-Type': 'application/json' },
+        body: JSON.stringify({ fields })
+      });
+      const data = await r.json();
+      currentLogId = data.id;
     }
-    state.stageDone[stage] = true;
-    updateStageTabs(); updateProgress();
-    const NEXT = { mash:'boil', boil:'transfer', transfer:'ferment', ferment:'bottle', bottle:null };
-    const next = NEXT[stage];
-    if (next) { showToast('Saved ✓','success'); setTimeout(() => switchStage(next), 400); }
-    else { showToast('🎉 Brew log complete!','success'); }
-  } catch(e) {
-    console.error(e);
-    showToast('Save failed — check connection','error');
-  } finally { btn.textContent = orig; btn.disabled = false; }
+    toast(`✓ ${stage} saved`);
+    if (currentStage < STAGES.length - 1) currentStage++;
+    currentLogFields = { ...currentLogFields, ...fields };
+    renderBrewStage(currentTargets, currentLogFields);
+  } catch(e) { toast('Error saving — check connection'); }
 }
 
-function buildFieldsForStage(stage) {
-  const g = id => { const el = document.getElementById(id); return el ? el.value : null; };
-  const n = id => { const v = parseFloat(g(id)); return isNaN(v) ? null : v; };
-  if (stage==='mash') return { 'Mash Temp Actual':n('input-mash-temp'), 'Mash pH Actual':n('input-mash-ph'), 'Mash Start Time':g('input-mash-time')||null, 'Log Status':'Mashing' };
-  if (stage==='boil') return { 'Pre-boil Volume Actual':n('input-preboil-vol'), 'Pre-boil Gravity Actual':n('input-preboil-grav'), 'Boil Duration Confirmed':!!checkboxState['boil-duration'], 'Hop Additions Notes':g('input-hop-notes')||null, 'Log Status':'Boiling' };
-  if (stage==='transfer') return { 'Transfer Volume Actual':n('input-transfer-vol'), 'OG Actual':n('input-og'), 'Transfer Temp Actual':n('input-transfer-temp'), 'Fermenter ID':g('input-fermenter')||null, 'Log Status':'Fermenting' };
-  if (stage==='ferment') return { 'Gravity Checks':getGravChecksValue(), 'FG Actual':n('input-fg'), 'Brewer Notes':g('input-ferm-notes')||null, 'Log Status':'Bottling' };
-  if (stage==='bottle') return { 'Bottling Volume Actual':n('input-bottle-vol'), 'Priming Sugar Amount':n('input-priming'), 'Bottling Date':g('input-bottle-date')||null, 'Brewer Notes':g('input-brew-notes')||null, 'Log Status':'Complete' };
-  return {};
+async function loadTasks() {
+  const data = await airtable(TABLES.tasks, '?filterByFormula=NOT({Status}="Done")&sort[0][field]=Priority');
+  const el = document.getElementById('task-list');
+  if (!data.records?.length) { el.innerHTML = '<div class="empty">No open tasks 🎉</div>'; return; }
+  el.innerHTML = data.records.map(r => {
+    const f = r.fields;
+    const p = sel(f.Priority);
+    const pCls = p==='Urgent'?'val-bad':p==='High'?'val-warn':'';
+    return `<div class="batch-card">
+      <div class="batch-card-header">
+        <div><div class="batch-name">${f.Task||'Unnamed'}</div>
+        <div class="batch-date">${f['Due Date']||'No due date'}</div></div>
+        <span class="badge badge-status-brewing" style="color:inherit" class="${pCls}">${p||'Normal'}</span>
+      </div>
+      <div class="batch-meta">${sel(f.Status)||''} · ${sel(f.Type)||''}</div>
+    </div>`;
+  }).join('');
 }
 
-loadHome();
+async function init() {
+  await loadHomeBatches();
+  const batchData = await airtable(TABLES.batches, '?sort[0][field]=Date&sort[0][direction]=desc');
+  const sel2 = document.getElementById('brew-batch-select');
+  sel2.innerHTML = '<option value="">Select a batch...</option>' +
+    (batchData.records||[]).map(r =>
+      `<option value="${r.id}">Batch #${r.fields['Batch ID']} — ${Array.isArray(r.fields.Recipe)?r.fields.Recipe[0]:''}</option>`
+    ).join('');
+  loadTasks();
+}
+
+init();
 </script>
 </body>
 </html>
