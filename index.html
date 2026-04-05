@@ -149,26 +149,68 @@
 
 <!-- HOME -->
 <div id="screen-home" class="screen active">
-  <div class="greeting">
-    <h1>Good day, Lars</h1>
-    <p>Brasserie du Château de Durbuy</p>
+<!-- Header -->
+<div style="padding:20px 20px 0; display:flex; justify-content:space-between; align-items:center;">
+  <div>
+    <p style="font-size:22px; font-weight:700; color:#111827; margin:0;" id="home-title">Today's operations</p>
   </div>
-  <div class="action-grid">
-    <div class="action-card" onclick="showScreen('screen-brew')">
-      <div class="icon">🍺</div><div class="label">Brew Day</div><div class="desc">Log a brew session</div>
+  <button onclick="showScreen('screen-settings')" style="background:#f3f4f6; border:none; border-radius:50%; width:36px; height:36px; font-size:16px; cursor:pointer;">⚙️</button>
+</div>
+
+<!-- WHAT'S NEXT -->
+<div style="padding:20px 20px 0;">
+  <p style="font-size:13px; font-weight:600; color:#9ca3af; letter-spacing:0.06em; text-transform:uppercase; margin:0 0 12px;" id="home-whats-next-label">What's next</p>
+
+  <!-- Guidance helper line (dismissible) -->
+  <div id="guidance-helper" style="background:#f0f9ff; border-radius:12px; padding:12px 14px; margin-bottom:12px; display:flex; justify-content:space-between; align-items:center;">
+    <p style="font-size:13px; color:#0369a1; margin:0;">Tap any card to go directly to that step.</p>
+    <button onclick="dismissGuidance()" style="background:none; border:none; color:#9ca3af; font-size:16px; cursor:pointer; padding:0 0 0 8px;">✕</button>
+  </div>
+
+  <!-- What's Next cards -->
+  <div id="whats-next-cards" style="display:flex; flex-direction:column; gap:10px;"></div>
+</div>
+
+<!-- ACTIVE BATCHES -->
+<div style="padding:20px 20px 0;">
+  <p style="font-size:13px; font-weight:600; color:#9ca3af; letter-spacing:0.06em; text-transform:uppercase; margin:0 0 12px;" id="home-batches-label">Active batches</p>
+  <div id="home-batch-list" style="display:flex; flex-direction:column; gap:10px;"></div>
+</div>
+
+<!-- AGENDA PREVIEW -->
+<div style="padding:20px 20px 0;">
+  <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:12px;">
+    <p style="font-size:13px; font-weight:600; color:#9ca3af; letter-spacing:0.06em; text-transform:uppercase; margin:0;" id="home-agenda-label">Agenda</p>
+    <button onclick="showScreen('screen-agenda')" style="background:none; border:none; color:#6b7280; font-size:13px; cursor:pointer;" id="home-agenda-more">See more</button>
+  </div>
+  <div id="home-agenda-preview" style="display:flex; flex-direction:column; gap:8px;"></div>
+</div>
+
+<!-- FINANCIAL PREVIEW -->
+<div style="padding:20px 20px 0;" id="home-financial-section">
+  <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:12px;">
+    <p style="font-size:13px; font-weight:600; color:#9ca3af; letter-spacing:0.06em; text-transform:uppercase; margin:0;" id="home-financial-label">Financial</p>
+  </div>
+  <div onclick="showScreen('screen-financial')" style="background:#f9fafb; border-radius:16px; padding:18px; cursor:pointer; display:flex; justify-content:space-around;">
+    <div style="text-align:center;">
+      <p style="font-size:11px; color:#9ca3af; margin:0 0 4px;" id="fin-rev-label">Revenue</p>
+      <p style="font-size:18px; font-weight:700; color:#111827; margin:0;" id="fin-rev-value">—</p>
+      <p style="font-size:11px; margin:0;" id="fin-rev-arrow"></p>
     </div>
-    <div class="action-card" onclick="loadBatches()">
-      <div class="icon">📦</div><div class="label">Batches</div><div class="desc">View all batches</div>
+    <div style="text-align:center;">
+      <p style="font-size:11px; color:#9ca3af; margin:0 0 4px;" id="fin-costs-label">Costs</p>
+      <p style="font-size:18px; font-weight:700; color:#111827; margin:0;" id="fin-costs-value">—</p>
+      <p style="font-size:11px; margin:0;" id="fin-costs-arrow"></p>
     </div>
-    <div class="action-card" onclick="showScreen('screen-tasks')">
-      <div class="icon">✅</div><div class="label">Tasks</div><div class="desc">Open items</div>
-    </div>
-    <div class="action-card" onclick="showScreen('screen-issues')">
-      <div class="icon">⚠️</div><div class="label">Issues</div><div class="desc">Log a problem</div>
+    <div style="text-align:center;">
+      <p style="font-size:11px; color:#9ca3af; margin:0 0 4px;" id="fin-margin-label">Margin</p>
+      <p style="font-size:18px; font-weight:700; color:#111827; margin:0;" id="fin-margin-value">—</p>
+      <p style="font-size:11px; margin:0;" id="fin-margin-arrow"></p>
     </div>
   </div>
-  <div class="section-title">Recent Batches</div>
-  <div id="home-batches"><div class="loading"><div class="spinner"></div></div></div>
+</div>
+
+<div style="height:80px;"></div>
 </div>
 
 <!-- BATCH LIST -->
@@ -992,12 +1034,6 @@ async function airtablePatch(table, id, fields) {
 }
 
 let screenStack = ['screen-home'];
-function showScreen(id) {
-  document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
-  document.getElementById(id).classList.add('active');
-  screenStack.push(id);
-  document.getElementById('navBack').style.display = screenStack.length > 1 ? 'flex' : 'none';
-}
 function goBack() {
   screenStack.pop();
   const prev = screenStack[screenStack.length-1] || 'screen-home';
@@ -1335,6 +1371,150 @@ function bootFlow() {
   }
 }
 
+// ── GUIDANCE HELPER ──────────────────────────────────────────────────────────
+function dismissGuidance() {
+  const count = parseInt(localStorage.getItem('brewos_guidance_dismissed') || '0') + 1;
+  localStorage.setItem('brewos_guidance_dismissed', count);
+  const el = document.getElementById('guidance-helper');
+  if (el) el.style.display = 'none';
+  if (count >= 3) localStorage.setItem('brewos_guidance_hide', '1');
+}
+
+function initGuidanceHelper() {
+  const hide = localStorage.getItem('brewos_guidance_hide') === '1'
+    || !( localStorage.getItem('brewos_show_guidance') !== '0' );
+  const el = document.getElementById('guidance-helper');
+  if (el && hide) el.style.display = 'none';
+}
+
+// ── WHAT'S NEXT CARDS ────────────────────────────────────────────────────────
+const WHATS_NEXT_DEMO = [
+  {
+    title: 'Check fermentation on Batch 4',
+    reason: 'Gravity reading overdue by 2 days.',
+    label: 'recommended',
+    screen: 'screen-batch-detail',
+  },
+  {
+    title: 'Log brew day for Batch 5',
+    reason: 'Brew day started — mash step not yet recorded.',
+    label: 'helpful',
+    screen: 'screen-brew',
+  },
+  {
+    title: 'Review Q1 cost summary',
+    reason: 'Obligation due end of month.',
+    label: 'later',
+    screen: 'screen-financial',
+  },
+];
+
+const LABEL_STYLES = {
+  recommended: { bg: '#ecfdf5', color: '#065f46', text: 'Recommended' },
+  helpful:     { bg: '#eff6ff', color: '#1e40af', text: 'Helpful' },
+  later:       { bg: '#f9fafb', color: '#6b7280', text: 'Later' },
+};
+
+function renderWhatsNext() {
+  const container = document.getElementById('whats-next-cards');
+  if (!container) return;
+  container.innerHTML = WHATS_NEXT_DEMO.map(card => {
+    const style = LABEL_STYLES[card.label] || LABEL_STYLES.later;
+    return `
+      <div onclick="showScreen('${card.screen}')" style="background:#fff; border:1.5px solid #f3f4f6; border-radius:16px; padding:16px; cursor:pointer; position:relative;">
+        <span style="position:absolute; top:14px; right:14px; font-size:11px; font-weight:600; background:${style.bg}; color:${style.color}; padding:3px 8px; border-radius:20px;">${style.text}</span>
+        <p style="font-size:15px; font-weight:600; color:#111827; margin:0 64px 6px 0;">${card.title}</p>
+        <p style="font-size:13px; color:#6b7280; margin:0;">${card.reason}</p>
+      </div>`;
+  }).join('');
+}
+
+// ── HOME BATCH LIST ──────────────────────────────────────────────────────────
+function renderHomeBatches(batches) {
+  const container = document.getElementById('home-batch-list');
+  if (!container) return;
+  if (!batches || batches.length === 0) {
+    container.innerHTML = '<p style="font-size:14px; color:#9ca3af; margin:0;">No active batches.</p>';
+    return;
+  }
+  container.innerHTML = batches.slice(0, 3).map(b => {
+    const fields = b.fields || {};
+    const status = sel(fields['Status']) || 'Unknown';
+    const batchId = fields['Batch ID'] || '—';
+    const summary = fields['Summary Line'] || status;
+    const isReady = status === 'Done' || status === 'Completed';
+    const badgeColor = isReady ? '#d1fae5' : status === 'Blocked' ? '#fee2e2' : '#e0e7ff';
+    const badgeText = isReady ? '#065f46' : status === 'Blocked' ? '#991b1b' : '#3730a3';
+    return `
+      <div onclick="openBatchDetail('${b.id}')" style="background:#fff; border:1.5px solid #f3f4f6; border-radius:16px; padding:16px; cursor:pointer; display:flex; justify-content:space-between; align-items:center;">
+        <div>
+          <p style="font-size:15px; font-weight:600; color:#111827; margin:0 0 4px;">Batch ${batchId}</p>
+          <p style="font-size:13px; color:#6b7280; margin:0;">${summary}</p>
+        </div>
+        <span style="font-size:11px; font-weight:600; background:${badgeColor}; color:${badgeText}; padding:4px 10px; border-radius:20px; white-space:nowrap;">${status}</span>
+      </div>`;
+  }).join('');
+}
+
+// ── AGENDA PREVIEW ───────────────────────────────────────────────────────────
+const AGENDA_DEMO = [
+  { time: '08:00', title: 'Check mash temperature — Batch 4', system: true },
+  { time: '11:00', title: 'Transfer to fermenter', system: false },
+  { time: null,    title: 'Call Brasserie Dupont re: hop order', system: false },
+];
+
+function renderAgendaPreview() {
+  const container = document.getElementById('home-agenda-preview');
+  if (!container) return;
+  const items = AGENDA_DEMO.slice(0, 3);
+  container.innerHTML = items.map(item => `
+    <div style="background:#fff; border:1.5px solid #f3f4f6; border-radius:12px; padding:12px 14px; display:flex; align-items:center; gap:12px;">
+      <span style="font-size:12px; color:#9ca3af; min-width:36px;">${item.time || '—'}</span>
+      ${item.system ? '<span style="font-size:12px;" title="System generated">✦</span>' : '<span style="min-width:14px;"></span>'}
+      <p style="font-size:14px; color:#111827; margin:0;">${item.title}</p>
+    </div>`).join('');
+}
+
+// ── FINANCIAL PREVIEW ────────────────────────────────────────────────────────
+const FINANCIAL_DEMO = {
+  revenue: 6480, costs: 3240, margin: 3240,
+  prevRevenue: 5100, prevCosts: 2890, prevMargin: 2210,
+};
+
+function renderFinancialPreview() {
+  const d = FINANCIAL_DEMO;
+  const arrow = (curr, prev) => curr >= prev ? '↑' : '↓';
+  const arrowColor = (curr, prev) => curr >= prev ? '#059669' : '#dc2626';
+  const fmt = v => `€${v.toLocaleString()}`;
+
+  const setEl = (id, val) => { const el = document.getElementById(id); if (el) el.textContent = val; };
+  const setStyle = (id, prop, val) => { const el = document.getElementById(id); if (el) el.style[prop] = val; };
+
+  setEl('fin-rev-value', fmt(d.revenue));
+  setEl('fin-costs-value', fmt(d.costs));
+  setEl('fin-margin-value', fmt(d.margin));
+  setEl('fin-rev-arrow', arrow(d.revenue, d.prevRevenue));
+  setEl('fin-costs-arrow', arrow(d.costs, d.prevCosts));
+  setEl('fin-margin-arrow', arrow(d.margin, d.prevMargin));
+  setStyle('fin-rev-arrow', 'color', arrowColor(d.revenue, d.prevRevenue));
+  setStyle('fin-costs-arrow', 'color', arrowColor(d.costs, d.prevCosts));
+  setStyle('fin-margin-arrow', 'color', arrowColor(d.margin, d.prevMargin));
+  setEl('fin-rev-label', t('financial.revenue'));
+  setEl('fin-costs-label', t('financial.costs'));
+  setEl('fin-margin-label', t('financial.margin'));
+}
+
+// ── HOME SECTION LABELS ──────────────────────────────────────────────────────
+function applyHomeLabels() {
+  const setEl = (id, key) => { const el = document.getElementById(id); if (el) el.textContent = t(key); };
+  setEl('home-title', 'home.today');
+  setEl('home-whats-next-label', 'home.whats_next');
+  setEl('home-batches-label', 'home.active_batches');
+  setEl('home-agenda-label', 'home.agenda');
+  setEl('home-agenda-more', 'agenda.see_more');
+  setEl('home-financial-label', 'home.financial');
+}
+
 async function init() {
   await loadHomeBatches();
   const batchData = await airtable(TABLES.batches, '?sort[0][field]=Date&sort[0][direction]=desc');
@@ -1344,6 +1524,11 @@ async function init() {
       `<option value="${r.id}">Batch #${r.fields['Batch ID']} — ${Array.isArray(r.fields.Recipe)?r.fields.Recipe[0]:''}</option>`
     ).join('');
   loadTasks();
+  applyHomeLabels();
+  initGuidanceHelper();
+  renderWhatsNext();
+  renderAgendaPreview();
+  renderFinancialPreview();
   bootFlow();
 }
 
