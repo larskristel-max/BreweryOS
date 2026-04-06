@@ -7,20 +7,61 @@
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <title>Brewery OS</title>
 <style>
+  /*
+  BrewOS DESIGN BASELINE — LOCKED
+
+  Principles:
+  - neutral-first color system
+  - no saturated primary blue
+  - dark primary actions (#111827)
+  - restrained typography
+  - minimal shadows, prefer borders
+  - no emoji branding in UI chrome
+  - no brewery-specific UI in generic flows
+
+  All UI changes must follow this system.
+  Do not introduce SaaS-style visuals.
+  Do not increase visual noise.
+  */
+
   * { box-sizing: border-box; margin: 0; padding: 0; }
   :root {
-    --brand: #2563eb; --brand-dark: #1d4ed8;
-    --bg: #f8fafc; --card: #ffffff;
-    --text: #0f172a; --muted: #64748b; --border: #e2e8f0;
+    /* Legacy aliases — remapped to neutral to eliminate blue drift */
+    --brand: #111827; --brand-dark: #1f2937;
+
+    /* Ink scale */
+    --ink-900: #111827;
+    --ink-800: #1f2937;
+    --ink-700: #374151;
+
+    /* Gray scale */
+    --gray-500: #6b7280;
+    --gray-400: #9ca3af;
+
+    /* Lines */
+    --line-200: #e5e7eb;
+    --line-150: #eceef1;
+
+    /* Backgrounds */
+    --bg-main: #f7f7f8;
+    --bg-card: #ffffff;
+    --bg-soft: #f3f4f6;
+
+    /* Legacy names kept for compatibility */
+    --bg: #f7f7f8; --card: #ffffff;
+    --text: #111827; --muted: #6b7280; --border: #e5e7eb;
+
+    /* Functional status colors — unchanged */
     --green: #16a34a; --red: #dc2626; --orange: #ea580c; --yellow: #ca8a04;
     --ready-bg: #dcfce7; --ready-text: #15803d;
     --blocked-bg: #fee2e2; --blocked-text: #b91c1c;
-    --radius: 12px; --shadow: 0 1px 3px rgba(0,0,0,0.08);
+
+    --radius: 16px; --shadow: 0 1px 2px rgba(0,0,0,0.05);
   }
   body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; background: var(--bg); color: var(--text); min-height: 100vh; }
   .nav { background: var(--card); border-bottom: 1px solid var(--border); padding: 16px 20px; display: flex; align-items: center; justify-content: space-between; position: sticky; top: 0; z-index: 100; }
-  .nav-title { font-size: 18px; font-weight: 700; color: var(--brand); }
-  .nav-back { font-size: 15px; color: var(--brand); cursor: pointer; display: flex; align-items: center; gap: 4px; }
+  .nav-title { font-size: 17px; font-weight: 600; color: var(--ink-900); letter-spacing: -0.01em; }
+  .nav-back { font-size: 15px; color: var(--gray-500); cursor: pointer; display: flex; align-items: center; gap: 4px; }
   .screen { display: none; padding: 20px; max-width: 600px; margin: 0 auto; }
   .screen.active { display: block; }
   .greeting { margin: 8px 0 24px; }
@@ -77,23 +118,23 @@
   .brew-stage p { font-size: 13px; color: var(--muted); margin-bottom: 16px; }
   .field-group { margin-bottom: 14px; }
   .field-label { font-size: 13px; font-weight: 500; color: var(--muted); margin-bottom: 6px; display: block; }
-  .field-hint { font-size: 11px; color: var(--brand); margin-bottom: 6px; display: block; }
+  .field-hint { font-size: 11px; color: var(--gray-400); margin-bottom: 6px; display: block; }
   input[type="text"], input[type="number"], textarea, select { width: 100%; padding: 11px 14px; border: 1px solid var(--border); border-radius: 8px; font-size: 15px; background: var(--bg); color: var(--text); appearance: none; }
-  input:focus, textarea:focus, select:focus { outline: none; border-color: var(--brand); }
+  input:focus, textarea:focus, select:focus { outline: none; border-color: var(--gray-500); }
   textarea { resize: none; min-height: 80px; }
   .checkbox-field { display: flex; align-items: center; gap: 10px; padding: 12px 14px; border: 1px solid var(--border); border-radius: 8px; background: var(--bg); cursor: pointer; }
-  .checkbox-field input[type="checkbox"] { width: 20px; height: 20px; accent-color: var(--brand); }
+  .checkbox-field input[type="checkbox"] { width: 20px; height: 20px; accent-color: var(--ink-900); }
   .stage-tabs { display: flex; gap: 6px; overflow-x: auto; padding-bottom: 4px; margin-bottom: 16px; }
   .stage-tab { flex-shrink: 0; padding: 7px 14px; border-radius: 20px; font-size: 13px; font-weight: 500; cursor: pointer; border: 1px solid var(--border); background: var(--card); color: var(--muted); }
-  .stage-tab.active { background: var(--brand); color: white; border-color: var(--brand); }
+  .stage-tab.active { background: var(--ink-900); color: white; border-color: var(--ink-900); }
   .stage-tab.done { background: var(--ready-bg); color: var(--ready-text); border-color: #86efac; }
-  .btn { width: 100%; padding: 14px; border-radius: 10px; font-size: 16px; font-weight: 600; cursor: pointer; border: none; margin-bottom: 10px; }
-  .btn-primary { background: var(--brand); color: white; }
-  .btn-primary:active { background: var(--brand-dark); }
-  .btn-secondary { background: var(--card); color: var(--brand); border: 1px solid var(--border); }
+  .btn { width: 100%; padding: 14px; border-radius: 16px; font-size: 17px; font-weight: 600; cursor: pointer; border: none; margin-bottom: 10px; min-height: 56px; letter-spacing: -0.01em; box-shadow: none; }
+  .btn-primary { background: #111827; color: white; }
+  .btn-primary:active { background: #1f2937; }
+  .btn-secondary { background: transparent; color: #111827; border: 1px solid #e5e7eb; }
   .loading { text-align: center; padding: 40px; color: var(--muted); }
   .empty { text-align: center; padding: 40px; color: var(--muted); font-size: 14px; }
-  .spinner { display: inline-block; width: 28px; height: 28px; border: 3px solid var(--border); border-top-color: var(--brand); border-radius: 50%; animation: spin 0.8s linear infinite; }
+  .spinner { display: inline-block; width: 28px; height: 28px; border: 3px solid var(--border); border-top-color: var(--ink-900); border-radius: 50%; animation: spin 0.8s linear infinite; }
   @keyframes spin { to { transform: rotate(360deg); } }
   .toast { position: fixed; bottom: 24px; left: 50%; transform: translateX(-50%); background: #1e293b; color: white; padding: 12px 20px; border-radius: 10px; font-size: 14px; font-weight: 500; z-index: 999; opacity: 0; transition: opacity 0.3s; pointer-events: none; white-space: nowrap; }
   .toast.show { opacity: 1; }
@@ -160,10 +201,11 @@
     letter-spacing: -0.02em;
   }
   .access-demo-link {
-    margin-top: 18px;
+    margin-top: 20px;
     text-align: center;
-    font-size: 14px;
-    color: #9e9e9e;
+    font-size: 15px;
+    font-weight: 400;
+    color: #9ca3af;
     cursor: pointer;
   }
   .access-demo-link:active { opacity: 0.6; }
@@ -173,7 +215,7 @@
 
 <div class="nav">
   <div id="navBack" class="nav-back" style="display:none" onclick="goBack()">← Back</div>
-  <div class="nav-title">🍺 Brewery OS</div>
+  <div class="nav-title">BrewOS</div>
   <div style="width:60px"></div>
 </div>
 <div id="toast" class="toast"></div>
@@ -385,7 +427,7 @@
   <div>
     <p style="font-size:22px; font-weight:700; color:#111827; margin:0;" id="home-title">Today's operations</p>
   </div>
-  <button onclick="showScreen('screen-settings')" style="background:#f3f4f6; border:none; border-radius:50%; width:36px; height:36px; font-size:16px; cursor:pointer;">⚙️</button>
+  <button onclick="showScreen('screen-settings')" style="background:#f3f4f6; border:none; border-radius:50%; width:36px; height:36px; font-size:14px; color:#6b7280; cursor:pointer; font-weight:600;">···</button>
 </div>
 
 <!-- WHAT'S NEXT -->
@@ -393,8 +435,8 @@
   <p style="font-size:13px; font-weight:600; color:#9ca3af; letter-spacing:0.06em; text-transform:uppercase; margin:0 0 12px;" id="home-whats-next-label">What's next</p>
 
   <!-- Guidance helper line (dismissible) -->
-  <div id="guidance-helper" style="background:#f0f9ff; border-radius:12px; padding:12px 14px; margin-bottom:12px; display:flex; justify-content:space-between; align-items:center;">
-    <p style="font-size:13px; color:#0369a1; margin:0;">Tap any card to go directly to that step.</p>
+  <div id="guidance-helper" style="background:#f3f4f6; border-radius:12px; padding:12px 14px; margin-bottom:12px; display:flex; justify-content:space-between; align-items:center;">
+    <p style="font-size:13px; color:#6b7280; margin:0;" id="guidance-helper-text">Tap any card to go directly to that step.</p>
     <button onclick="dismissGuidance()" style="background:none; border:none; color:#9ca3af; font-size:16px; cursor:pointer; padding:0 0 0 8px;">✕</button>
   </div>
 
@@ -2793,25 +2835,25 @@ async function init() {
 
 init();
 </script>
-<div style="position:fixed; bottom:0; left:0; right:0; background:#fff; border-top:1px solid #f3f4f6; display:flex; justify-content:space-around; align-items:center; padding:8px 0 20px; z-index:500;">
-  <button onclick="showScreen('screen-home')" style="background:none; border:none; display:flex; flex-direction:column; align-items:center; gap:2px; cursor:pointer; color:#6b7280; font-size:10px;">
-    <span style="font-size:22px;">🏠</span>
+<div style="position:fixed; bottom:0; left:0; right:0; background:#fff; border-top:1px solid #e5e7eb; display:flex; justify-content:space-around; align-items:center; padding:10px 0 22px; z-index:500;">
+  <button onclick="showScreen('screen-home')" style="background:none; border:none; display:flex; flex-direction:column; align-items:center; gap:3px; cursor:pointer; color:#6b7280; font-size:11px; font-weight:500; min-width:56px;">
+    <span style="width:20px; height:20px; display:block; border:1.5px solid currentColor; border-radius:4px; position:relative;"><span style="position:absolute; bottom:0; left:3px; right:3px; height:8px; border:1.5px solid currentColor; border-bottom:none; border-radius:2px 2px 0 0;"></span></span>
     <span id="nav-home">Home</span>
   </button>
-  <button onclick="showScreen('screen-batches')" style="background:none; border:none; display:flex; flex-direction:column; align-items:center; gap:2px; cursor:pointer; color:#6b7280; font-size:10px;">
-    <span style="font-size:22px;">🍺</span>
+  <button onclick="showScreen('screen-batches')" style="background:none; border:none; display:flex; flex-direction:column; align-items:center; gap:3px; cursor:pointer; color:#6b7280; font-size:11px; font-weight:500; min-width:56px;">
+    <span style="width:20px; height:20px; display:flex; align-items:center; justify-content:center; font-size:15px; color:#9ca3af; font-weight:300;">⬡</span>
     <span id="nav-batches">Batches</span>
   </button>
-  <button onclick="showScreen('screen-agenda')" style="background:none; border:none; display:flex; flex-direction:column; align-items:center; gap:2px; cursor:pointer; color:#6b7280; font-size:10px;">
-    <span style="font-size:22px;">📅</span>
+  <button onclick="showScreen('screen-agenda')" style="background:none; border:none; display:flex; flex-direction:column; align-items:center; gap:3px; cursor:pointer; color:#6b7280; font-size:11px; font-weight:500; min-width:56px;">
+    <span style="width:20px; height:20px; display:block; border:1.5px solid currentColor; border-radius:3px; position:relative;"><span style="position:absolute; top:3px; left:2px; right:2px; height:1.5px; background:currentColor;"></span><span style="position:absolute; top:-3px; left:4px; width:1.5px; height:5px; background:currentColor;"></span><span style="position:absolute; top:-3px; right:4px; width:1.5px; height:5px; background:currentColor;"></span></span>
     <span id="nav-agenda">Agenda</span>
   </button>
-  <button onclick="showScreen('screen-tasks')" style="background:none; border:none; display:flex; flex-direction:column; align-items:center; gap:2px; cursor:pointer; color:#6b7280; font-size:10px;">
-    <span style="font-size:22px;">✅</span>
+  <button onclick="showScreen('screen-tasks')" style="background:none; border:none; display:flex; flex-direction:column; align-items:center; gap:3px; cursor:pointer; color:#6b7280; font-size:11px; font-weight:500; min-width:56px;">
+    <span style="width:20px; height:20px; display:flex; align-items:center; justify-content:center;"><span style="width:14px; height:14px; border:1.5px solid currentColor; border-radius:3px;"></span></span>
     <span id="nav-tasks">Tasks</span>
   </button>
-  <button onclick="showScreen('screen-financial')" style="background:none; border:none; display:flex; flex-direction:column; align-items:center; gap:2px; cursor:pointer; color:#6b7280; font-size:10px;">
-    <span style="font-size:22px;">💰</span>
+  <button onclick="showScreen('screen-financial')" style="background:none; border:none; display:flex; flex-direction:column; align-items:center; gap:3px; cursor:pointer; color:#6b7280; font-size:11px; font-weight:500; min-width:56px;">
+    <span style="width:20px; height:20px; display:flex; align-items:center; justify-content:center; font-size:13px; font-weight:600; color:#9ca3af; letter-spacing:-0.5px;">€</span>
     <span id="nav-financial">Financial</span>
   </button>
 </div>
