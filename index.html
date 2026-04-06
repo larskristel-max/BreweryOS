@@ -1424,13 +1424,6 @@ function batchCard(r) {
     </div>`;
 }
 
-async function loadHomeBatches() {
-  const data = await airtable(TABLES.batches, '?maxRecords=3&sort[0][field]=Date&sort[0][direction]=desc');
-  const el = document.getElementById('home-batches');
-  if (!data.records?.length) { el.innerHTML = '<div class="empty">No batches yet.</div>'; return; }
-  el.innerHTML = data.records.map(r => batchCard(r)).join('');
-}
-
 async function loadBatches() {
   showScreen('screen-batches');
   const data = await airtable(TABLES.batches, '?sort[0][field]=Date&sort[0][direction]=desc');
@@ -2814,7 +2807,6 @@ function renderFinancialPage() {
 
 async function init() {
   bootFlow();
-  await loadHomeBatches();
   const batchData = await airtable(TABLES.batches, '?sort[0][field]=Date&sort[0][direction]=desc');
   const sel2 = document.getElementById('brew-batch-select');
   sel2.innerHTML = '<option value="">Select a batch...</option>' +
