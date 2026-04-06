@@ -870,6 +870,21 @@ function hasSavedLanguagePreference() {
   return !!getAccountLanguagePreference() || !!getStoredLanguagePreference();
 }
 
+function hasUserSession() {
+  // Temporary auth stub. Return false until real login/session handling exists.
+  return false;
+}
+
+function getInitialScreen() {
+  if (!hasSavedLanguagePreference()) {
+    return 'screen-language';
+  }
+  if (!hasUserSession()) {
+    return 'screen-entry';
+  }
+  return 'screen-home';
+}
+
 let currentLang = resolveInitialLanguage();
 
 function t(key) {
@@ -1754,11 +1769,7 @@ function enterDemo() {
 function bootFlow() {
   refreshStaticTranslations();
   applyTranslations();
-  if (!hasSavedLanguagePreference()) {
-    showScreen('screen-language');
-  } else {
-    showScreen('screen-entry');
-  }
+  showScreen(getInitialScreen());
 }
 
 // ── GUIDANCE HELPER ──────────────────────────────────────────────────────────
@@ -2760,6 +2771,7 @@ function renderFinancialPage() {
 }
 
 async function init() {
+  bootFlow();
   await loadHomeBatches();
   const batchData = await airtable(TABLES.batches, '?sort[0][field]=Date&sort[0][direction]=desc');
   const sel2 = document.getElementById('brew-batch-select');
@@ -2777,7 +2789,6 @@ async function init() {
   renderWhatsNext();
   renderAgendaPreview();
   renderFinancialPreview();
-  bootFlow();
 }
 
 init();
