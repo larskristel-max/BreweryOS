@@ -57,12 +57,14 @@
     --blocked-bg: #fee2e2; --blocked-text: #b91c1c;
 
     --radius: 16px; --shadow: 0 1px 2px rgba(0,0,0,0.05);
+    --bottom-nav-height: 64px;
+    --safe-bottom-space: calc(var(--bottom-nav-height) + env(safe-area-inset-bottom, 0px) + 16px);
   }
   body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; background: var(--bg); color: var(--text); min-height: 100vh; }
   .nav { background: var(--card); border-bottom: 1px solid var(--border); padding: 16px 20px; display: flex; align-items: center; justify-content: space-between; position: sticky; top: 0; z-index: 100; }
   .nav-title { font-size: 17px; font-weight: 600; color: var(--ink-900); letter-spacing: -0.01em; }
   .nav-back { font-size: 15px; color: var(--gray-500); cursor: pointer; display: flex; align-items: center; gap: 4px; }
-  .screen { display: none; flex-direction: column; width: 100%; max-width: 100%; padding: 24px; padding-bottom: 96px; gap: 32px; }
+  .screen { display: none; flex-direction: column; width: 100%; max-width: 100%; padding: 24px; padding-bottom: var(--safe-bottom-space); gap: 32px; }
   .screen.active { display: flex; }
   /* ── Home layout ── */
   .home-header { display: flex; justify-content: space-between; align-items: center; width: 100%; }
@@ -284,17 +286,17 @@
   </div>
 
   <!-- Current time line + item list -->
-  <div id="agenda-list" style="flex:1; overflow-y:auto; padding:12px 20px 80px;">
+  <div id="agenda-list" style="flex:1; overflow-y:auto; padding:12px 20px; padding-bottom:var(--safe-bottom-space);">
     <!-- populated by renderAgendaDay() -->
   </div>
 
   <!-- Week view (hidden by default) -->
-  <div id="agenda-week-view" style="display:none; flex:1; overflow-y:auto; padding:12px 20px 80px;">
+  <div id="agenda-week-view" style="display:none; flex:1; overflow-y:auto; padding:12px 20px; padding-bottom:var(--safe-bottom-space);">
     <div id="agenda-week-grid" style="display:grid; grid-template-columns:repeat(7,1fr); gap:4px; text-align:center;"></div>
   </div>
 
   <!-- FAB add button -->
-  <button onclick="openQuickAdd()" style="position:fixed; bottom:90px; right:20px; width:52px; height:52px; border-radius:50%; background:#111827; color:#fff; font-size:24px; border:none; cursor:pointer; box-shadow:0 4px 12px rgba(0,0,0,0.15); z-index:100;">+</button>
+  <button onclick="openQuickAdd()" style="position:fixed; bottom:calc(var(--bottom-nav-height) + env(safe-area-inset-bottom, 0px) + 12px); right:20px; width:52px; height:52px; border-radius:50%; background:#111827; color:#fff; font-size:24px; border:none; cursor:pointer; box-shadow:0 4px 12px rgba(0,0,0,0.15); z-index:100;">+</button>
 
   <!-- Quick add sheet -->
   <div id="quick-add-sheet" style="display:none; position:fixed; bottom:0; left:0; right:0; background:#fff; border-radius:20px 20px 0 0; padding:24px 20px 40px; box-shadow:0 -4px 24px rgba(0,0,0,0.1); z-index:200;">
@@ -378,7 +380,7 @@
   </div>
 
   <!-- 5. Obligations -->
-  <div style="padding:20px 20px 32px;">
+  <div style="padding:20px 20px; padding-bottom:var(--safe-bottom-space);">
     <p style="font-size:13px; font-weight:600; color:#9ca3af; letter-spacing:0.06em; text-transform:uppercase; margin:0 0 12px;" id="fp-oblig-label">Obligations</p>
     <div id="fp-obligations" style="display:flex; flex-direction:column; gap:8px;"></div>
   </div>
@@ -912,12 +914,16 @@ function hasUserSession() {
   return false;
 }
 
+function shouldForceLanguageSelection() {
+  // Without a real session, always require language selection on each open.
+  // This keeps the language-first flow active in demo mode.
+  // When hasUserSession() becomes true, saved preference can skip this step.
+  return !hasUserSession();
+}
+
 function getInitialScreen() {
-  if (!hasSavedLanguagePreference()) {
+  if (!hasSavedLanguagePreference() || shouldForceLanguageSelection()) {
     return 'screen-language';
-  }
-  if (!hasUserSession()) {
-    return 'screen-entry';
   }
   return 'screen-home';
 }
