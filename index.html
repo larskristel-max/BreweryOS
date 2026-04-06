@@ -24,7 +24,7 @@
   Do not increase visual noise.
   */
 
-  * { box-sizing: border-box; margin: 0; padding: 0; }
+  * { box-sizing: border-box; margin: 0; padding: 0; word-break: break-word; overflow-wrap: break-word; }
   :root {
     /* Legacy aliases — remapped to neutral to eliminate blue drift */
     --brand: #111827; --brand-dark: #1f2937;
@@ -62,8 +62,17 @@
   .nav { background: var(--card); border-bottom: 1px solid var(--border); padding: 16px 20px; display: flex; align-items: center; justify-content: space-between; position: sticky; top: 0; z-index: 100; }
   .nav-title { font-size: 17px; font-weight: 600; color: var(--ink-900); letter-spacing: -0.01em; }
   .nav-back { font-size: 15px; color: var(--gray-500); cursor: pointer; display: flex; align-items: center; gap: 4px; }
-  .screen { display: none; padding: 20px; max-width: 600px; margin: 0 auto; }
-  .screen.active { display: block; }
+  .screen { display: none; flex-direction: column; width: 100%; max-width: 100%; padding: 24px; padding-bottom: 96px; gap: 32px; }
+  .screen.active { display: flex; }
+  /* ── Home layout ── */
+  .home-header { display: flex; justify-content: space-between; align-items: center; width: 100%; }
+  .home-title { font-size: 28px; line-height: 1.15; font-weight: 600; letter-spacing: -0.02em; color: #111827; margin: 0; }
+  .home-section { display: flex; flex-direction: column; gap: 12px; width: 100%; }
+  .home-section-header { display: flex; justify-content: space-between; align-items: baseline; width: 100%; }
+  .section-label { font-size: 15px; font-weight: 600; letter-spacing: 0.08em; text-transform: uppercase; color: #9ca3af; margin: 0; }
+  .home-helper-card { display: flex; align-items: center; justify-content: space-between; gap: 12px; width: 100%; background: #f3f4f6; border-radius: 16px; padding: 14px 16px; }
+  .financial-preview-card { background: #f9fafb; border-radius: 16px; padding: 18px; cursor: pointer; display: flex; gap: 8px; }
+  .financial-metric { flex: 1; min-width: 0; text-align: center; }
   .greeting { margin: 8px 0 24px; }
   .greeting h1 { font-size: 24px; font-weight: 700; }
   .greeting p { color: var(--muted); font-size: 14px; margin-top: 4px; }
@@ -139,14 +148,13 @@
   .toast { position: fixed; bottom: 24px; left: 50%; transform: translateX(-50%); background: #1e293b; color: white; padding: 12px 20px; border-radius: 10px; font-size: 14px; font-weight: 500; z-index: 999; opacity: 0; transition: opacity 0.3s; pointer-events: none; white-space: nowrap; }
   .toast.show { opacity: 1; }
 
-  /* ── Language screen ── */
-  .language-screen {
-    min-height: 100vh;
+  /* ── Onboarding screens (language + entry) — ONE centering system ── */
+  .onboarding-inner {
+    width: 100%;
+    max-width: 440px;
     display: flex;
     flex-direction: column;
-    justify-content: center;
-    padding: 32px 24px 48px;
-    box-sizing: border-box;
+    padding: 40px 24px 56px;
   }
   .language-brand {
     text-align: center;
@@ -154,7 +162,7 @@
     line-height: 1.15;
     font-weight: 650;
     color: #111827;
-    margin-bottom: 14px;
+    margin-bottom: 12px;
     letter-spacing: -0.02em;
   }
   .language-subtitle {
@@ -182,20 +190,10 @@
     display: block;
   }
   .language-option:active { transform: scale(0.997); }
-
-  /* ── Access screen ── */
-  .access-screen {
-    min-height: 100vh;
-    display: flex;
-    flex-direction: column;
-    justify-content: center;
-    padding: 32px 24px 48px;
-    box-sizing: border-box;
-  }
   .access-title {
     text-align: center;
     font-size: 28px;
-    font-weight: 700;
+    font-weight: 600;
     color: #111827;
     margin-bottom: 40px;
     letter-spacing: -0.02em;
@@ -220,8 +218,8 @@
 </div>
 <div id="toast" class="toast"></div>
 
-<div id="screen-language" style="display:none; position:fixed; inset:0; background:#fff; z-index:9999; overflow-y:auto;">
-  <div class="language-screen">
+<div id="screen-language" style="display:none; position:fixed; inset:0; background:#fff; z-index:9999; flex-direction:column; align-items:center; justify-content:center; overflow-y:auto;">
+  <div class="onboarding-inner">
     <div class="language-brand">BrewOS</div>
     <div class="language-subtitle" data-i18n="language.choose">Choose your language</div>
     <button class="language-option" onclick="selectLanguage('fr')">Français</button>
@@ -231,8 +229,8 @@
   </div>
 </div>
 
-<div id="screen-entry" style="display:none; position:fixed; inset:0; background:#fff; z-index:9998; overflow-y:auto;">
-  <div class="access-screen">
+<div id="screen-entry" style="display:none; position:fixed; inset:0; background:#fff; z-index:9998; flex-direction:column; align-items:center; justify-content:center; overflow-y:auto;">
+  <div class="onboarding-inner">
     <div class="access-title" data-i18n="access.welcome" id="entry-welcome-title">Welcome to BrewOS</div>
     <button class="btn btn-primary" onclick="showScreen('screen-home')" data-i18n="access.login" id="entry-login-btn">Log in</button>
     <button class="btn btn-secondary" onclick="showScreen('screen-home')" data-i18n="access.create_account" id="entry-account-btn" style="margin-top:10px;">Create account</button>
@@ -422,68 +420,60 @@
 
 <!-- HOME -->
 <div id="screen-home" class="screen active">
-<!-- Header -->
-<div style="padding:20px 20px 0; display:flex; justify-content:space-between; align-items:center;">
-  <div>
-    <p style="font-size:22px; font-weight:700; color:#111827; margin:0;" id="home-title">Today's operations</p>
-  </div>
-  <button onclick="showScreen('screen-settings')" style="background:#f3f4f6; border:none; border-radius:50%; width:36px; height:36px; font-size:14px; color:#6b7280; cursor:pointer; font-weight:600;">···</button>
-</div>
 
-<!-- WHAT'S NEXT -->
-<div style="padding:20px 20px 0;">
-  <p style="font-size:13px; font-weight:600; color:#9ca3af; letter-spacing:0.06em; text-transform:uppercase; margin:0 0 12px;" id="home-whats-next-label">What's next</p>
-
-  <!-- Guidance helper line (dismissible) -->
-  <div id="guidance-helper" style="background:#f3f4f6; border-radius:12px; padding:12px 14px; margin-bottom:12px; display:flex; justify-content:space-between; align-items:center;">
-    <p style="font-size:13px; color:#6b7280; margin:0;" id="guidance-helper-text">Tap any card to go directly to that step.</p>
-    <button onclick="dismissGuidance()" style="background:none; border:none; color:#9ca3af; font-size:16px; cursor:pointer; padding:0 0 0 8px;">✕</button>
+  <!-- Header -->
+  <div class="home-header">
+    <p class="home-title" id="home-title">Today's operations</p>
+    <button onclick="showScreen('screen-settings')" style="background:#f3f4f6; border:none; border-radius:50%; width:36px; height:36px; font-size:14px; color:#6b7280; cursor:pointer; font-weight:600; flex-shrink:0;">···</button>
   </div>
 
-  <!-- What's Next cards -->
-  <div id="whats-next-cards"></div>
-</div>
-
-<!-- ACTIVE BATCHES -->
-<div style="padding:20px 20px 0;">
-  <p style="font-size:13px; font-weight:600; color:#9ca3af; letter-spacing:0.06em; text-transform:uppercase; margin:0 0 12px;" id="home-batches-label">Active batches</p>
-  <div id="home-batch-list" style="display:flex; flex-direction:column; gap:10px;"></div>
-</div>
-
-<!-- AGENDA PREVIEW -->
-<div style="padding:20px 20px 0;">
-  <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:12px;">
-    <p style="font-size:13px; font-weight:600; color:#9ca3af; letter-spacing:0.06em; text-transform:uppercase; margin:0;" id="home-agenda-label">Agenda</p>
-    <button onclick="showScreen('screen-agenda')" style="background:none; border:none; color:#6b7280; font-size:13px; cursor:pointer;" id="home-agenda-more">See more</button>
-  </div>
-  <div id="home-agenda-preview" style="display:flex; flex-direction:column; gap:8px;"></div>
-</div>
-
-<!-- FINANCIAL PREVIEW -->
-<div style="padding:20px 20px 0;" id="home-financial-section">
-  <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:12px;">
-    <p style="font-size:13px; font-weight:600; color:#9ca3af; letter-spacing:0.06em; text-transform:uppercase; margin:0;" id="home-financial-label">Financial</p>
-  </div>
-  <div onclick="showScreen('screen-financial')" style="background:#f9fafb; border-radius:16px; padding:18px; cursor:pointer; display:flex; justify-content:space-around;">
-    <div style="text-align:center;">
-      <p style="font-size:11px; color:#9ca3af; margin:0 0 4px;" id="fin-rev-label">Revenue</p>
-      <p style="font-size:18px; font-weight:700; color:#111827; margin:0;" id="fin-rev-value">—</p>
-      <p style="font-size:11px; margin:0;" id="fin-rev-arrow"></p>
+  <!-- WHAT'S NEXT -->
+  <div class="home-section">
+    <p class="section-label" id="home-whats-next-label">What's next</p>
+    <div id="guidance-helper" class="home-helper-card">
+      <p style="font-size:13px; color:#6b7280; margin:0;" id="guidance-helper-text">Tap any card to go directly to that step.</p>
+      <button onclick="dismissGuidance()" style="background:none; border:none; color:#9ca3af; font-size:16px; cursor:pointer; padding:0; flex-shrink:0;">✕</button>
     </div>
-    <div style="text-align:center;">
-      <p style="font-size:11px; color:#9ca3af; margin:0 0 4px;" id="fin-costs-label">Costs</p>
-      <p style="font-size:18px; font-weight:700; color:#111827; margin:0;" id="fin-costs-value">—</p>
-      <p style="font-size:11px; margin:0;" id="fin-costs-arrow"></p>
+    <div id="whats-next-cards" style="display:flex; flex-direction:column; gap:12px;"></div>
+  </div>
+
+  <!-- ACTIVE BATCHES -->
+  <div class="home-section">
+    <p class="section-label" id="home-batches-label">Active batches</p>
+    <div id="home-batch-list" style="display:flex; flex-direction:column; gap:10px;"></div>
+  </div>
+
+  <!-- AGENDA PREVIEW -->
+  <div class="home-section">
+    <div class="home-section-header">
+      <p class="section-label" id="home-agenda-label">Agenda</p>
+      <button onclick="showScreen('screen-agenda')" style="background:none; border:none; color:#6b7280; font-size:15px; cursor:pointer; padding:0;" id="home-agenda-more">See more</button>
     </div>
-    <div style="text-align:center;">
-      <p style="font-size:11px; color:#9ca3af; margin:0 0 4px;" id="fin-margin-label">Margin</p>
-      <p style="font-size:18px; font-weight:700; color:#111827; margin:0;" id="fin-margin-value">—</p>
-      <p style="font-size:11px; margin:0;" id="fin-margin-arrow"></p>
+    <div id="home-agenda-preview" style="display:flex; flex-direction:column; gap:8px;"></div>
+  </div>
+
+  <!-- FINANCIAL PREVIEW -->
+  <div class="home-section" id="home-financial-section">
+    <p class="section-label" id="home-financial-label">Financial</p>
+    <div onclick="showScreen('screen-financial')" class="financial-preview-card">
+      <div class="financial-metric">
+        <p style="font-size:11px; color:#9ca3af; margin:0 0 4px;" id="fin-rev-label">Revenue</p>
+        <p style="font-size:18px; font-weight:700; color:#111827; margin:0;" id="fin-rev-value">—</p>
+        <p style="font-size:11px; margin:0;" id="fin-rev-arrow"></p>
+      </div>
+      <div class="financial-metric">
+        <p style="font-size:11px; color:#9ca3af; margin:0 0 4px;" id="fin-costs-label">Costs</p>
+        <p style="font-size:18px; font-weight:700; color:#111827; margin:0;" id="fin-costs-value">—</p>
+        <p style="font-size:11px; margin:0;" id="fin-costs-arrow"></p>
+      </div>
+      <div class="financial-metric">
+        <p style="font-size:11px; color:#9ca3af; margin:0 0 4px;" id="fin-margin-label">Margin</p>
+        <p style="font-size:18px; font-weight:700; color:#111827; margin:0;" id="fin-margin-value">—</p>
+        <p style="font-size:11px; margin:0;" id="fin-margin-arrow"></p>
+      </div>
     </div>
   </div>
-</div>
 
-<div style="height:80px;"></div>
 </div>
 
 <!-- BATCH LIST -->
@@ -783,6 +773,11 @@ const TRANSLATIONS = {
     'financial.today': 'Today',
     'financial.week': 'Week',
     'financial.month': 'Month',
+    'whats_next_recommended': 'Recommended',
+    'whats_next_helpful': 'Helpful',
+    'whats_next_later': 'Later',
+    'whats_next_empty': 'No open tasks right now.',
+    'whats_next_error': 'Could not load tasks.',
   },
   de: {
     'language.choose': 'Wähle deine Sprache',
@@ -1673,9 +1668,7 @@ function showScreen(id) {
   });
   const target = document.getElementById(id);
   if (!target) return;
-  // screens that scroll as block
-  const blockScreens = ['screen-financial', 'screen-settings', 'screen-batches', 'screen-tasks', 'screen-issues'];
-  target.style.display = blockScreens.includes(id) ? 'block' : 'flex';
+  target.style.display = 'flex';
   // refresh screen-specific state on navigate
   if (id === 'screen-agenda') { switchAgendaView(agendaView); loadAgendaFromAirtable(); }
   if (id === 'screen-financial') { renderFinancialPage(); loadFinancialFromAirtable(); }
@@ -1851,6 +1844,19 @@ const LABEL_STYLES = {
   later:       { bg: '#f9fafb', color: '#6b7280', text: 'Later' },
 };
 
+// Normalize any Airtable value to a plain number (handles objects, arrays, strings)
+function toNum(v) {
+  if (typeof v === 'number') return isFinite(v) ? v : 0;
+  if (Array.isArray(v)) return toNum(v[0]);
+  if (v && typeof v === 'object') {
+    if ('value' in v) return toNum(v.value);
+    if ('number' in v) return toNum(v.number);
+    if ('amount' in v) return toNum(v.amount);
+  }
+  if (typeof v === 'string') return parseFloat(v.replace(/[^0-9.-]/g, '')) || 0;
+  return 0;
+}
+
 async function fetchFinancialSnapshot(periodType) {
   const key  = window.__AIRTABLE_KEY__;
   const base = 'appslXmtOEoDI6lwp';
@@ -1878,17 +1884,17 @@ async function fetchFinancialSnapshot(periodType) {
       periodLabel:   g('Period Label') || '',
       date:          g('Date') || '',
       periodType:    sel(g('Period Type')),
-      revenue:       g('Revenue') || 0,
-      costs:         g('Costs') || 0,
-      margin:        g('Margin') || 0,
-      prevRevenue:   g('Previous Period Revenue') || null,
-      prevCosts:     g('Previous Period Costs') || null,
-      prevMargin:    g('Previous Period Margin') || null,
-      vatReserve:    g('VAT Reserve Estimate') || 0,
-      exciseReserve: g('Excise Reserve Estimate') || 0,
-      taxReserve:    g('Tax Reserve Estimate') || 0,
-      totalReserve:  g('Total Reserve Estimate') || 0,
-      safeToSpend:   g('Safe To Spend') || 0,
+      revenue:       toNum(g('Revenue')),
+      costs:         toNum(g('Costs')),
+      margin:        toNum(g('Margin')),
+      prevRevenue:   g('Previous Period Revenue') != null ? toNum(g('Previous Period Revenue')) : null,
+      prevCosts:     g('Previous Period Costs')   != null ? toNum(g('Previous Period Costs'))   : null,
+      prevMargin:    g('Previous Period Margin')  != null ? toNum(g('Previous Period Margin'))  : null,
+      vatReserve:    toNum(g('VAT Reserve Estimate')),
+      exciseReserve: toNum(g('Excise Reserve Estimate')),
+      taxReserve:    toNum(g('Tax Reserve Estimate')),
+      totalReserve:  toNum(g('Total Reserve Estimate')),
+      safeToSpend:   toNum(g('Safe To Spend')),
     };
   });
 }
@@ -2424,12 +2430,12 @@ function renderFinancialPreview() {
   const role = localStorage.getItem('brewos_role') || 'owner';
   const permitted = ['admin','owner','finance'].includes(role);
   const section = document.getElementById('home-financial-section');
-  if (section) section.style.display = permitted ? 'block' : 'none';
+  if (section) section.style.display = permitted ? '' : 'none';
   if (!permitted) return;
   const d = FINANCIAL_DEMO;
   const arrow = (curr, prev) => curr >= prev ? '↑' : '↓';
   const arrowColor = (curr, prev) => curr >= prev ? '#059669' : '#dc2626';
-  const fmt = v => `€${v.toLocaleString()}`;
+  const fmt = v => `€${toNum(v).toLocaleString()}`;
 
   const setEl = (id, val) => { const el = document.getElementById(id); if (el) el.textContent = val; };
   const setStyle = (id, prop, val) => { const el = document.getElementById(id); if (el) el.style[prop] = val; };
@@ -2744,7 +2750,7 @@ function setFinPeriod(period) {
 function renderFinancialPage() {
   const d = FINANCIAL_PAGE_DEMO[finPeriod];
   if (!d) return;
-  const fmt = v => `€${v.toLocaleString()}`;
+  const fmt = v => `€${toNum(v).toLocaleString()}`;
   const arrow = (curr, prev) => curr >= prev ? '↑' : '↓';
   const arrowColor = (curr, prev) => curr >= prev ? '#059669' : '#dc2626';
   const setEl = (id, val) => { const el = document.getElementById(id); if (el) el.textContent = val; };
