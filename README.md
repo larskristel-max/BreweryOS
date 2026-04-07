@@ -106,3 +106,5 @@ This repo is a real working BrewOS prototype, but it is still held together in a
 
 It already contains useful operational logic.
 It also needs careful stabilization so future work does not become harder every time something new is added.
+
+TEST_CODEX_PUSH_WORKS
