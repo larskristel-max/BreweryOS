@@ -102,10 +102,10 @@
   .badge-ready { background: var(--ready-bg); color: var(--ready-text); }
   .badge-blocked { background: var(--blocked-bg); color: var(--blocked-text); }
   .indicator-pill { width: 30px; min-width: 30px; height: 18px; min-height: 18px; border-radius: 999px; padding: 0; display: inline-flex; align-items: center; justify-content: center; }
-  .indicator-red { background: #fecaca; }
-  .indicator-yellow { background: #fef3c7; }
-  .indicator-green { background: #dcfce7; }
-  .indicator-blue { background: #dbeafe; }
+  .indicator-red { background: #fca5a5; }
+  .indicator-yellow { background: #fde68a; }
+  .indicator-green { background: #86efac; }
+  .indicator-blue { background: #93c5fd; }
   .indicator-neutral { background: #e5e7eb; }
   .readiness-panel { border-radius: var(--radius); padding: 16px; margin-bottom: 16px; border: 1px solid; }
   .readiness-panel.ready { background: var(--ready-bg); border-color: #86efac; }
@@ -1628,6 +1628,10 @@ function batchCard(r) {
   const recipe = Array.isArray(f.Recipe) ? f.Recipe[0] : '';
   const status = sel(f.Status) || 'Unknown';
   const type   = getObjectType('Batches');
+  const summaryRaw = f['Summary Line'] || status;
+  const summary = String(summaryRaw || '').toLowerCase() === 'process_run'
+    ? displayStatus(status)
+    : summaryRaw;
   return `
     <div class="batch-card" onclick="loadBatchDetail('${r.id}')">
       <div class="batch-card-header">
@@ -1635,10 +1639,10 @@ function batchCard(r) {
           <div class="batch-name">Batch #${f['Batch ID']} — ${recipe}</div>
           <div class="batch-date">${f.Date || '—'}</div>
         </div>
-        ${readinessBadge(f, type)}
+        ${statusBadge(status)}
       </div>
       <div class="batch-meta">
-        ${statusBadge(status)}
+        <span style="font-size:13px; color:#6b7280;">${summary}</span>
         ${objectTypeTag(type)}
       </div>
     </div>`;
@@ -3108,8 +3112,10 @@ function renderFinancialPage() {
   setEl('fp-oblig-label', t('financial.obligations'));
 }
 
+let colorTipDismissedForSession = false;
+
 function dismissColorTip() {
-  localStorage.setItem('brewos_color_tip_seen', '1');
+  colorTipDismissedForSession = true;
   const guide = document.getElementById('home-color-guide');
   if (guide) guide.style.display = 'none';
 }
@@ -3117,11 +3123,7 @@ function dismissColorTip() {
 function maybeShowColorTip() {
   const guide = document.getElementById('home-color-guide');
   if (!guide) return;
-  if (localStorage.getItem('brewos_color_tip_seen') === '1') {
-    guide.style.display = 'none';
-    return;
-  }
-  guide.style.display = 'flex';
+  guide.style.display = colorTipDismissedForSession ? 'none' : 'flex';
 }
 
 async function init() {
