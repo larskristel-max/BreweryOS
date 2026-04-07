@@ -540,7 +540,7 @@ const TRANSLATIONS = {
     'settings.language_change': 'Changer de langue',
     'settings.guidance_toggle': 'Afficher les conseils',
     'home.greeting': 'Bienvenue',
-    'home.today': 'Opérations du jour',
+    'home.today': 'Opérations',
     'home.whats_next': 'Prochaine étape',
     'home.active_batches': 'Brassins en cours',
     'home.agenda': 'Agenda',
@@ -616,10 +616,10 @@ const TRANSLATIONS = {
     'whats_next_later': 'Plus tard',
     'whats_next_empty': 'Aucune tâche ouverte pour le moment.',
     'whats_next_error': 'Impossible de charger les tâches.',
-    'batch.all_batches': 'Tous les brassins',
+    'batch.all_batches': 'Brassins',
     'batch.no_batches': 'Aucun brassin trouvé.',
     'home.no_active_batches': 'Aucun brassin actif.',
-    'task.open_tasks': 'Tâches ouvertes',
+    'task.open_tasks': 'Tâches',
     'task.no_tasks': 'Aucune tâche ouverte.',
     'task.no_due_date': 'Sans date limite',
     'task.unnamed': 'Sans titre',
@@ -2597,10 +2597,16 @@ async function renderWhatsNext() {
               color:${pillTextColor[pill]};
               font-size:10px;
               font-weight:600;
-              padding:2px 7px;
+              padding:3px 8px;
+              min-height:18px;
               border-radius:20px;
               letter-spacing:0.3px;
               text-transform:uppercase;
+              display:inline-flex;
+              align-items:center;
+              justify-content:center;
+              line-height:1;
+              white-space:nowrap;
             ">${pillLabel[pill]}</span>
             ${dueLabel(rec)}
           </div>
@@ -2809,13 +2815,20 @@ function renderAgendaDay() {
   timed.forEach(item => {
     if (!injectedNow && isToday && item.time > nowStr) {
       html += `<div style="display:flex; align-items:center; gap:8px; margin:6px 0;">
-        <div style="flex:1; height:1px; background:#ef4444; opacity:0.4;"></div>
-        <span style="font-size:10px; color:#ef4444;">${nowStr}</span>
+        <div style="flex:1; height:2px; background:#ef4444;"></div>
+        <span style="font-size:10px; color:#ef4444; font-weight:600;">${nowStr}</span>
       </div>`;
       injectedNow = true;
     }
     html += renderAgendaItem(item);
   });
+
+  if (!injectedNow && isToday) {
+    html += `<div style="display:flex; align-items:center; gap:8px; margin:6px 0;">
+      <div style="flex:1; height:2px; background:#ef4444;"></div>
+      <span style="font-size:10px; color:#ef4444; font-weight:600;">${nowStr}</span>
+    </div>`;
+  }
 
   if (untimed.length) {
     html += `<p style="font-size:12px; color:#9ca3af; margin:16px 0 8px; text-transform:uppercase; letter-spacing:0.06em;">No time set</p>`;
