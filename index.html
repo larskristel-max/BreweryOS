@@ -102,10 +102,10 @@
   .badge-ready { background: var(--ready-bg); color: var(--ready-text); }
   .badge-blocked { background: var(--blocked-bg); color: var(--blocked-text); }
   .indicator-pill { width: 30px; min-width: 30px; height: 18px; min-height: 18px; border-radius: 999px; padding: 0; display: inline-flex; align-items: center; justify-content: center; }
-  .indicator-red { background: #fca5a5; }
-  .indicator-yellow { background: #fde68a; }
-  .indicator-green { background: #86efac; }
-  .indicator-blue { background: #93c5fd; }
+  .indicator-red { background: #f87171; }
+  .indicator-yellow { background: #facc15; }
+  .indicator-green { background: #4ade80; }
+  .indicator-blue { background: #60a5fa; }
   .indicator-neutral { background: #e5e7eb; }
   .readiness-panel { border-radius: var(--radius); padding: 16px; margin-bottom: 16px; border: 1px solid; }
   .readiness-panel.ready { background: var(--ready-bg); border-color: #86efac; }
@@ -1629,9 +1629,9 @@ function batchCard(r) {
   const status = sel(f.Status) || 'Unknown';
   const type   = getObjectType('Batches');
   const summaryRaw = f['Summary Line'] || status;
-  const summary = String(summaryRaw || '').toLowerCase() === 'process_run'
-    ? displayStatus(status)
-    : summaryRaw;
+  const summaryKey = String(summaryRaw || '').toLowerCase().trim();
+  const summaryLooksInternal = !summaryRaw || /^[a-z0-9]+(?:_[a-z0-9]+)+$/.test(summaryKey);
+  const summary = summaryLooksInternal ? displayStatus(status) : summaryRaw;
   return `
     <div class="batch-card" onclick="loadBatchDetail('${r.id}')">
       <div class="batch-card-header">
