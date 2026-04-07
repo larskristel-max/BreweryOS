@@ -160,9 +160,10 @@
   .bottom-nav-item { flex: 1; min-width: 0; background: none; border: none; display: flex; flex-direction: column; align-items: center; justify-content: flex-start; gap: 5px; cursor: pointer; color: #6b7280; padding: 0 2px; }
   .bottom-nav-icon { width: 20px; height: 20px; display: flex; align-items: center; justify-content: center; color: currentColor; }
   .bottom-nav-label { width: 100%; max-width: 68px; text-align: center; font-size: 11px; line-height: 1.15; font-weight: 500; min-height: 24px; text-wrap: balance; overflow-wrap: anywhere; }
-  .color-tip { position: fixed; left: 12px; right: 12px; bottom: calc(var(--bottom-nav-height) + env(safe-area-inset-bottom, 0px) + 8px); background: #fff; border: 1px solid #e5e7eb; border-radius: 12px; box-shadow: 0 4px 10px rgba(0,0,0,0.06); padding: 12px; z-index: 650; }
-  .color-tip-title { font-size: 12px; font-weight: 700; color: #111827; margin-bottom: 6px; }
-  .color-tip-line { font-size: 12px; color: #6b7280; line-height: 1.35; }
+  .home-color-guide { display: flex; flex-direction: column; align-items: stretch; gap: 8px; background: #f9fafb; border: 1px solid #e5e7eb; }
+  .color-tip-head { display: flex; justify-content: space-between; align-items: center; gap: 10px; }
+  .color-tip-title { font-size: 12px; font-weight: 700; color: #111827; margin: 0; }
+  .color-tip-line { font-size: 12px; color: #6b7280; line-height: 1.35; margin: 0; }
 
   /* ── Onboarding screens (language + entry) — ONE centering system ── */
   .onboarding-inner {
@@ -450,6 +451,16 @@
     <div id="guidance-helper" class="home-helper-card">
       <p style="font-size:13px; color:#6b7280; margin:0;" id="guidance-helper-text">Tap any card to go directly to that step.</p>
       <button onclick="dismissGuidance()" style="background:none; border:none; color:#9ca3af; font-size:16px; cursor:pointer; padding:0; flex-shrink:0;">✕</button>
+    </div>
+    <div id="home-color-guide" class="home-helper-card home-color-guide" style="display:none;">
+      <div class="color-tip-head">
+        <p class="color-tip-title">Color guide</p>
+        <button onclick="dismissColorTip()" aria-label="Dismiss color guide" style="background:none; border:none; color:#9ca3af; font-size:16px; cursor:pointer; padding:0; flex-shrink:0;">✕</button>
+      </div>
+      <p class="color-tip-line">🟢 Low / Done</p>
+      <p class="color-tip-line">🟡 Medium</p>
+      <p class="color-tip-line">🔴 High / Blocked</p>
+      <p class="color-tip-line">🔵 In progress</p>
     </div>
     <div id="whats-next-cards" style="display:flex; flex-direction:column; gap:12px;"></div>
   </div>
@@ -3099,18 +3110,18 @@ function renderFinancialPage() {
 
 function dismissColorTip() {
   localStorage.setItem('brewos_color_tip_seen', '1');
-  const tip = document.getElementById('color-tip');
-  if (tip) tip.style.display = 'none';
+  const guide = document.getElementById('home-color-guide');
+  if (guide) guide.style.display = 'none';
 }
 
 function maybeShowColorTip() {
-  const tip = document.getElementById('color-tip');
-  if (!tip) return;
+  const guide = document.getElementById('home-color-guide');
+  if (!guide) return;
   if (localStorage.getItem('brewos_color_tip_seen') === '1') {
-    tip.style.display = 'none';
+    guide.style.display = 'none';
     return;
   }
-  tip.style.display = 'block';
+  guide.style.display = 'flex';
 }
 
 async function init() {
@@ -3136,14 +3147,6 @@ async function init() {
 
 init();
 </script>
-<div id="color-tip" class="color-tip" style="display:none;">
-  <div class="color-tip-title">Color guide</div>
-  <div class="color-tip-line">🟢 Low / Done</div>
-  <div class="color-tip-line">🟡 Medium</div>
-  <div class="color-tip-line">🔴 High / Blocked</div>
-  <div class="color-tip-line">🔵 In progress</div>
-  <button onclick="dismissColorTip()" style="margin-top:8px; border:none; background:#f3f4f6; color:#374151; border-radius:8px; padding:6px 10px; font-size:12px; cursor:pointer;">Got it</button>
-</div>
 <div class="bottom-nav">
   <button onclick="showScreen('screen-home')" class="bottom-nav-item">
     <span class="bottom-nav-icon" style="display:block; border:1.5px solid currentColor; border-radius:4px; position:relative;"><span style="position:absolute; bottom:0; left:3px; right:3px; height:8px; border:1.5px solid currentColor; border-bottom:none; border-radius:2px 2px 0 0;"></span></span>
