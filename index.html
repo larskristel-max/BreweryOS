@@ -92,7 +92,8 @@
   .batch-date { font-size: 12px; color: var(--muted); }
   .batch-meta { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; }
   .object-type-tag { font-size: 10px; color: var(--muted); font-family: monospace; background: var(--bg); border: 1px solid var(--border); padding: 2px 6px; border-radius: 4px; }
-  .badge { display: inline-flex; align-items: center; font-size: 11px; font-weight: 600; padding: 3px 8px; border-radius: 20px; }
+  .badge { display: inline-flex; align-items: center; justify-content: center; gap: 4px; font-size: 11px; font-weight: 600; line-height: 1; padding: 5px 10px; min-height: 22px; border-radius: 20px; }
+  .badge-icon { display: inline-flex; align-items: center; justify-content: center; line-height: 1; transform: translateY(-0.5px); }
   .badge-status-brewing { background: #dbeafe; color: #1e40af; }
   .badge-status-fermenting { background: #fef3c7; color: #92400e; }
   .badge-status-complete { background: #dcfce7; color: #15803d; }
@@ -149,6 +150,10 @@
   @keyframes spin { to { transform: rotate(360deg); } }
   .toast { position: fixed; bottom: 24px; left: 50%; transform: translateX(-50%); background: #1e293b; color: white; padding: 12px 20px; border-radius: 10px; font-size: 14px; font-weight: 500; z-index: 999; opacity: 0; transition: opacity 0.3s; pointer-events: none; white-space: nowrap; }
   .toast.show { opacity: 1; }
+  .bottom-nav { position: fixed; bottom: 0; left: 0; right: 0; height: calc(var(--bottom-nav-height) + env(safe-area-inset-bottom, 0px)); background: #fff; border-top: 1px solid #e5e7eb; display: flex; align-items: flex-start; padding: 8px 4px env(safe-area-inset-bottom, 0px); z-index: 500; }
+  .bottom-nav-item { flex: 1; min-width: 0; background: none; border: none; display: flex; flex-direction: column; align-items: center; justify-content: flex-start; gap: 5px; cursor: pointer; color: #6b7280; padding: 0 2px; }
+  .bottom-nav-icon { width: 20px; height: 20px; display: flex; align-items: center; justify-content: center; color: currentColor; }
+  .bottom-nav-label { width: 100%; max-width: 68px; text-align: center; font-size: 11px; line-height: 1.15; font-weight: 500; min-height: 24px; text-wrap: balance; overflow-wrap: anywhere; }
 
   /* ── Onboarding screens (language + entry) — ONE centering system ── */
   .onboarding-inner {
@@ -1488,8 +1493,8 @@ function readinessBadge(fields, objectType) {
   if (objectType !== 'process_run') return '';
   const { ready } = SEMANTIC.computeReadiness(fields, {}, APP_READINESS_CONDITIONS);
   return ready
-    ? '<span class="badge badge-ready">✓ READY</span>'
-    : '<span class="badge badge-blocked">✗ BLOCKED</span>';
+    ? '<span class="badge badge-ready"><span class="badge-icon">✓</span><span>READY</span></span>'
+    : '<span class="badge badge-blocked"><span class="badge-icon">✗</span><span>BLOCKED</span></span>';
 }
 
 function readinessPanel(fields, objectType) {
@@ -1579,6 +1584,11 @@ function statusBadge(status) {
   return `<span class="badge badge-status-${s}">${displayStatus(status)}</span>`;
 }
 
+function objectTypeTag(type) {
+  if (!type || type === 'process_run') return '';
+  return `<span class="object-type-tag">${type}</span>`;
+}
+
 function batchCard(r) {
   const f      = r.fields;
   const recipe = Array.isArray(f.Recipe) ? f.Recipe[0] : '';
@@ -1595,7 +1605,7 @@ function batchCard(r) {
       </div>
       <div class="batch-meta">
         ${statusBadge(status)}
-        <span class="object-type-tag">${type}</span>
+        ${objectTypeTag(type)}
       </div>
     </div>`;
 }
@@ -1640,7 +1650,9 @@ async function loadBatchDetail(recordId) {
       <div class="detail-row"><span class="detail-label">Recipe</span><span class="detail-value">${recipe || '—'}</span></div>
       <div class="detail-row"><span class="detail-label">Date</span><span class="detail-value">${f.Date || '—'}</span></div>
       <div class="detail-row"><span class="detail-label">Status</span>${statusBadge(status)}</div>
-      <div class="detail-row"><span class="detail-label">Object Type</span><span class="object-type-tag">${objType}</span></div>
+      ${objType && objType !== 'process_run'
+        ? `<div class="detail-row"><span class="detail-label">Object Type</span>${objectTypeTag(objType)}</div>`
+        : ''}
     </div>
     ${readinessPanel(f, objType)}
     <div class="detail-section">
@@ -2618,7 +2630,10 @@ function renderHomeBatches(batches) {
     const fields = b.fields || {};
     const status = sel(fields['Status']) || 'Unknown';
     const batchId = fields['Batch ID'] || '—';
-    const summary = fields['Summary Line'] || status;
+    const summaryRaw = fields['Summary Line'] || status;
+    const summary = String(summaryRaw || '').toLowerCase() === 'process_run'
+      ? displayStatus(status)
+      : summaryRaw;
     const isReady = status === 'Done' || status === 'Completed';
     const badgeColor = isReady ? '#d1fae5' : status === 'Blocked' ? '#fee2e2' : '#e0e7ff';
     const badgeText = isReady ? '#065f46' : status === 'Blocked' ? '#991b1b' : '#3730a3';
@@ -2628,7 +2643,7 @@ function renderHomeBatches(batches) {
           <p style="font-size:15px; font-weight:600; color:#111827; margin:0 0 4px;">Batch ${batchId}</p>
           <p style="font-size:13px; color:#6b7280; margin:0;">${summary}</p>
         </div>
-        <span style="font-size:11px; font-weight:600; background:${badgeColor}; color:${badgeText}; padding:4px 10px; border-radius:20px; white-space:nowrap;">${status}</span>
+        <span style="font-size:11px; font-weight:600; background:${badgeColor}; color:${badgeText}; padding:5px 10px; min-height:22px; border-radius:20px; white-space:nowrap; display:inline-flex; align-items:center; justify-content:center; line-height:1;">${displayStatus(status)}</span>
       </div>`;
   }).join('');
 }
@@ -3070,26 +3085,26 @@ async function init() {
 
 init();
 </script>
-<div style="position:fixed; bottom:0; left:0; right:0; height:calc(var(--bottom-nav-height) + env(safe-area-inset-bottom, 0px)); background:#fff; border-top:1px solid #e5e7eb; display:flex; justify-content:space-around; align-items:flex-start; padding:10px 0 env(safe-area-inset-bottom, 0px); z-index:500;">
-  <button onclick="showScreen('screen-home')" style="background:none; border:none; display:flex; flex-direction:column; align-items:center; gap:3px; cursor:pointer; color:#6b7280; font-size:11px; font-weight:500; min-width:56px;">
-    <span style="width:20px; height:20px; display:block; border:1.5px solid currentColor; border-radius:4px; position:relative;"><span style="position:absolute; bottom:0; left:3px; right:3px; height:8px; border:1.5px solid currentColor; border-bottom:none; border-radius:2px 2px 0 0;"></span></span>
-    <span id="nav-home">Home</span>
+<div class="bottom-nav">
+  <button onclick="showScreen('screen-home')" class="bottom-nav-item">
+    <span class="bottom-nav-icon" style="display:block; border:1.5px solid currentColor; border-radius:4px; position:relative;"><span style="position:absolute; bottom:0; left:3px; right:3px; height:8px; border:1.5px solid currentColor; border-bottom:none; border-radius:2px 2px 0 0;"></span></span>
+    <span id="nav-home" class="bottom-nav-label">Home</span>
   </button>
-  <button onclick="loadBatches()" style="background:none; border:none; display:flex; flex-direction:column; align-items:center; gap:3px; cursor:pointer; color:#6b7280; font-size:11px; font-weight:500; min-width:56px;">
-    <span style="width:20px; height:20px; display:flex; align-items:center; justify-content:center; font-size:15px; color:#9ca3af; font-weight:300;">⬡</span>
-    <span id="nav-batches">Batches</span>
+  <button onclick="loadBatches()" class="bottom-nav-item">
+    <span class="bottom-nav-icon" style="font-size:15px; font-weight:300;">⬡</span>
+    <span id="nav-batches" class="bottom-nav-label">Batches</span>
   </button>
-  <button onclick="showScreen('screen-agenda')" style="background:none; border:none; display:flex; flex-direction:column; align-items:center; gap:3px; cursor:pointer; color:#6b7280; font-size:11px; font-weight:500; min-width:56px;">
-    <span style="width:20px; height:20px; display:block; border:1.5px solid currentColor; border-radius:3px; position:relative;"><span style="position:absolute; top:3px; left:2px; right:2px; height:1.5px; background:currentColor;"></span><span style="position:absolute; top:-3px; left:4px; width:1.5px; height:5px; background:currentColor;"></span><span style="position:absolute; top:-3px; right:4px; width:1.5px; height:5px; background:currentColor;"></span></span>
-    <span id="nav-agenda">Agenda</span>
+  <button onclick="showScreen('screen-agenda')" class="bottom-nav-item">
+    <span class="bottom-nav-icon" style="display:block; border:1.5px solid currentColor; border-radius:3px; position:relative;"><span style="position:absolute; top:3px; left:2px; right:2px; height:1.5px; background:currentColor;"></span><span style="position:absolute; top:-3px; left:4px; width:1.5px; height:5px; background:currentColor;"></span><span style="position:absolute; top:-3px; right:4px; width:1.5px; height:5px; background:currentColor;"></span></span>
+    <span id="nav-agenda" class="bottom-nav-label">Agenda</span>
   </button>
-  <button onclick="showScreen('screen-tasks')" style="background:none; border:none; display:flex; flex-direction:column; align-items:center; gap:3px; cursor:pointer; color:#6b7280; font-size:11px; font-weight:500; min-width:56px;">
-    <span style="width:20px; height:20px; display:flex; align-items:center; justify-content:center;"><span style="width:14px; height:14px; border:1.5px solid currentColor; border-radius:3px;"></span></span>
-    <span id="nav-tasks">Tasks</span>
+  <button onclick="showScreen('screen-tasks')" class="bottom-nav-item">
+    <span class="bottom-nav-icon"><span style="width:14px; height:14px; border:1.5px solid currentColor; border-radius:3px;"></span></span>
+    <span id="nav-tasks" class="bottom-nav-label">Tasks</span>
   </button>
-  <button onclick="showScreen('screen-financial')" style="background:none; border:none; display:flex; flex-direction:column; align-items:center; gap:3px; cursor:pointer; color:#6b7280; font-size:11px; font-weight:500; min-width:56px;">
-    <span style="width:20px; height:20px; display:flex; align-items:center; justify-content:center; font-size:13px; font-weight:600; color:#9ca3af; letter-spacing:-0.5px;">€</span>
-    <span id="nav-financial">Financial</span>
+  <button onclick="showScreen('screen-financial')" class="bottom-nav-item">
+    <span class="bottom-nav-icon" style="font-size:13px; font-weight:600; letter-spacing:-0.5px;">€</span>
+    <span id="nav-financial" class="bottom-nav-label">Financial</span>
   </button>
 </div>
 </body>
