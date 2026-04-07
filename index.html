@@ -52,19 +52,19 @@
     --text: #111827; --muted: #6b7280; --border: #e5e7eb;
 
     /* Functional status colors — normalized shared tokens */
-    --status-success: #16a34a;
-    --status-warning: #ca8a04;
-    --status-danger: #dc2626;
-    --status-info: #7aa2d1;
-    --status-success-soft: #dcfce7;
-    --status-warning-soft: #fef3c7;
-    --status-danger-soft: #fee2e2;
-    --status-info-soft: #e0ecfb;
+    --color-success: #16a34a;
+    --color-warning: #ca8a04;
+    --color-danger: #dc2626;
+    --color-info: #6f93b8;
+    --color-success-soft: #dcfce7;
+    --color-warning-soft: #fef3c7;
+    --color-danger-soft: #fee2e2;
+    --color-info-soft: #e0ecfb;
 
     /* Legacy aliases */
-    --green: var(--status-success); --red: var(--status-danger); --orange: #ea580c; --yellow: var(--status-warning);
-    --ready-bg: var(--status-success-soft); --ready-text: var(--status-success);
-    --blocked-bg: var(--status-danger-soft); --blocked-text: var(--status-danger);
+    --green: var(--color-success); --red: var(--color-danger); --orange: #ea580c; --yellow: var(--color-warning);
+    --ready-bg: var(--color-success-soft); --ready-text: var(--color-success);
+    --blocked-bg: var(--color-danger-soft); --blocked-text: var(--color-danger);
 
     --radius: 16px; --shadow: 0 1px 2px rgba(0,0,0,0.05);
     --bottom-nav-height: 64px;
@@ -104,32 +104,32 @@
   .object-type-tag { font-size: 10px; color: var(--muted); font-family: monospace; background: var(--bg); border: 1px solid var(--border); padding: 2px 6px; border-radius: 4px; }
   .badge { display: inline-flex; align-items: center; justify-content: center; gap: 4px; font-size: 11px; font-weight: 600; line-height: 1; padding: 5px 10px; min-height: 22px; border-radius: 20px; }
   .badge-icon { display: inline-flex; align-items: center; justify-content: center; line-height: 1; transform: translateY(-0.5px); }
-  .badge-status-brewing { background: var(--status-info-soft); color: var(--status-info); }
-  .badge-status-fermenting { background: var(--status-warning-soft); color: var(--status-warning); }
-  .badge-status-complete { background: var(--status-success-soft); color: var(--status-success); }
-  .badge-status-done { background: var(--status-success-soft); color: var(--status-success); }
+  .badge-status-brewing { background: var(--color-info-soft); color: var(--color-info); }
+  .badge-status-fermenting { background: var(--color-warning-soft); color: var(--color-warning); }
+  .badge-status-complete { background: var(--color-success-soft); color: var(--color-success); }
+  .badge-status-done { background: var(--color-success-soft); color: var(--color-success); }
   .badge-status-planned { background: #f1f5f9; color: #475569; }
   .badge-ready { background: var(--ready-bg); color: var(--ready-text); }
   .badge-blocked { background: var(--blocked-bg); color: var(--blocked-text); }
   .indicator-pill { width: 30px; min-width: 30px; height: 18px; min-height: 18px; border-radius: 999px; padding: 0; display: inline-flex; align-items: center; justify-content: center; }
-  .indicator-red { background: var(--status-danger); }
-  .indicator-yellow { background: var(--status-warning); }
-  .indicator-green { background: var(--status-success); }
-  .indicator-blue { background: var(--status-info); }
+  .indicator-red { background: var(--color-danger); }
+  .indicator-yellow { background: var(--color-warning); }
+  .indicator-green { background: var(--color-success); }
+  .indicator-blue { background: var(--color-info); }
   .indicator-neutral { background: #e5e7eb; }
   .readiness-panel { border-radius: var(--radius); padding: 16px; margin-bottom: 16px; border: 1px solid; }
-  .readiness-panel.ready { background: var(--ready-bg); border-color: var(--status-success); }
-  .readiness-panel.blocked { background: var(--blocked-bg); border-color: var(--status-danger); }
+  .readiness-panel.ready { background: var(--ready-bg); border-color: var(--color-success); }
+  .readiness-panel.blocked { background: var(--blocked-bg); border-color: var(--color-danger); }
   .readiness-title { font-size: 15px; font-weight: 700; margin-bottom: 10px; }
   .readiness-title.ready { color: var(--ready-text); }
   .readiness-title.blocked { color: var(--blocked-text); }
   .readiness-checks { display: flex; flex-direction: column; gap: 6px; }
   .readiness-check { display: flex; align-items: center; gap: 8px; font-size: 13px; }
   .readiness-check .dot { width: 18px; height: 18px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 10px; flex-shrink: 0; }
-  .dot-pass { background: var(--status-success-soft); color: var(--status-success); }
-  .dot-fail { background: var(--status-danger-soft); color: var(--status-danger); }
+  .dot-pass { background: var(--color-success-soft); color: var(--color-success); }
+  .dot-fail { background: var(--color-danger-soft); color: var(--color-danger); }
   .check-label.fail { color: var(--blocked-text); font-weight: 500; }
-  .blocked-reason { margin-top: 10px; padding-top: 10px; border-top: 1px solid var(--status-danger); font-size: 12px; color: var(--blocked-text); }
+  .blocked-reason { margin-top: 10px; padding-top: 10px; border-top: 1px solid var(--color-danger); font-size: 12px; color: var(--blocked-text); }
   .blocked-reason strong { display: block; margin-bottom: 4px; }
   .detail-section { background: var(--card); border-radius: var(--radius); padding: 16px; box-shadow: var(--shadow); border: 1px solid var(--border); margin-bottom: 14px; }
   .detail-section h3 { font-size: 13px; font-weight: 600; color: var(--muted); text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 12px; }
@@ -155,7 +155,7 @@
   .stage-tabs { display: flex; gap: 6px; overflow-x: auto; padding-bottom: 4px; margin-bottom: 16px; }
   .stage-tab { flex-shrink: 0; padding: 7px 14px; border-radius: 20px; font-size: 13px; font-weight: 500; cursor: pointer; border: 1px solid var(--border); background: var(--card); color: var(--muted); }
   .stage-tab.active { background: var(--ink-900); color: white; border-color: var(--ink-900); }
-  .stage-tab.done { background: var(--ready-bg); color: var(--ready-text); border-color: var(--status-success); }
+  .stage-tab.done { background: var(--ready-bg); color: var(--ready-text); border-color: var(--color-success); }
   .btn { width: 100%; padding: 14px; border-radius: 16px; font-size: 17px; font-weight: 600; cursor: pointer; border: none; margin-bottom: 10px; min-height: 56px; letter-spacing: -0.01em; box-shadow: none; }
   .btn-primary { background: #111827; color: white; }
   .btn-primary:active { background: #1f2937; }
@@ -170,10 +170,15 @@
   .bottom-nav-item { flex: 1; min-width: 0; background: none; border: none; display: flex; flex-direction: column; align-items: center; justify-content: flex-start; gap: 5px; cursor: pointer; color: #6b7280; padding: 0 2px; }
   .bottom-nav-icon { width: 20px; height: 20px; display: flex; align-items: center; justify-content: center; color: currentColor; }
   .bottom-nav-label { width: 100%; max-width: 68px; text-align: center; font-size: 11px; line-height: 1.15; font-weight: 500; min-height: 24px; text-wrap: balance; overflow-wrap: anywhere; }
-  .home-color-guide { display: flex; flex-direction: column; align-items: stretch; gap: 8px; background: #f9fafb; border: 1px solid #e5e7eb; }
+  .home-color-guide { display: flex; flex-direction: column; align-items: stretch; gap: 8px; background: var(--bg-soft); border: 1px solid var(--line-200); border-radius: var(--radius); padding: 16px; box-shadow: var(--shadow); }
   .color-tip-head { display: flex; justify-content: space-between; align-items: center; gap: 10px; }
   .color-tip-title { font-size: 12px; font-weight: 700; color: #111827; margin: 0; }
-  .color-tip-line { font-size: 12px; color: #6b7280; line-height: 1.35; margin: 0; }
+  .color-tip-line { font-size: 12px; color: #6b7280; line-height: 1.35; margin: 0; display:flex; align-items:center; gap:8px; }
+  .color-tip-dot { width: 8px; height: 8px; border-radius: 999px; flex-shrink: 0; opacity: 0.78; }
+  .color-tip-dot.success { background: var(--color-success); }
+  .color-tip-dot.warning { background: var(--color-warning); }
+  .color-tip-dot.danger { background: var(--color-danger); }
+  .color-tip-dot.info { background: var(--color-info); }
 
   /* ── Onboarding screens (language + entry) — ONE centering system ── */
   .onboarding-inner {
@@ -388,7 +393,7 @@
     <p style="font-size:13px; font-weight:600; color:#9ca3af; letter-spacing:0.06em; text-transform:uppercase; margin:0 0 12px;" id="fp-what-this-means-label">What this means</p>
     <div style="background:#f0fdf4; border-radius:16px; padding:18px;">
       <p style="font-size:22px; font-weight:700; color:#111827; margin:0 0 4px;" id="fp-safe-val">—</p>
-      <p style="font-size:13px; font-weight:600; color:var(--status-success); margin:0 0 6px;" id="fp-safe-label">Safe to spend</p>
+      <p style="font-size:13px; font-weight:600; color:var(--color-success); margin:0 0 6px;" id="fp-safe-label">Safe to spend</p>
       <p style="font-size:12px; color:#6b7280; margin:0;" id="fp-safe-sub">After VAT, excise, and expected payments</p>
     </div>
   </div>
@@ -467,10 +472,10 @@
         <p class="color-tip-title">Color guide</p>
         <button onclick="dismissColorTip()" aria-label="Dismiss color guide" style="background:none; border:none; color:#9ca3af; font-size:16px; cursor:pointer; padding:0; flex-shrink:0;">✕</button>
       </div>
-      <p class="color-tip-line">🟢 Low / Done</p>
-      <p class="color-tip-line">🟡 Medium</p>
-      <p class="color-tip-line">🔴 High / Blocked</p>
-      <p class="color-tip-line">🔵 In progress</p>
+      <p class="color-tip-line"><span class="color-tip-dot success"></span>Low / Done</p>
+      <p class="color-tip-line"><span class="color-tip-dot warning"></span>Medium</p>
+      <p class="color-tip-line"><span class="color-tip-dot danger"></span>High / Blocked</p>
+      <p class="color-tip-line"><span class="color-tip-dot info"></span>In progress</p>
     </div>
     <div id="whats-next-cards" style="display:flex; flex-direction:column; gap:12px;"></div>
   </div>
@@ -2136,8 +2141,8 @@ const WHATS_NEXT_DEMO = [
 ];
 
 const LABEL_STYLES = {
-  recommended: { bg: 'var(--status-success-soft)', color: 'var(--status-success)', text: 'Recommended' },
-  helpful:     { bg: 'var(--status-info-soft)', color: 'var(--status-info)', text: 'Helpful' },
+  recommended: { bg: 'var(--color-success-soft)', color: 'var(--color-success)', text: 'Recommended' },
+  helpful:     { bg: 'var(--color-info-soft)', color: 'var(--color-info)', text: 'Helpful' },
   later:       { bg: '#f9fafb', color: '#6b7280', text: 'Later' },
 };
 
@@ -2331,7 +2336,7 @@ function renderFinancialFromCache() {
             <span style="font-weight:500;">€${c.amount.toLocaleString('fr-BE')}</span>
           </div>
           <div style="background:#f0f0f0;border-radius:4px;height:5px;overflow:hidden;">
-            <div style="background:var(--status-info);height:100%;width:${Math.round((c.amount/maxAmt)*100)}%;border-radius:4px;"></div>
+            <div style="background:var(--color-info);height:100%;width:${Math.round((c.amount/maxAmt)*100)}%;border-radius:4px;"></div>
           </div>
           <div style="font-size:11px;color:#9e9e9e;margin-top:2px;">${c.category}${c.batchId ? ' · Batch '+c.batchId : ''}</div>
         </div>`).join('');
@@ -2343,7 +2348,7 @@ function renderFinancialFromCache() {
     || document.querySelector('[data-financial="obligations"]');
 
   if (oblListEl) {
-    const statusColor = { upcoming: 'var(--status-warning)', overdue: 'var(--status-danger)', done: 'var(--status-success)', paid: 'var(--status-success)' };
+    const statusColor = { upcoming: 'var(--color-warning)', overdue: 'var(--color-danger)', done: 'var(--color-success)', paid: 'var(--color-success)' };
     const today = new Date(); today.setHours(0,0,0,0);
 
     oblListEl.innerHTML = obligations.map(o => {
@@ -2352,8 +2357,8 @@ function renderFinancialFromCache() {
       if (o.dueDate) {
         const due  = new Date(o.dueDate); due.setHours(0,0,0,0);
         const diff = Math.round((due - today) / 86400000);
-        if (diff < 0)        dueLabel = `<span style="color:var(--status-danger);">${t('due.overdue').replace('%d', Math.abs(diff))}</span>`;
-        else if (diff === 0) dueLabel = `<span style="color:var(--status-warning);">${t('due.today')}</span>`;
+        if (diff < 0)        dueLabel = `<span style="color:var(--color-danger);">${t('due.overdue').replace('%d', Math.abs(diff))}</span>`;
+        else if (diff === 0) dueLabel = `<span style="color:var(--color-warning);">${t('due.today')}</span>`;
         else                 dueLabel = `<span style="color:#757575;">${o.dueDate}</span>`;
       }
       return `
@@ -2454,16 +2459,16 @@ function renderAgendaForSelectedDay() {
   }
 
   const typeIcon  = { task: '☑', note: '✎', event: '◆' };
-  const typeColor = { task: 'var(--status-info)', note: 'var(--status-warning)', event: 'var(--status-success)' };
+  const typeColor = { task: 'var(--color-info)', note: 'var(--color-warning)', event: 'var(--color-success)' };
 
   listEl.innerHTML = allItems.map(item => {
     const timeLabel = item.scheduledTime
       ? new Date(item.scheduledTime).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
       : '';
-    const systemMark = item.isSystem ? ' <span style="color:var(--status-warning);font-size:10px;">✦</span>' : '';
+    const systemMark = item.isSystem ? ' <span style="color:var(--color-warning);font-size:10px;">✦</span>' : '';
     const doneStyle  = item.isCompleted ? 'opacity:0.45;text-decoration:line-through;' : '';
     const icon       = typeIcon[item.type] || '☑';
-    const color      = typeColor[item.type] || 'var(--status-info)';
+    const color      = typeColor[item.type] || 'var(--color-info)';
 
     return `
       <div class="agenda-item" data-id="${item.id}" data-completed="${item.isCompleted}"
@@ -2571,14 +2576,14 @@ async function renderWhatsNext() {
     };
 
     const pillColor = {
-      recommended: 'var(--status-success-soft)',
-      helpful:     'var(--status-warning-soft)',
+      recommended: 'var(--color-success-soft)',
+      helpful:     'var(--color-warning-soft)',
       later:       '#f5f5f5'
     };
 
     const pillTextColor = {
-      recommended: 'var(--status-success)',
-      helpful:     'var(--status-warning)',
+      recommended: 'var(--color-success)',
+      helpful:     'var(--color-warning)',
       later:       '#757575'
     };
 
@@ -2592,9 +2597,9 @@ async function renderWhatsNext() {
       const today = new Date(); today.setHours(0,0,0,0);
       const due   = new Date(d); due.setHours(0,0,0,0);
       const diff  = Math.round((due - today) / 86400000);
-      if (diff < 0)  return `<span style="color:var(--status-danger);font-size:11px;">${t('due.overdue').replace('%d', Math.abs(diff))}</span>`;
-      if (diff === 0) return `<span style="color:var(--status-warning);font-size:11px;">${t('due.today')}</span>`;
-      if (diff === 1) return `<span style="color:var(--status-warning);font-size:11px;">${t('due.tomorrow')}</span>`;
+      if (diff < 0)  return `<span style="color:var(--color-danger);font-size:11px;">${t('due.overdue').replace('%d', Math.abs(diff))}</span>`;
+      if (diff === 0) return `<span style="color:var(--color-warning);font-size:11px;">${t('due.today')}</span>`;
+      if (diff === 1) return `<span style="color:var(--color-warning);font-size:11px;">${t('due.tomorrow')}</span>`;
       return `<span style="color:#757575;font-size:11px;">${t('due.in_days').replace('%d', diff)}</span>`;
     }
 
@@ -2738,7 +2743,7 @@ function renderFinancialPreview() {
   if (!permitted) return;
   const d = FINANCIAL_DEMO;
   const arrow = (curr, prev) => curr >= prev ? '↑' : '↓';
-  const arrowColor = (curr, prev) => curr >= prev ? 'var(--status-success)' : 'var(--status-danger)';
+  const arrowColor = (curr, prev) => curr >= prev ? 'var(--color-success)' : 'var(--color-danger)';
   const fmt = v => `€${toNum(v).toLocaleString()}`;
 
   const setEl = (id, val) => { const el = document.getElementById(id); if (el) el.textContent = val; };
@@ -2861,8 +2866,8 @@ function renderAgendaDay() {
   timed.forEach(item => {
     if (!injectedNow && isToday && item.time > nowStr) {
       html += `<div style="display:flex; align-items:center; gap:8px; margin:6px 0;">
-        <div style="flex:1; height:2px; background:var(--status-danger);"></div>
-        <span style="font-size:10px; color:var(--status-danger); font-weight:600;">${nowStr}</span>
+        <div style="flex:1; height:2px; background:var(--color-danger);"></div>
+        <span style="font-size:10px; color:var(--color-danger); font-weight:600;">${nowStr}</span>
       </div>`;
       injectedNow = true;
     }
@@ -2871,8 +2876,8 @@ function renderAgendaDay() {
 
   if (!injectedNow && isToday) {
     html += `<div style="display:flex; align-items:center; gap:8px; margin:6px 0;">
-      <div style="flex:1; height:2px; background:var(--status-danger);"></div>
-      <span style="font-size:10px; color:var(--status-danger); font-weight:600;">${nowStr}</span>
+      <div style="flex:1; height:2px; background:var(--color-danger);"></div>
+      <span style="font-size:10px; color:var(--color-danger); font-weight:600;">${nowStr}</span>
     </div>`;
   }
 
@@ -2994,8 +2999,8 @@ const FINANCIAL_PAGE_DEMO = {
   today:  { revenue: 6480, costs: 3240, margin: 3240, prevRevenue: 5100, prevCosts: 2890, prevMargin: 2210,
             safeToSpend: 1756, vat: 864, excise: 120, tax: 480,
             flow: [
-              { label: 'Unpaid invoices', value: '€1,200', note: '2 open', color: 'var(--status-warning)' },
-              { label: 'Overdue payments', value: '€480',  note: '1 overdue', color: 'var(--status-danger)' },
+              { label: 'Unpaid invoices', value: '€1,200', note: '2 open', color: 'var(--color-warning)' },
+              { label: 'Overdue payments', value: '€480',  note: '1 overdue', color: 'var(--color-danger)' },
             ],
             costs: [
               { label: 'Raw materials', value: '€1,440', pct: 44 },
@@ -3012,7 +3017,7 @@ const FINANCIAL_PAGE_DEMO = {
   week:   { revenue: 18200, costs: 9100, margin: 9100, prevRevenue: 16400, prevCosts: 8600, prevMargin: 7800,
             safeToSpend: 5200, vat: 2400, excise: 340, tax: 1300,
             flow: [
-              { label: 'Unpaid invoices', value: '€3,400', note: '5 open', color: 'var(--status-warning)' },
+              { label: 'Unpaid invoices', value: '€3,400', note: '5 open', color: 'var(--color-warning)' },
             ],
             costs: [
               { label: 'Raw materials', value: '€4,000', pct: 44 },
@@ -3028,8 +3033,8 @@ const FINANCIAL_PAGE_DEMO = {
   month:  { revenue: 74800, costs: 37400, margin: 37400, prevRevenue: 68000, prevCosts: 34000, prevMargin: 34000,
             safeToSpend: 21400, vat: 9800, excise: 1400, tax: 5400,
             flow: [
-              { label: 'Unpaid invoices', value: '€12,600', note: '8 open',  color: 'var(--status-warning)' },
-              { label: 'Overdue payments', value: '€2,400', note: '2 overdue', color: 'var(--status-danger)' },
+              { label: 'Unpaid invoices', value: '€12,600', note: '8 open',  color: 'var(--color-warning)' },
+              { label: 'Overdue payments', value: '€2,400', note: '2 overdue', color: 'var(--color-danger)' },
             ],
             costs: [
               { label: 'Raw materials', value: '€16,500', pct: 44 },
@@ -3063,7 +3068,7 @@ function renderFinancialPage() {
   if (!d) return;
   const fmt = v => `€${toNum(v).toLocaleString()}`;
   const arrow = (curr, prev) => curr >= prev ? '↑' : '↓';
-  const arrowColor = (curr, prev) => curr >= prev ? 'var(--status-success)' : 'var(--status-danger)';
+  const arrowColor = (curr, prev) => curr >= prev ? 'var(--color-success)' : 'var(--color-danger)';
   const setEl = (id, val) => { const el = document.getElementById(id); if (el) el.textContent = val; };
   const setStyle = (id, prop, val) => { const el = document.getElementById(id); if (el) el.style[prop] = val; };
 
@@ -3102,7 +3107,7 @@ function renderFinancialPage() {
       </div>
     </div>`).join('');
 
-  const statusColors = { upcoming: 'var(--status-warning)', due: 'var(--status-danger)', submitted: 'var(--status-success)', overdue: 'var(--status-danger)' };
+  const statusColors = { upcoming: 'var(--color-warning)', due: 'var(--color-danger)', submitted: 'var(--color-success)', overdue: 'var(--color-danger)' };
   const oblig = document.getElementById('fp-obligations');
   if (oblig) oblig.innerHTML = d.obligations.map(o => `
     <div style="background:#f9fafb; border-radius:12px; padding:14px 16px; display:flex; justify-content:space-between; align-items:center;">
