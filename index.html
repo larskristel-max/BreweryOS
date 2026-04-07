@@ -101,6 +101,12 @@
   .badge-status-planned { background: #f1f5f9; color: #475569; }
   .badge-ready { background: var(--ready-bg); color: var(--ready-text); }
   .badge-blocked { background: var(--blocked-bg); color: var(--blocked-text); }
+  .indicator-pill { width: 30px; min-width: 30px; height: 18px; min-height: 18px; border-radius: 999px; padding: 0; display: inline-flex; align-items: center; justify-content: center; }
+  .indicator-red { background: #fecaca; }
+  .indicator-yellow { background: #fef3c7; }
+  .indicator-green { background: #dcfce7; }
+  .indicator-blue { background: #dbeafe; }
+  .indicator-neutral { background: #e5e7eb; }
   .readiness-panel { border-radius: var(--radius); padding: 16px; margin-bottom: 16px; border: 1px solid; }
   .readiness-panel.ready { background: var(--ready-bg); border-color: #86efac; }
   .readiness-panel.blocked { background: var(--blocked-bg); border-color: #fca5a5; }
@@ -154,6 +160,9 @@
   .bottom-nav-item { flex: 1; min-width: 0; background: none; border: none; display: flex; flex-direction: column; align-items: center; justify-content: flex-start; gap: 5px; cursor: pointer; color: #6b7280; padding: 0 2px; }
   .bottom-nav-icon { width: 20px; height: 20px; display: flex; align-items: center; justify-content: center; color: currentColor; }
   .bottom-nav-label { width: 100%; max-width: 68px; text-align: center; font-size: 11px; line-height: 1.15; font-weight: 500; min-height: 24px; text-wrap: balance; overflow-wrap: anywhere; }
+  .color-tip { position: fixed; left: 12px; right: 12px; bottom: calc(var(--bottom-nav-height) + env(safe-area-inset-bottom, 0px) + 8px); background: #fff; border: 1px solid #e5e7eb; border-radius: 12px; box-shadow: 0 4px 10px rgba(0,0,0,0.06); padding: 12px; z-index: 650; }
+  .color-tip-title { font-size: 12px; font-weight: 700; color: #111827; margin-bottom: 6px; }
+  .color-tip-line { font-size: 12px; color: #6b7280; line-height: 1.35; }
 
   /* ── Onboarding screens (language + entry) — ONE centering system ── */
   .onboarding-inner {
@@ -1492,9 +1501,7 @@ function setCurrentRecord(tableName, recordId) {
 function readinessBadge(fields, objectType) {
   if (objectType !== 'process_run') return '';
   const { ready } = SEMANTIC.computeReadiness(fields, {}, APP_READINESS_CONDITIONS);
-  return ready
-    ? '<span class="badge badge-ready"><span class="badge-icon">✓</span><span>READY</span></span>'
-    : '<span class="badge badge-blocked"><span class="badge-icon">✗</span><span>BLOCKED</span></span>';
+  return `<span class="badge indicator-pill ${ready ? 'indicator-green' : 'indicator-red'}" aria-label="${ready ? 'ready' : 'blocked'}"></span>`;
 }
 
 function readinessPanel(fields, objectType) {
@@ -1579,9 +1586,25 @@ function displayStatus(raw) {
   return enVal || raw;
 }
 
+function pillClassFromPriority(raw) {
+  const key = String(raw || '').toLowerCase().replace(/\s+/g, '_').replace(/-/g, '_');
+  if (key === 'high' || key === 'élevé') return 'indicator-red';
+  if (key === 'medium' || key === 'normal') return 'indicator-yellow';
+  if (key === 'low' || key === 'faible') return 'indicator-green';
+  return 'indicator-neutral';
+}
+
+function pillClassFromStatus(raw) {
+  const key = String(raw || '').toLowerCase().replace(/\s+/g, '_').replace(/-/g, '_');
+  if (key === 'blocked') return 'indicator-red';
+  if (key === 'in_progress' || key === 'brewing' || key === 'fermenting') return 'indicator-blue';
+  if (key === 'done' || key === 'complete' || key === 'completed') return 'indicator-green';
+  return 'indicator-neutral';
+}
+
 function statusBadge(status) {
-  const s = (status||'').toLowerCase().replace(/\s/g,'-');
-  return `<span class="badge badge-status-${s}">${displayStatus(status)}</span>`;
+  const cls = pillClassFromStatus(status);
+  return `<span class="badge indicator-pill ${cls}" aria-label="${displayStatus(status)}"></span>`;
 }
 
 function objectTypeTag(type) {
@@ -1850,7 +1873,7 @@ async function loadTasks() {
       <div class="batch-card-header">
         <div><div class="batch-name">${f.Task || t('task.unnamed')}</div>
         <div class="batch-date">${f['Due Date'] || t('task.no_due_date')}</div></div>
-        <span class="badge badge-status-planned">${displayStatus(p || 'Normal')}</span>
+        <span class="badge indicator-pill ${pillClassFromPriority(p || 'Normal')}" aria-label="${displayStatus(p || 'Normal')}"></span>
       </div>
       <div class="batch-meta">${displayStatus(rawStatus)}${rawType ? ' · ' + rawType : ''}</div>
     </div>`;
@@ -2640,16 +2663,14 @@ function renderHomeBatches(batches) {
     const summary = String(summaryRaw || '').toLowerCase() === 'process_run'
       ? displayStatus(status)
       : summaryRaw;
-    const isReady = status === 'Done' || status === 'Completed';
-    const badgeColor = isReady ? '#d1fae5' : status === 'Blocked' ? '#fee2e2' : '#e0e7ff';
-    const badgeText = isReady ? '#065f46' : status === 'Blocked' ? '#991b1b' : '#3730a3';
+    const statusPillClass = pillClassFromStatus(status);
     return `
       <div onclick="openBatchDetail('${b.id}')" style="background:#fff; border:1.5px solid #f3f4f6; border-radius:16px; padding:16px; cursor:pointer; display:flex; justify-content:space-between; align-items:center;">
         <div>
           <p style="font-size:15px; font-weight:600; color:#111827; margin:0 0 4px;">Batch ${batchId}</p>
           <p style="font-size:13px; color:#6b7280; margin:0;">${summary}</p>
         </div>
-        <span style="font-size:11px; font-weight:600; background:${badgeColor}; color:${badgeText}; padding:5px 10px; min-height:22px; border-radius:20px; white-space:nowrap; display:inline-flex; align-items:center; justify-content:center; line-height:1;">${displayStatus(status)}</span>
+        <span class="badge indicator-pill ${statusPillClass}" aria-label="${displayStatus(status)}"></span>
       </div>`;
   }).join('');
 }
@@ -3076,6 +3097,22 @@ function renderFinancialPage() {
   setEl('fp-oblig-label', t('financial.obligations'));
 }
 
+function dismissColorTip() {
+  localStorage.setItem('brewos_color_tip_seen', '1');
+  const tip = document.getElementById('color-tip');
+  if (tip) tip.style.display = 'none';
+}
+
+function maybeShowColorTip() {
+  const tip = document.getElementById('color-tip');
+  if (!tip) return;
+  if (localStorage.getItem('brewos_color_tip_seen') === '1') {
+    tip.style.display = 'none';
+    return;
+  }
+  tip.style.display = 'block';
+}
+
 async function init() {
   bootFlow();
   const batchData = await airtable(TABLES.batches, '?sort[0][field]=Date&sort[0][direction]=desc');
@@ -3094,10 +3131,19 @@ async function init() {
   renderWhatsNext();
   renderAgendaPreview();
   renderFinancialPreview();
+  maybeShowColorTip();
 }
 
 init();
 </script>
+<div id="color-tip" class="color-tip" style="display:none;">
+  <div class="color-tip-title">Color guide</div>
+  <div class="color-tip-line">🟢 Low / Done</div>
+  <div class="color-tip-line">🟡 Medium</div>
+  <div class="color-tip-line">🔴 High / Blocked</div>
+  <div class="color-tip-line">🔵 In progress</div>
+  <button onclick="dismissColorTip()" style="margin-top:8px; border:none; background:#f3f4f6; color:#374151; border-radius:8px; padding:6px 10px; font-size:12px; cursor:pointer;">Got it</button>
+</div>
 <div class="bottom-nav">
   <button onclick="showScreen('screen-home')" class="bottom-nav-item">
     <span class="bottom-nav-icon" style="display:block; border:1.5px solid currentColor; border-radius:4px; position:relative;"><span style="position:absolute; bottom:0; left:3px; right:3px; height:8px; border:1.5px solid currentColor; border-bottom:none; border-radius:2px 2px 0 0;"></span></span>
