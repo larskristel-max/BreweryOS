@@ -1754,8 +1754,13 @@ function normalizeBatchStatus(rawStatus) {
 function normalizeBatchRecord(record) {
   const fields = record?.fields || {};
   const status = normalizeBatchStatus(fields.Status);
-  const displayName = fields['Display Name']
-    || (fields['Batch ID'] ? `Batch #${fields['Batch ID']}` : `Batch ${record?.id || ''}`);
+  const batchName =
+    fields['Batch Number'] ||
+    fields['Name'] ||
+    fields['Display Name'] ||
+    fields['Title'] ||
+    record?.id;
+  const displayName = batchName || `Batch ${record?.id || ''}`;
   const blockingReasons = safeJsonParseArray(fields['Blocking Reasons']);
   const overrideRecords = safeJsonParseArray(fields['Override Records']);
   const executionLog = safeJsonParseArray(fields['Execution Log']);
@@ -1966,11 +1971,17 @@ function batchCard(r) {
   const recipe = Array.isArray(f.Recipe) ? f.Recipe[0] : '';
   const status = sel(f.Status) || 'Unknown';
   const type   = getObjectType('Batches');
+  const batchName =
+    f['Batch Number'] ||
+    f['Name'] ||
+    f['Display Name'] ||
+    f['Title'] ||
+    r.id;
   return `
     <div class="batch-card" onclick="loadBatchDetail('${r.id}')">
       <div class="batch-card-header">
         <div>
-          <div class="batch-name">Batch #${f['Batch ID']} — ${recipe}</div>
+          <div class="batch-name">${batchName}${recipe ? ` — ${recipe}` : ''}</div>
           <div class="batch-date">${f.Date || '—'}</div>
         </div>
         ${readinessBadge(f, type)}
@@ -2032,7 +2043,13 @@ async function refreshBatchDataViews() {
   if (sel2) {
     sel2.innerHTML = '<option value="">Select a batch...</option>' +
       renderInput.map(r =>
-        `<option value="${r.id}">Batch #${r.fields['Batch ID']} — ${Array.isArray(r.fields.Recipe) ? r.fields.Recipe[0] : ''}</option>`
+        `<option value="${r.id}">${
+          r.fields['Batch Number'] ||
+          r.fields['Name'] ||
+          r.fields['Display Name'] ||
+          r.fields['Title'] ||
+          r.id
+        }${Array.isArray(r.fields.Recipe) && r.fields.Recipe[0] ? ` — ${r.fields.Recipe[0]}` : ''}</option>`
       ).join('');
   }
   renderHomeBatches(renderInput);
