@@ -121,6 +121,13 @@
   .check-label.fail { color: var(--blocked-text); font-weight: 500; }
   .blocked-reason { margin-top: 10px; padding-top: 10px; border-top: 1px solid #fca5a5; font-size: 12px; color: var(--blocked-text); }
   .blocked-reason strong { display: block; margin-bottom: 4px; }
+  .lifecycle-actions { background: var(--card); border: 1px solid var(--border); border-radius: var(--radius); padding: 16px; margin-bottom: 14px; }
+  .lifecycle-actions h3 { font-size: 13px; font-weight: 600; color: var(--muted); text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 12px; }
+  .lifecycle-row { display: flex; justify-content: space-between; align-items: center; font-size: 13px; color: var(--muted); margin-bottom: 10px; }
+  .lifecycle-block-list { margin: 8px 0 12px 18px; color: var(--blocked-text); font-size: 12px; }
+  .lifecycle-note { margin: 8px 0 12px; font-size: 12px; color: var(--muted); }
+  .lifecycle-log { margin-top: 10px; display: flex; flex-direction: column; gap: 6px; }
+  .lifecycle-log-item { font-size: 12px; color: var(--muted); background: var(--bg-soft); border-radius: 8px; padding: 8px 10px; }
   .detail-section { background: var(--card); border-radius: var(--radius); padding: 16px; box-shadow: var(--shadow); border: 1px solid var(--border); margin-bottom: 14px; }
   .detail-section h3 { font-size: 13px; font-weight: 600; color: var(--muted); text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 12px; }
   .detail-row { display: flex; justify-content: space-between; align-items: center; padding: 6px 0; border-bottom: 1px solid var(--border); }
@@ -1655,6 +1662,27 @@ function getNotionEndpoint() {
 
 const TABLES = SOURCE_CONFIG.airtable.tables;
 
+// ===== BATCH ENGINE =====
+// Phase 4 lifecycle engine is intentionally grouped in this single block:
+// normalization, sequencing, readiness gating, override handling,
+// append-only logging helpers, blocking helpers, task triggers, transition entrypoint.
+const BATCH_LIFECYCLE = ['planned', 'brewing', 'fermenting', 'ready', 'packaged'];
+const BATCH_STATUS_TO_AIRTABLE = {
+  planned: 'Planned',
+  brewing: 'Brewing',
+  fermenting: 'Fermenting',
+  ready: 'Ready',
+  packaged: 'Packaged',
+};
+const BATCH_TIMESTAMP_FIELDS = {
+  planned: 'planned_at',
+  brewing: 'brewing_started_at',
+  fermenting: 'fermentation_started_at',
+  ready: 'ready_at',
+  packaged: 'packaged_at',
+};
+const BATCH_TRANSITION_LOCKS = {};
+
 const RECIPE_TARGETS = {
   'Blonde du Château': { og: 1.059, fg: 1.010, mash: 65, boil: 60, preboil: 570 },
   'Ambrée/Marckloff':  { og: 1.060, fg: 1.012, mash: 67, boil: 60, preboil: 570 },
@@ -1679,6 +1707,206 @@ async function airtablePatch(table, id, fields) {
   });
   return r.json();
 }
+
+async function airtableCreate(table, fields) {
+  const r = await fetch(`https://api.airtable.com/v0/${getAirtableBaseId()}/${table}`, {
+    method: 'POST',
+    headers: { Authorization: `Bearer ${getAirtableApiKey()}`, 'Content-Type': 'application/json' },
+    body: JSON.stringify({ fields })
+  });
+  return r.json();
+}
+
+function safeJsonParseArray(value) {
+  if (Array.isArray(value)) return value;
+  if (!value) return [];
+  try {
+    const parsed = JSON.parse(value);
+    return Array.isArray(parsed) ? parsed : [];
+  } catch (_) {
+    return [];
+  }
+}
+
+function safeJsonStringifyArray(value) {
+  return JSON.stringify(Array.isArray(value) ? value : []);
+}
+
+function normalizeBatchStatus(rawStatus) {
+  const raw = String(sel(rawStatus) || '').trim().toLowerCase();
+  const mapped = {
+    planned: 'planned',
+    brewing: 'brewing',
+    fermenting: 'fermenting',
+    ready: 'ready',
+    packaged: 'packaged',
+    done: 'packaged',
+    complete: 'packaged',
+    completed: 'packaged',
+    conditioning: 'ready'
+  };
+  return mapped[raw] || 'planned';
+}
+
+function normalizeBatchRecord(record) {
+  const fields = record?.fields || {};
+  const status = normalizeBatchStatus(fields.Status);
+  const displayName = fields['Display Name']
+    || (fields['Batch ID'] ? `Batch #${fields['Batch ID']}` : `Batch ${record?.id || ''}`);
+  const blockingReasons = safeJsonParseArray(fields['Blocking Reasons']);
+  const overrideRecords = safeJsonParseArray(fields['Override Records']);
+  const executionLog = safeJsonParseArray(fields['Execution Log']);
+  return {
+    id: record.id,
+    displayName,
+    recipeRef: Array.isArray(fields.Recipe) ? fields.Recipe[0] : (fields.Recipe || null),
+    status,
+    timestamps: {
+      planned_at: fields.planned_at || fields['Planned At'] || null,
+      brewing_started_at: fields.brewing_started_at || fields['Brewing Started At'] || null,
+      fermentation_started_at: fields.fermentation_started_at || fields['Fermentation Started At'] || null,
+      ready_at: fields.ready_at || fields['Ready At'] || null,
+      packaged_at: fields.packaged_at || fields['Packaged At'] || null,
+    },
+    blockedState: fields['Blocked State'] === true,
+    blockingReasons: blockingReasons.length ? blockingReasons : (fields['Blocking Reason'] ? [fields['Blocking Reason']] : []),
+    overrideRecords,
+    executionLog,
+    rawFields: fields,
+  };
+}
+
+function nextBatchStatus(status) {
+  const idx = BATCH_LIFECYCLE.indexOf(status);
+  if (idx < 0 || idx >= BATCH_LIFECYCLE.length - 1) return null;
+  return BATCH_LIFECYCLE[idx + 1];
+}
+
+function computeBatchReadiness(batchRecord) {
+  const normalized = normalizeBatchRecord(batchRecord);
+  const readiness = SEMANTIC.computeReadiness(normalized.rawFields, {}, APP_READINESS_CONDITIONS);
+  return {
+    ready: readiness.ready,
+    reasons: readiness.failing,
+  };
+}
+
+async function appendBatchJsonArrayItem(batchId, fieldName, entry) {
+  const latest = await airtable(TABLES.batches, `/${batchId}`);
+  const existing = safeJsonParseArray(latest?.fields?.[fieldName]);
+  const updated = [...existing, entry];
+  await airtablePatch(TABLES.batches, batchId, { [fieldName]: safeJsonStringifyArray(updated) });
+  return updated;
+}
+
+async function mergeBatchBlockingReasons(batchId, reasons) {
+  const latest = await airtable(TABLES.batches, `/${batchId}`);
+  const existing = safeJsonParseArray(latest?.fields?.['Blocking Reasons']);
+  const merged = [...new Set([...existing, ...reasons])];
+  await airtablePatch(TABLES.batches, batchId, { 'Blocking Reasons': safeJsonStringifyArray(merged) });
+  return merged;
+}
+
+async function createOperationalTask(taskName, reason, batchRecordId) {
+  const fields = {
+    'Task': taskName,
+    'Status': 'To Do',
+    'Priority': 'High',
+    'Type': 'System',
+    'Suggestion Reason': reason,
+  };
+  if (batchRecordId) fields['Linked Entity ID'] = batchRecordId;
+  try {
+    await airtableCreate(TABLES.tasks, fields);
+  } catch (err) {
+    console.warn('[TaskTrigger] Failed to create task', taskName, err);
+  }
+}
+
+async function runBatchTransition(batchId, opts = {}) {
+  const override = opts.override === true;
+  const overrideReason = (opts.overrideReason || '').trim();
+  if (BATCH_TRANSITION_LOCKS[batchId]) {
+    throw new Error('Transition already in progress for this batch.');
+  }
+  BATCH_TRANSITION_LOCKS[batchId] = true;
+  try {
+    const latest = await airtable(TABLES.batches, `/${batchId}`);
+    const normalized = normalizeBatchRecord(latest);
+    const fromStatus = normalized.status;
+    const toStatus = nextBatchStatus(fromStatus);
+    if (!toStatus) {
+      throw new Error('No legal transition available from current state.');
+    }
+
+    const readiness = computeBatchReadiness(latest);
+    const now = new Date().toISOString();
+
+    if (!readiness.ready && !override) {
+      const blockedLogEntry = {
+        type: 'readiness_blocked',
+        timestamp: now,
+        payload: { from: fromStatus, to: toStatus, reasons: readiness.reasons }
+      };
+      await appendBatchJsonArrayItem(batchId, 'Execution Log', blockedLogEntry);
+      const mergedBlockingReasons = await mergeBatchBlockingReasons(batchId, readiness.reasons);
+      await airtablePatch(TABLES.batches, batchId, {
+        'Blocked State': true,
+        'Blocking Reason': mergedBlockingReasons.join(', '),
+      });
+      await createOperationalTask('Resolve blocking issue', `Transition ${fromStatus} → ${toStatus} blocked`, batchId);
+      const blockedLatest = await airtable(TABLES.batches, `/${batchId}`);
+      return { blocked: true, reasons: readiness.reasons, batch: normalizeBatchRecord(blockedLatest) };
+    }
+
+    if (!readiness.ready && override && !overrideReason) {
+      throw new Error('Override justification is required.');
+    }
+
+    if (!readiness.ready && override) {
+      const overrideEntry = {
+        timestamp: now,
+        reason: overrideReason,
+        user: 'system-placeholder-user',
+        context: { from: fromStatus, to: toStatus, blockedReasons: readiness.reasons }
+      };
+      await appendBatchJsonArrayItem(batchId, 'Override Records', overrideEntry);
+      await appendBatchJsonArrayItem(batchId, 'Execution Log', {
+        type: 'override_used',
+        payload: overrideEntry
+      });
+      await createOperationalTask('Review override decision', `Override used for ${fromStatus} → ${toStatus}`, batchId);
+    }
+
+    await appendBatchJsonArrayItem(batchId, 'Execution Log', {
+      type: 'lifecycle_transition',
+      timestamp: now,
+      payload: { from: fromStatus, to: toStatus, overrideUsed: !readiness.ready && override }
+    });
+
+    const patchFields = {
+      Status: BATCH_STATUS_TO_AIRTABLE[toStatus],
+      'Blocked State': false,
+      'Blocking Reason': null,
+      [BATCH_TIMESTAMP_FIELDS[toStatus]]: now
+    };
+    if (!normalized.timestamps.planned_at) {
+      patchFields[BATCH_TIMESTAMP_FIELDS.planned] = now;
+    }
+
+    await airtablePatch(TABLES.batches, batchId, patchFields);
+
+    if (toStatus === 'fermenting') {
+      await createOperationalTask('Monitor fermentation', `Batch entered fermenting state`, batchId);
+    }
+
+    const persisted = await airtable(TABLES.batches, `/${batchId}`);
+    return { blocked: false, batch: normalizeBatchRecord(persisted) };
+  } finally {
+    BATCH_TRANSITION_LOCKS[batchId] = false;
+  }
+}
+// ===== END BATCH ENGINE =====
 
 let screenStack = ['screen-home'];
 function goBack() {
@@ -1759,6 +1987,23 @@ async function loadBatches() {
   el.innerHTML = data.records.map(r => batchCard(r)).join('');
 }
 
+async function refreshBatchDataViews() {
+  const batchData = await airtable(TABLES.batches, '?sort[0][field]=Date&sort[0][direction]=desc');
+  const listEl = document.getElementById('batch-list');
+  if (listEl) {
+    if (!batchData.records?.length) listEl.innerHTML = `<div class="empty">${t('batch.no_batches')}</div>`;
+    else listEl.innerHTML = batchData.records.map(r => batchCard(r)).join('');
+  }
+  const sel2 = document.getElementById('brew-batch-select');
+  if (sel2) {
+    sel2.innerHTML = '<option value="">Select a batch...</option>' +
+      (batchData.records || []).map(r =>
+        `<option value="${r.id}">Batch #${r.fields['Batch ID']} — ${Array.isArray(r.fields.Recipe) ? r.fields.Recipe[0] : ''}</option>`
+      ).join('');
+  }
+  renderHomeBatches(batchData.records || []);
+}
+
 async function loadBatchDetail(recordId) {
   showScreen('screen-batch-detail');
   setCurrentRecord('Batches', recordId);
@@ -1771,11 +2016,15 @@ async function loadBatchDetail(recordId) {
   ]);
 
   const f       = batchData.fields;
+  const normalizedBatch = normalizeBatchRecord(batchData);
   const recipe  = Array.isArray(f.Recipe) ? f.Recipe[0] : '';
   const targets = RECIPE_TARGETS[recipe] || {};
   const log     = logsData.records?.[0]?.fields || {};
-  const status  = sel(f.Status) || 'Unknown';
+  const status  = BATCH_STATUS_TO_AIRTABLE[normalizedBatch.status] || sel(f.Status) || 'Unknown';
   const objType = APP_STATE.currentObjectType;
+  const readiness = computeBatchReadiness(batchData);
+  const nextStatus = nextBatchStatus(normalizedBatch.status);
+  const inTransition = BATCH_TRANSITION_LOCKS[recordId] === true;
 
   function compare(actual, target) {
     if (!actual || !target) return `<span class="detail-value">${actual || '—'}</span>`;
@@ -1796,6 +2045,34 @@ async function loadBatchDetail(recordId) {
         : ''}
     </div>
     ${readinessPanel(f, objType)}
+    <div class="lifecycle-actions">
+      <h3>Lifecycle Engine</h3>
+      <div class="lifecycle-row">
+        <span>Current</span>
+        <strong>${displayStatus(status)}</strong>
+      </div>
+      <div class="lifecycle-row">
+        <span>Next</span>
+        <strong>${nextStatus ? displayStatus(BATCH_STATUS_TO_AIRTABLE[nextStatus]) : '—'}</strong>
+      </div>
+      ${!readiness.ready ? `<div style="font-size:12px; color:var(--blocked-text); font-weight:600;">Transition blocked by readiness checks.</div>` : ''}
+      ${!readiness.ready ? `<ul class="lifecycle-block-list">${readiness.reasons.map(reason => `<li>${reason}</li>`).join('')}</ul>` : ''}
+      ${normalizedBatch.blockedState ? `<div class="lifecycle-note"><strong>Last blocked reason:</strong> ${normalizedBatch.blockingReasons.join(', ') || '—'}</div>` : ''}
+      ${nextStatus ? `
+        <button class="btn btn-primary" onclick="triggerBatchTransition('${recordId}')" ${inTransition ? 'disabled' : ''}>
+          ${inTransition ? 'Processing…' : `Move to ${displayStatus(BATCH_STATUS_TO_AIRTABLE[nextStatus])}`}
+        </button>
+      ` : `<div class="lifecycle-note">Batch already reached final lifecycle state.</div>`}
+      ${nextStatus && !readiness.ready ? `
+        <textarea id="override-justification" placeholder="Override justification is required"></textarea>
+        <button class="btn btn-secondary" onclick="triggerBatchOverride('${recordId}')" ${inTransition ? 'disabled' : ''}>Override and continue</button>
+      ` : ''}
+      <div class="lifecycle-log">
+        ${(normalizedBatch.executionLog || []).slice(-4).reverse().map(entry => `
+          <div class="lifecycle-log-item">${entry.timestamp || '—'} · ${entry.type || 'event'}</div>
+        `).join('') || '<div class="lifecycle-log-item">No lifecycle events yet.</div>'}
+      </div>
+    </div>
     <div class="detail-section">
       <h3>Mash</h3>
       <div class="detail-row"><span class="detail-label">Temp</span>${compare(log['Mash Temp Actual'], targets.mash)}</div>
@@ -1830,6 +2107,37 @@ async function loadBatchDetail(recordId) {
       <p style="font-size:14px;line-height:1.6">${log['Brewer Notes']}</p>
     </div>` : ''}
     <button class="btn btn-secondary" onclick="goBack()">← Back</button>`;
+}
+
+async function triggerBatchTransition(batchId) {
+  if (BATCH_TRANSITION_LOCKS[batchId]) return;
+  try {
+    await runBatchTransition(batchId);
+    toast('Lifecycle transition completed');
+  } catch (err) {
+    toast(err.message || 'Transition failed');
+  } finally {
+    await loadBatchDetail(batchId);
+    await refreshBatchDataViews();
+  }
+}
+
+async function triggerBatchOverride(batchId) {
+  if (BATCH_TRANSITION_LOCKS[batchId]) return;
+  const reason = (document.getElementById('override-justification')?.value || '').trim();
+  if (!reason) {
+    toast('Override justification is required');
+    return;
+  }
+  try {
+    await runBatchTransition(batchId, { override: true, overrideReason: reason });
+    toast('Override applied and transition completed');
+  } catch (err) {
+    toast(err.message || 'Override failed');
+  } finally {
+    await loadBatchDetail(batchId);
+    await refreshBatchDataViews();
+  }
 }
 
 const STAGES = ['Mash','Boil','Transfer','Ferment','Bottle'];
@@ -3248,13 +3556,7 @@ async function init() {
     APP_STATE.isReady = true;
 
     bootFlow();
-    const batchData = await airtable(TABLES.batches, '?sort[0][field]=Date&sort[0][direction]=desc');
-    const sel2 = document.getElementById('brew-batch-select');
-    sel2.innerHTML = '<option value="">Select a batch...</option>' +
-      (batchData.records||[]).map(r =>
-        `<option value="${r.id}">Batch #${r.fields['Batch ID']} — ${Array.isArray(r.fields.Recipe)?r.fields.Recipe[0]:''}</option>`
-      ).join('');
-    renderHomeBatches(batchData.records || []);
+    await refreshBatchDataViews();
     loadTasks();
     applyHomeLabels();
     initSettings();
