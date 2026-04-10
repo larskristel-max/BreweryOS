@@ -1751,16 +1751,23 @@ function normalizeBatchStatus(rawStatus) {
   return mapped[raw] || 'planned';
 }
 
+function resolveBatchLabel(record) {
+  const f = record?.fields || {};
+  return (
+    f["Display Name"] ||
+    (f["Declaration Number"] ? `Batch #${f["Declaration Number"]}` : null) ||
+    (f["Batch Number"] ? `Batch #${f["Batch Number"]}` : null) ||
+    f["Name"] ||
+    f["Title"] ||
+    record?.id ||
+    "Batch"
+  );
+}
+
 function normalizeBatchRecord(record) {
   const fields = record?.fields || {};
   const status = normalizeBatchStatus(fields.Status);
-  const batchName =
-    fields['Batch Number'] ||
-    fields['Name'] ||
-    fields['Display Name'] ||
-    fields['Title'] ||
-    record?.id;
-  const displayName = batchName || `Batch ${record?.id || ''}`;
+  const displayName = resolveBatchLabel(record);
   const blockingReasons = safeJsonParseArray(fields['Blocking Reasons']);
   const overrideRecords = safeJsonParseArray(fields['Override Records']);
   const executionLog = safeJsonParseArray(fields['Execution Log']);
@@ -1971,12 +1978,7 @@ function batchCard(r) {
   const recipe = Array.isArray(f.Recipe) ? f.Recipe[0] : '';
   const status = sel(f.Status) || 'Unknown';
   const type   = getObjectType('Batches');
-  const batchName =
-    f['Batch Number'] ||
-    f['Name'] ||
-    f['Display Name'] ||
-    f['Title'] ||
-    r.id;
+  const batchName = resolveBatchLabel(r);
   return `
     <div class="batch-card" onclick="loadBatchDetail('${r.id}')">
       <div class="batch-card-header">
@@ -2043,13 +2045,7 @@ async function refreshBatchDataViews() {
   if (sel2) {
     sel2.innerHTML = '<option value="">Select a batch...</option>' +
       renderInput.map(r =>
-        `<option value="${r.id}">${
-          r.fields['Batch Number'] ||
-          r.fields['Name'] ||
-          r.fields['Display Name'] ||
-          r.fields['Title'] ||
-          r.id
-        }${Array.isArray(r.fields.Recipe) && r.fields.Recipe[0] ? ` — ${r.fields.Recipe[0]}` : ''}</option>`
+        `<option value="${r.id}">${resolveBatchLabel(r)}${Array.isArray(r.fields.Recipe) && r.fields.Recipe[0] ? ` — ${r.fields.Recipe[0]}` : ''}</option>`
       ).join('');
   }
   renderHomeBatches(renderInput);
@@ -2067,6 +2063,7 @@ async function loadBatchDetail(recordId) {
   ]);
 
   const f       = batchData.fields;
+  const batchLabel = resolveBatchLabel(batchData);
   const normalizedBatch = normalizeBatchRecord(batchData);
   const recipe  = Array.isArray(f.Recipe) ? f.Recipe[0] : '';
   const targets = RECIPE_TARGETS[recipe] || {};
@@ -2087,7 +2084,7 @@ async function loadBatchDetail(recordId) {
   el.innerHTML = `
     <div class="detail-section">
       <h3>Batch Info</h3>
-      <div class="detail-row"><span class="detail-label">Batch ID</span><span class="detail-value">#${f['Batch ID']}</span></div>
+      <div class="detail-row"><span class="detail-label">Batch</span><span class="detail-value">${batchLabel}</span></div>
       <div class="detail-row"><span class="detail-label">Recipe</span><span class="detail-value">${recipe || '—'}</span></div>
       <div class="detail-row"><span class="detail-label">Date</span><span class="detail-value">${f.Date || '—'}</span></div>
       <div class="detail-row"><span class="detail-label">Status</span>${statusBadge(status)}</div>
@@ -3108,7 +3105,7 @@ function renderHomeBatches(batches) {
   container.innerHTML = batches.slice(0, 3).map(b => {
     const fields = b.fields || {};
     const status = sel(fields['Status']) || 'Unknown';
-    const batchId = fields['Batch ID'] || '—';
+    const batchLabel = resolveBatchLabel(b);
     const summaryRaw = fields['Summary Line'] || status;
     const summary = String(summaryRaw || '').toLowerCase() === 'process_run'
       ? displayStatus(status)
@@ -3117,7 +3114,7 @@ function renderHomeBatches(batches) {
     return `
       <div onclick="openBatchDetail('${b.id}')" style="background:#fff; border:1.5px solid #f3f4f6; border-radius:16px; padding:16px; cursor:pointer; display:flex; justify-content:space-between; align-items:center;">
         <div>
-          <p style="font-size:15px; font-weight:600; color:#111827; margin:0 0 4px;">Batch ${batchId}</p>
+          <p style="font-size:15px; font-weight:600; color:#111827; margin:0 0 4px;">${batchLabel}</p>
           <p style="font-size:13px; color:#6b7280; margin:0;">${summary}</p>
         </div>
         <span class="badge indicator-pill ${statusPillClass}" aria-label="${displayStatus(status)}"></span>
