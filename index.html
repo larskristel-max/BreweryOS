@@ -233,6 +233,10 @@
   <div style="width:60px"></div>
 </div>
 <div id="toast" class="toast"></div>
+<div id="screen-loading" style="display:none; position:fixed; inset:0; background:#fff; z-index:10000; align-items:center; justify-content:center; flex-direction:column; gap:12px;">
+  <div class="spinner" aria-hidden="true"></div>
+  <div id="screen-loading-message" class="loading">Loading BrewOS…</div>
+</div>
 
 <div id="screen-language" style="display:none; position:fixed; inset:0; background:#fff; z-index:9999; flex-direction:column; align-items:center; justify-content:center; overflow-y:auto;">
   <div class="onboarding-inner">
@@ -1486,13 +1490,28 @@ let APP_READINESS_CONDITIONS = SEMANTIC.readinessConditionsFallback;
 const APP_STATE = {
   currentObjectType: null,
   currentRecordId: null,
-  currentTableName: null
+  currentTableName: null,
+  isInitialized: false,
+  isSemanticReady: false,
+  isReady: false
 };
 
 function setCurrentRecord(tableName, recordId) {
   APP_STATE.currentTableName  = tableName;
   APP_STATE.currentRecordId   = recordId;
   APP_STATE.currentObjectType = getObjectType(tableName);
+}
+
+function showLoadingScreen(message = 'Loading BrewOS…') {
+  const overlay = document.getElementById('screen-loading');
+  const text = document.getElementById('screen-loading-message');
+  if (text) text.textContent = message;
+  if (overlay) overlay.style.display = 'flex';
+}
+
+function hideLoadingScreen() {
+  const overlay = document.getElementById('screen-loading');
+  if (overlay) overlay.style.display = 'none';
 }
 
 function readinessBadge(fields, objectType) {
@@ -1980,6 +1999,11 @@ async function loadTasks() {
 }
 
 function showScreen(id) {
+  if (!APP_STATE.isReady && id !== 'screen-loading') {
+    showLoadingScreen();
+    return;
+  }
+
   document.querySelectorAll('[id^="screen-"]').forEach(s => {
     s.style.display = 'none';
   });
@@ -3201,37 +3225,52 @@ function maybeShowColorTip() {
 }
 
 async function init() {
-  initializeCurrentBreweryContext();
-  if (!isBreweryContextInitialized()) {
-    throw new Error('Brewery context not initialized');
+  showLoadingScreen('Loading BrewOS…');
+  APP_STATE.isInitialized = false;
+  APP_STATE.isSemanticReady = false;
+  APP_STATE.isReady = false;
+
+  try {
+    initializeCurrentBreweryContext();
+    if (!isBreweryContextInitialized()) {
+      throw new Error('Brewery context not initialized');
+    }
+    APP_STATE.isInitialized = true;
+
+    try {
+      APP_READINESS_CONDITIONS = await getReadinessConditions();
+    } catch (err) {
+      console.warn('[Semantic] Runtime readiness initialization failed; using fallback.', err);
+      APP_READINESS_CONDITIONS = SEMANTIC.readinessConditionsFallback;
+    }
+
+    APP_STATE.isSemanticReady = true;
+    APP_STATE.isReady = true;
+
+    bootFlow();
+    const batchData = await airtable(TABLES.batches, '?sort[0][field]=Date&sort[0][direction]=desc');
+    const sel2 = document.getElementById('brew-batch-select');
+    sel2.innerHTML = '<option value="">Select a batch...</option>' +
+      (batchData.records||[]).map(r =>
+        `<option value="${r.id}">Batch #${r.fields['Batch ID']} — ${Array.isArray(r.fields.Recipe)?r.fields.Recipe[0]:''}</option>`
+      ).join('');
+    renderHomeBatches(batchData.records || []);
+    loadTasks();
+    applyHomeLabels();
+    initSettings();
+    renderFinancialPage();
+    switchAgendaView(agendaView);
+    initGuidanceHelper();
+    renderWhatsNext();
+    renderAgendaPreview();
+    renderFinancialPreview();
+    maybeShowColorTip();
+    hideLoadingScreen();
+  } catch (err) {
+    console.error('[Boot] initialization failed', err);
+    APP_STATE.isReady = false;
+    showLoadingScreen('Failed to initialize BrewOS. Please reload.');
   }
-
-  getReadinessConditions()
-    .then((conditions) => {
-      APP_READINESS_CONDITIONS = conditions;
-    })
-    .catch((err) => {
-      console.warn('[Semantic] Runtime readiness initialization failed; keeping fallback.', err);
-    });
-
-  bootFlow();
-  const batchData = await airtable(TABLES.batches, '?sort[0][field]=Date&sort[0][direction]=desc');
-  const sel2 = document.getElementById('brew-batch-select');
-  sel2.innerHTML = '<option value="">Select a batch...</option>' +
-    (batchData.records||[]).map(r =>
-      `<option value="${r.id}">Batch #${r.fields['Batch ID']} — ${Array.isArray(r.fields.Recipe)?r.fields.Recipe[0]:''}</option>`
-    ).join('');
-  renderHomeBatches(batchData.records || []);
-  loadTasks();
-  applyHomeLabels();
-  initSettings();
-  renderFinancialPage();
-  switchAgendaView(agendaView);
-  initGuidanceHelper();
-  renderWhatsNext();
-  renderAgendaPreview();
-  renderFinancialPreview();
-  maybeShowColorTip();
 }
 
 init();
