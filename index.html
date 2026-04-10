@@ -1580,6 +1580,21 @@ async function airtableProxyRequest(payload) {
   return r.json();
 }
 
+function resolveBatchLabel(record) {
+  if (!record) return 'Batch';
+  const f = record.fields || {};
+  return (
+    f['Display Name'] ||
+    (f['Declaration Number'] ? `Batch #${f['Declaration Number']}` : null) ||
+    (f['Batch Number'] ? `Batch #${f['Batch Number']}` : null) ||
+    f['Name'] ||
+    f['Title'] ||
+    record.id ||
+    'Batch'
+  );
+}
+
+
 let screenStack = ['screen-home'];
 function goBack() {
   screenStack.pop();
@@ -1635,11 +1650,12 @@ function batchCard(r) {
   const recipe = Array.isArray(f.Recipe) ? f.Recipe[0] : '';
   const status = sel(f.Status) || 'Unknown';
   const type   = getObjectType('Batches');
+  const batchName = resolveBatchLabel(r);
   return `
     <div class="batch-card" onclick="loadBatchDetail('${r.id}')">
       <div class="batch-card-header">
         <div>
-          <div class="batch-name">Batch #${f['Batch ID']} — ${recipe}</div>
+          <div class="batch-name">${batchName}${recipe ? ` — ${recipe}` : ''}</div>
           <div class="batch-date">${f.Date || '—'}</div>
         </div>
         ${readinessBadge(f, type)}
@@ -1658,6 +1674,7 @@ async function loadBatches() {
   if (!data.records?.length) { el.innerHTML = `<div class="empty">${t('batch.no_batches')}</div>`; return; }
   el.innerHTML = data.records.map(r => batchCard(r)).join('');
 }
+
 
 async function loadBatchDetail(recordId) {
   showScreen('screen-batch-detail');
@@ -1687,7 +1704,7 @@ async function loadBatchDetail(recordId) {
   el.innerHTML = `
     <div class="detail-section">
       <h3>Batch Info</h3>
-      <div class="detail-row"><span class="detail-label">Batch ID</span><span class="detail-value">#${f['Batch ID']}</span></div>
+      <div class="detail-row"><span class="detail-label">Batch</span><span class="detail-value">${resolveBatchLabel(batchData)}</span></div>
       <div class="detail-row"><span class="detail-label">Recipe</span><span class="detail-value">${recipe || '—'}</span></div>
       <div class="detail-row"><span class="detail-label">Date</span><span class="detail-value">${f.Date || '—'}</span></div>
       <div class="detail-row"><span class="detail-label">Status</span>${statusBadge(status)}</div>
@@ -2632,7 +2649,7 @@ function renderHomeBatches(batches) {
   container.innerHTML = batches.slice(0, 3).map(b => {
     const fields = b.fields || {};
     const status = sel(fields['Status']) || 'Unknown';
-    const batchId = fields['Batch ID'] || '—';
+    const batchLabel = resolveBatchLabel(b);
     const summaryRaw = fields['Summary Line'] || status;
     const summary = String(summaryRaw || '').toLowerCase() === 'process_run'
       ? displayStatus(status)
@@ -2641,7 +2658,7 @@ function renderHomeBatches(batches) {
     return `
       <div onclick="openBatchDetail('${b.id}')" style="background:#fff; border:1.5px solid #f3f4f6; border-radius:16px; padding:16px; cursor:pointer; display:flex; justify-content:space-between; align-items:center;">
         <div>
-          <p style="font-size:15px; font-weight:600; color:#111827; margin:0 0 4px;">Batch ${batchId}</p>
+          <p style="font-size:15px; font-weight:600; color:#111827; margin:0 0 4px;">${batchLabel}</p>
           <p style="font-size:13px; color:#6b7280; margin:0;">${summary}</p>
         </div>
         <span class="badge indicator-pill ${statusPillClass}" aria-label="${displayStatus(status)}"></span>
@@ -3093,7 +3110,7 @@ async function init() {
   const sel2 = document.getElementById('brew-batch-select');
   sel2.innerHTML = '<option value="">Select a batch...</option>' +
     (batchData.records||[]).map(r =>
-      `<option value="${r.id}">Batch #${r.fields['Batch ID']} — ${Array.isArray(r.fields.Recipe)?r.fields.Recipe[0]:''}</option>`
+      `<option value="${r.id}">${resolveBatchLabel(r)}${Array.isArray(r.fields.Recipe)?` — ${r.fields.Recipe[0]}`:''}</option>`
     ).join('');
   renderHomeBatches(batchData.records || []);
   loadTasks();
