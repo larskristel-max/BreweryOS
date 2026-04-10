@@ -1540,7 +1540,7 @@ function readinessPanel(fields, objectType) {
 }
 
 const BASE = 'appslXmtOEoDI6lwp';
-const KEY  = '%%AIRTABLE_KEY%%';
+const AIRTABLE_PROXY_ENDPOINT = '/.netlify/functions/airtable';
 const TABLES = {
   batches:  'tblGrw6fTgMyz3ZL5',
   brewLogs: 'tblF6c610KRtvFosJ',
@@ -1558,17 +1558,19 @@ const RECIPE_TARGETS = {
 function sel(v){ return (v && typeof v==='object' && v.name) ? v.name : (v||''); }
 
 async function airtable(table, params='') {
-  const r = await fetch(`https://api.airtable.com/v0/${BASE}/${table}${params}`, {
-    headers: { Authorization: `Bearer ${KEY}` }
+  const r = await fetch(AIRTABLE_PROXY_ENDPOINT, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ path: `/${BASE}/${table}${params}`, method: 'GET' })
   });
   return r.json();
 }
 
 async function airtablePatch(table, id, fields) {
-  const r = await fetch(`https://api.airtable.com/v0/${BASE}/${table}/${id}`, {
-    method: 'PATCH',
-    headers: { Authorization: `Bearer ${KEY}`, 'Content-Type': 'application/json' },
-    body: JSON.stringify({ fields })
+  const r = await fetch(AIRTABLE_PROXY_ENDPOINT, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ path: `/${BASE}/${table}/${id}`, method: 'PATCH', body: { fields } })
   });
   return r.json();
 }
@@ -1856,10 +1858,10 @@ async function saveStage(stage) {
     } else {
       fields['Batch']  = [batchId];
       fields['Log ID'] = `LOG-${batchId.slice(-4)}-${Date.now()}`;
-      const r = await fetch(`https://api.airtable.com/v0/${BASE}/${TABLES.brewLogs}`, {
+      const r = await fetch(AIRTABLE_PROXY_ENDPOINT, {
         method: 'POST',
-        headers: { Authorization: `Bearer ${KEY}`, 'Content-Type': 'application/json' },
-        body: JSON.stringify({ fields })
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ path: `/${BASE}/${TABLES.brewLogs}`, method: 'POST', body: { fields } })
       });
       const data = await r.json();
       currentLogId = data.id;
@@ -2141,7 +2143,6 @@ function toNum(v) {
 }
 
 async function fetchFinancialSnapshot(periodType) {
-  const key  = window.__AIRTABLE_KEY__;
   const base = 'appslXmtOEoDI6lwp';
 
   const fields = [
@@ -2152,9 +2153,13 @@ async function fetchFinancialSnapshot(periodType) {
   ].map(f => `fields[]=${encodeURIComponent(f)}`).join('&');
 
   const formula = encodeURIComponent(`{Period Type}='${periodType}'`);
-  const url = `https://api.airtable.com/v0/${base}/tbltrrs047wZJv0SB?${fields}&filterByFormula=${formula}&maxRecords=5&sort[0][field]=Date&sort[0][direction]=desc`;
+  const url = `/${base}/tbltrrs047wZJv0SB?${fields}&filterByFormula=${formula}&maxRecords=5&sort[0][field]=Date&sort[0][direction]=desc`;
 
-  const resp = await fetch(url, { headers: { Authorization: `Bearer ${key}` } });
+  const resp = await fetch(AIRTABLE_PROXY_ENDPOINT, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ path: url, method: 'GET' })
+  });
   if (!resp.ok) throw new Error(`Financial snapshot ${resp.status}`);
   const data = await resp.json();
 
@@ -2183,15 +2188,18 @@ async function fetchFinancialSnapshot(periodType) {
 }
 
 async function fetchCostBreakdown() {
-  const key  = window.__AIRTABLE_KEY__;
   const base = 'appslXmtOEoDI6lwp';
 
   const fields = ['Description','Cost Category','Amount','Date','Linked Batch ID']
     .map(f => `fields[]=${encodeURIComponent(f)}`).join('&');
 
-  const url = `https://api.airtable.com/v0/${base}/tblVpdYdza5mWgT0K?${fields}&maxRecords=50&sort[0][field]=Date&sort[0][direction]=desc`;
+  const url = `/${base}/tblVpdYdza5mWgT0K?${fields}&maxRecords=50&sort[0][field]=Date&sort[0][direction]=desc`;
 
-  const resp = await fetch(url, { headers: { Authorization: `Bearer ${key}` } });
+  const resp = await fetch(AIRTABLE_PROXY_ENDPOINT, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ path: url, method: 'GET' })
+  });
   if (!resp.ok) throw new Error(`Cost breakdown ${resp.status}`);
   const data = await resp.json();
 
@@ -2211,15 +2219,18 @@ async function fetchCostBreakdown() {
 }
 
 async function fetchObligations() {
-  const key  = window.__AIRTABLE_KEY__;
   const base = 'appslXmtOEoDI6lwp';
 
   const fields = ['Title','Type','Due Date','Status','Notes']
     .map(f => `fields[]=${encodeURIComponent(f)}`).join('&');
 
-  const url = `https://api.airtable.com/v0/${base}/tblL6qs7uKCUJA10L?${fields}&maxRecords=20&sort[0][field]=Due Date&sort[0][direction]=asc`;
+  const url = `/${base}/tblL6qs7uKCUJA10L?${fields}&maxRecords=20&sort[0][field]=Due Date&sort[0][direction]=asc`;
 
-  const resp = await fetch(url, { headers: { Authorization: `Bearer ${key}` } });
+  const resp = await fetch(AIRTABLE_PROXY_ENDPOINT, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ path: url, method: 'GET' })
+  });
   if (!resp.ok) throw new Error(`Obligations ${resp.status}`);
   const data = await resp.json();
 
@@ -2356,7 +2367,6 @@ function renderFinancialFromCache() {
 }
 
 async function fetchAgendaItems() {
-  const key = window.__AIRTABLE_KEY__;
   const base = 'appslXmtOEoDI6lwp';
   const table = 'tblpkSb7zxoWBcxFA';
 
@@ -2365,10 +2375,12 @@ async function fetchAgendaItems() {
     'Is System Generated', 'Linked Entity Type', 'Linked Entity ID', 'Position Index'
   ].map(f => `fields[]=${encodeURIComponent(f)}`).join('&');
 
-  const url = `https://api.airtable.com/v0/${base}/${table}?${fields}&maxRecords=100`;
+  const url = `/${base}/${table}?${fields}&maxRecords=100`;
 
-  const resp = await fetch(url, {
-    headers: { Authorization: `Bearer ${key}` }
+  const resp = await fetch(AIRTABLE_PROXY_ENDPOINT, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ path: url, method: 'GET' })
   });
 
   if (!resp.ok) throw new Error(`Airtable agenda ${resp.status}`);
@@ -2481,12 +2493,15 @@ function toggleAgendaItem(el, id) {
     const item = window._agendaCache.find(i => i.id === id);
     if (item) item.isCompleted = !isDone;
   }
-  const key  = window.__AIRTABLE_KEY__;
   const base = 'appslXmtOEoDI6lwp';
-  fetch(`https://api.airtable.com/v0/${base}/tblpkSb7zxoWBcxFA/${id}`, {
-    method:  'PATCH',
-    headers: { Authorization: `Bearer ${key}`, 'Content-Type': 'application/json' },
-    body:    JSON.stringify({ fields: { 'Is Completed': !isDone } })
+  fetch(AIRTABLE_PROXY_ENDPOINT, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({
+      path: `/${base}/tblpkSb7zxoWBcxFA/${id}`,
+      method: 'PATCH',
+      body: { fields: { 'Is Completed': !isDone } }
+    })
   }).catch(err => console.warn('[Agenda] patch failed', err));
 }
 
@@ -2497,7 +2512,6 @@ async function renderWhatsNext() {
   container.innerHTML = '<div class="wn-loading">Loading…</div>';
 
   try {
-    const key = window.__AIRTABLE_KEY__;
     const base = 'appslXmtOEoDI6lwp';
     const table = 'tblxyLhvY6wyWogqq';
 
@@ -2510,10 +2524,12 @@ async function renderWhatsNext() {
       "AND(NOT({Status}='Done'), NOT({Status}='Completed'))"
     );
 
-    const url = `https://api.airtable.com/v0/${base}/${table}?${fields}&filterByFormula=${formula}&maxRecords=20`;
+    const url = `/${base}/${table}?${fields}&filterByFormula=${formula}&maxRecords=20`;
 
-    const resp = await fetch(url, {
-      headers: { Authorization: `Bearer ${key}` }
+    const resp = await fetch(AIRTABLE_PROXY_ENDPOINT, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ path: url, method: 'GET' })
     });
 
     if (!resp.ok) throw new Error(`Airtable ${resp.status}`);
