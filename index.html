@@ -1482,9 +1482,6 @@ function getObjectType(tableName) {
 }
 
 let APP_READINESS_CONDITIONS = SEMANTIC.readinessConditionsFallback;
-(async () => {
-  APP_READINESS_CONDITIONS = await getReadinessConditions();
-})();
 
 const APP_STATE = {
   currentObjectType: null,
@@ -1556,8 +1553,65 @@ const SOURCE_CONFIG = {
   }
 };
 
+const BREWERY_CONTEXT = {
+  breweryId: SOURCE_CONFIG.brewery.id,
+  breweryName: SOURCE_CONFIG.brewery.name,
+  opsBaseId: SOURCE_CONFIG.airtable.baseId,
+  semanticGraphSource: SOURCE_CONFIG.notion.semanticGraph,
+  semanticLinksSource: SOURCE_CONFIG.notion.semanticLinks,
+  notionEndpoint: SOURCE_CONFIG.notion.endpoint,
+  isInitialized: false
+};
+
+function initializeCurrentBreweryContext() {
+  const requiredFields = [
+    ['breweryId', BREWERY_CONTEXT.breweryId],
+    ['breweryName', BREWERY_CONTEXT.breweryName],
+    ['opsBaseId', BREWERY_CONTEXT.opsBaseId],
+    ['semanticGraphSource', BREWERY_CONTEXT.semanticGraphSource],
+    ['semanticLinksSource', BREWERY_CONTEXT.semanticLinksSource],
+    ['notionEndpoint', BREWERY_CONTEXT.notionEndpoint],
+  ];
+
+  const missing = requiredFields.filter(([, value]) => !value).map(([key]) => key);
+  if (missing.length) {
+    console.error('[BreweryContext] Missing required fields:', missing.join(', '));
+    throw new Error(`Brewery context initialization failed: missing ${missing.join(', ')}`);
+  }
+
+  BREWERY_CONTEXT.isInitialized = true;
+}
+
+function isBreweryContextInitialized() {
+  return BREWERY_CONTEXT.isInitialized === true;
+}
+
+function getCurrentBreweryId() {
+  return BREWERY_CONTEXT.breweryId;
+}
+
+function getCurrentBreweryName() {
+  return BREWERY_CONTEXT.breweryName;
+}
+
+function getCurrentOpsBaseId() {
+  return BREWERY_CONTEXT.opsBaseId;
+}
+
+function getCurrentSemanticGraphSource() {
+  return BREWERY_CONTEXT.semanticGraphSource;
+}
+
+function getCurrentSemanticLinksSource() {
+  return BREWERY_CONTEXT.semanticLinksSource;
+}
+
+function getCurrentNotionEndpoint() {
+  return BREWERY_CONTEXT.notionEndpoint;
+}
+
 function getAirtableBaseId() {
-  return SOURCE_CONFIG.airtable.baseId;
+  return getCurrentOpsBaseId();
 }
 
 function getAirtableApiKey() {
@@ -1569,15 +1623,15 @@ function getAirtableTableId(key) {
 }
 
 function getSemanticGraphSource() {
-  return SOURCE_CONFIG.notion.semanticGraph;
+  return getCurrentSemanticGraphSource();
 }
 
 function getSemanticLinksSource() {
-  return SOURCE_CONFIG.notion.semanticLinks;
+  return getCurrentSemanticLinksSource();
 }
 
 function getNotionEndpoint() {
-  return SOURCE_CONFIG.notion.endpoint;
+  return getCurrentNotionEndpoint();
 }
 
 const TABLES = SOURCE_CONFIG.airtable.tables;
@@ -3147,6 +3201,19 @@ function maybeShowColorTip() {
 }
 
 async function init() {
+  initializeCurrentBreweryContext();
+  if (!isBreweryContextInitialized()) {
+    throw new Error('Brewery context not initialized');
+  }
+
+  getReadinessConditions()
+    .then((conditions) => {
+      APP_READINESS_CONDITIONS = conditions;
+    })
+    .catch((err) => {
+      console.warn('[Semantic] Runtime readiness initialization failed; keeping fallback.', err);
+    });
+
   bootFlow();
   const batchData = await airtable(TABLES.batches, '?sort[0][field]=Date&sort[0][direction]=desc');
   const sel2 = document.getElementById('brew-batch-select');
