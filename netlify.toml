@@ -1,6 +1,3 @@
 [build]
-  command = "bash build.sh"
-  publish = "dist"
-
-[build.environment]
-  NODE_VERSION = "18"
+publish = "."
+command = ""
