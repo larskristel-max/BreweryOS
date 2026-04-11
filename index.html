@@ -1686,6 +1686,7 @@ async function ensureOperationalTask({
 
   const taskFields = {
     'Task': title,
+    'Created At': new Date().toISOString(),
     'Status': 'todo',
     'Priority': priority,
     'Due Date': dueDate || undefined,
@@ -1703,6 +1704,14 @@ async function ensureOperationalTask({
     taskFields['Linked Brew Log ID'] = brewLogId;
   }
   return createTaskRecordWithFallback(taskFields);
+}
+
+async function runTaskSyncSafely(batchRecord, brewLogId = '') {
+  try {
+    await syncBatchOperationalTasks(batchRecord, brewLogId);
+  } catch (error) {
+    console.warn('Task sync skipped for this flow:', error);
+  }
 }
 
 async function syncBatchOperationalTasks(batchRecord, brewLogId = '') {
@@ -2021,7 +2030,7 @@ async function loadBatchDetail(recordId) {
   const brewLogRecord = logsData.records?.[0] || null;
   const brewLogId = brewLogRecord?.id || null;
   const log     = logsData.records?.[0]?.fields || {};
-  await syncBatchOperationalTasks(batchData, brewLogId || '');
+  runTaskSyncSafely(batchData, brewLogId || '');
   batchDetailLoadedState = { recordId, brewLogId, log: { ...log } };
   const status  = sel(f.Status) || 'Unknown';
   const objType = APP_STATE.currentObjectType;
@@ -2303,31 +2312,36 @@ async function saveStage(stage) {
 }
 
 async function loadTasks() {
-  const data = await airtable(TABLES.tasks, '?maxRecords=200&sort[0][field]=Priority&sort[1][field]=Due Date');
   const el = document.getElementById('task-list');
-  const records = data.records || [];
-  if (!records.length) { el.innerHTML = `<div class="empty">${t('task.no_tasks')}</div>`; return; }
-  const esc = (v) => String(v || '').replace(/'/g, "\\'");
-  el.innerHTML = records.map(r => {
-    const f = r.fields;
-    const p = sel(f.Priority);
-    const rawStatus = sel(f.Status) || '';
-    const rawType = sel(f.Type) || '';
-    const isDone = normalizeTaskStatus(rawStatus) === 'done';
-    const batchId = deriveTaskBatchId(f);
-    const brewLogId = deriveTaskBrewLogId(f);
-    return `<div class="batch-card">
-      <div class="batch-card-header" onclick="openTaskContext('${esc(batchId)}','${esc(brewLogId)}')">
-        <div><div class="batch-name">${f.Task || t('task.unnamed')}</div>
-        <div class="batch-date">${f['Due Date'] || t('task.no_due_date')}</div></div>
-        <span class="badge indicator-pill ${pillClassFromPriority(p || 'Normal')}" aria-label="${displayStatus(p || 'Normal')}"></span>
-      </div>
-      <div class="batch-meta" style="justify-content:space-between;">
-        <span>${displayStatus(rawStatus)}${rawType ? ' · ' + rawType : ''}</span>
-        <button class="btn btn-secondary" style="width:auto;min-height:auto;padding:6px 10px;margin:0;" onclick="toggleTaskCompletion(event,'${r.id}',${isDone})">${isDone ? 'Reopen' : 'Done'}</button>
-      </div>
-    </div>`;
-  }).join('');
+  try {
+    const data = await airtable(TABLES.tasks, '?maxRecords=200&sort[0][field]=Priority&sort[1][field]=Due Date');
+    const records = data.records || [];
+    if (!records.length) { el.innerHTML = `<div class="empty">${t('task.no_tasks')}</div>`; return; }
+    const esc = (v) => String(v || '').replace(/'/g, "\\'");
+    el.innerHTML = records.map(r => {
+      const f = r.fields;
+      const p = sel(f.Priority);
+      const rawStatus = sel(f.Status) || '';
+      const rawType = sel(f.Type) || '';
+      const isDone = normalizeTaskStatus(rawStatus) === 'done';
+      const batchId = deriveTaskBatchId(f);
+      const brewLogId = deriveTaskBrewLogId(f);
+      return `<div class="batch-card">
+        <div class="batch-card-header" onclick="openTaskContext('${esc(batchId)}','${esc(brewLogId)}')">
+          <div><div class="batch-name">${f.Task || t('task.unnamed')}</div>
+          <div class="batch-date">${f['Due Date'] || t('task.no_due_date')}</div></div>
+          <span class="badge indicator-pill ${pillClassFromPriority(p || 'Normal')}" aria-label="${displayStatus(p || 'Normal')}"></span>
+        </div>
+        <div class="batch-meta" style="justify-content:space-between;">
+          <span>${displayStatus(rawStatus)}${rawType ? ' · ' + rawType : ''}</span>
+          <button class="btn btn-secondary" style="width:auto;min-height:auto;padding:6px 10px;margin:0;" onclick="toggleTaskCompletion(event,'${r.id}',${isDone})">${isDone ? 'Reopen' : 'Done'}</button>
+        </div>
+      </div>`;
+    }).join('');
+  } catch (error) {
+    console.warn('Unable to load tasks:', error);
+    el.innerHTML = `<div class="empty">${t('whats_next_error') || 'Could not load tasks.'}</div>`;
+  }
 }
 
 async function toggleTaskCompletion(event, taskId, isDone) {
@@ -3560,7 +3574,7 @@ async function init() {
   bootFlow();
   const batchData = await airtable(TABLES.batches, '?sort[0][field]=Date&sort[0][direction]=desc');
   for (const record of (batchData.records || [])) {
-    await syncBatchOperationalTasks(record, '');
+    runTaskSyncSafely(record, '');
   }
   const sel2 = document.getElementById('brew-batch-select');
   sel2.innerHTML = '<option value="">Select a batch...</option>' +
