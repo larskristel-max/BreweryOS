@@ -1349,6 +1349,9 @@ const SEMANTIC = {
       if (condition.sourceKey === 'output_lot_integrity') {
         const lots = context.linkedLots;
         if (Array.isArray(lots)) return lots.length > 0;
+        // Fall back to Airtable checkbox if linkedLots not provided
+        const fieldVal = record[condition.airtableField];
+        return fieldVal === true || fieldVal === 1;
       }
     }
     const value = record[condition.airtableField];
