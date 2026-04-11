@@ -1685,7 +1685,7 @@ async function ensureOperationalTask({
   dueDate = null,
   batchId = '',
   brewLogId = '',
-  source = 'Automatic',
+  source = 'System',
   sourceKey
 }) {
   if (!sourceKey || !title) return;
@@ -1775,7 +1775,7 @@ async function syncBatchOperationalTasks(batchRecord, brewLogId = '') {
       description: `Lifecycle transition follow-up for ${resolveBatchLabel(batchRecord)}.`,
       batchId,
       brewLogId,
-      source: 'Automatic',
+      source: 'System',
       sourceKey: `batch_stage:${batchId}:${lifecycle}`
     });
   }
@@ -1803,7 +1803,7 @@ async function syncBatchOperationalTasks(batchRecord, brewLogId = '') {
         description: `Readiness failed for ${resolveBatchLabel(batchRecord)} (${condition.label}).`,
         batchId,
         brewLogId,
-        source: 'Automatic',
+        source: 'System',
         sourceKey: `readiness:${batchId}:${condition.sourceKey || readinessTaskKeyLabel(condition.label)}`
       });
     }
@@ -2425,6 +2425,7 @@ async function toggleTaskCompletion(event, taskId, isDone) {
 }
 
 async function openTaskContext(taskId, batchId, brewLogId) {
+  console.log('TASK CARD CLICK', { taskId, batchId, brewLogId });
   let resolvedBatchId = '';
   let resolvedBrewLogId = '';
 
@@ -2444,8 +2445,12 @@ async function openTaskContext(taskId, batchId, brewLogId) {
   if (resolvedBrewLogId) {
     const logData = await airtable(TABLES.brewLogs, `/${resolvedBrewLogId}`);
     const linkedBatchId = Array.isArray(logData?.fields?.Batch) ? logData.fields.Batch[0] : '';
-    if (linkedBatchId) await loadBatchDetail(linkedBatchId);
+    if (linkedBatchId) {
+      await loadBatchDetail(linkedBatchId);
+      return;
+    }
   }
+  toast('No linked batch for this task');
 }
 
 function showScreen(id) {
