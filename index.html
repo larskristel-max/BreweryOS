@@ -152,6 +152,10 @@
   .btn-secondary { background: transparent; color: #111827; border: 1px solid #e5e7eb; }
   .loading { text-align: center; padding: 40px; color: var(--muted); }
   .empty { text-align: center; padding: 40px; color: var(--muted); font-size: 14px; }
+  .task-create-card { background: var(--card); border: 1px solid var(--border); border-radius: var(--radius); padding: 14px; display: flex; flex-direction: column; gap: 10px; }
+  .task-create-row { display: flex; gap: 8px; }
+  .task-create-row .btn { margin-bottom: 0; width: auto; min-height: auto; padding: 10px 12px; font-size: 14px; border-radius: 10px; }
+  .task-create-meta { font-size: 12px; color: var(--muted); margin-top: -4px; }
   .spinner { display: inline-block; width: 28px; height: 28px; border: 3px solid var(--border); border-top-color: var(--ink-900); border-radius: 50%; animation: spin 0.8s linear infinite; }
   @keyframes spin { to { transform: rotate(360deg); } }
   .toast { position: fixed; bottom: 24px; left: 50%; transform: translateX(-50%); background: #1e293b; color: white; padding: 12px 20px; border-radius: 10px; font-size: 14px; font-weight: 500; z-index: 999; opacity: 0; transition: opacity 0.3s; pointer-events: none; white-space: nowrap; }
@@ -533,7 +537,18 @@
 <div id="screen-tasks" class="screen">
   <div style="display:flex;justify-content:space-between;align-items:center;gap:12px;">
     <div class="section-title" id="task-screen-title" style="margin-bottom:0;">Open Tasks</div>
-    <button class="btn btn-secondary" style="width:auto;min-height:auto;padding:8px 12px;margin:0;" onclick="createTaskFromTasksScreen()">Add Task</button>
+    <button class="btn btn-secondary" style="width:auto;min-height:auto;padding:8px 12px;margin:0;" onclick="toggleTaskCreateForm(true)">Add Task</button>
+  </div>
+  <div id="task-create-card" class="task-create-card" style="display:none;">
+    <input id="task-create-title" type="text" placeholder="Task title" />
+    <select id="task-create-batch">
+      <option value="">No linked batch</option>
+    </select>
+    <p class="task-create-meta">Agenda link is not available yet in the current task schema.</p>
+    <div class="task-create-row">
+      <button class="btn btn-secondary" onclick="toggleTaskCreateForm(false)">Cancel</button>
+      <button class="btn btn-primary" onclick="createTaskFromTasksScreen()">Save Task</button>
+    </div>
   </div>
   <div id="task-list"><div class="loading"><div class="spinner"></div></div></div>
 </div>
@@ -1692,6 +1707,15 @@ function deriveTaskBrewLogId(fields = {}) {
   );
 }
 
+function escapeHtml(value = '') {
+  return String(value)
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&#39;');
+}
+
 async function fetchTasksForOps() {
   const data = await airtable(TABLES.tasks, '?maxRecords=200');
   return data.records || [];
@@ -1729,11 +1753,20 @@ async function ensureOperationalTask({
     const existingKey = f['Source Key'] || deriveTaskSourceKeyFromDescription(f['Description'] || f['Notes'] || '');
     const existingBatchId = deriveTaskBatchId(f);
     const existingBrewLogId = deriveTaskBrewLogId(f);
+    const brewLogCompatible = !brewLogId || !existingBrewLogId || existingBrewLogId === brewLogId;
     return existingKey === sourceKey
       && (!batchId || existingBatchId === batchId)
-      && (!brewLogId || existingBrewLogId === brewLogId);
+      && brewLogCompatible;
   });
-  if (duplicate) return duplicate;
+  if (duplicate) {
+    const duplicateFields = duplicate.fields || {};
+    const existingBrewLogId = deriveTaskBrewLogId(duplicateFields);
+    if (brewLogId && !existingBrewLogId) {
+      await airtablePatch(TABLES.tasks, duplicate.id, { 'Linked Brew Log': [brewLogId] })
+        .catch((error) => console.warn('Could not backfill brew log link on operational task', error));
+    }
+    return duplicate;
+  }
 
   const taskFields = {
     'Task': title,
@@ -1752,19 +1785,53 @@ async function ensureOperationalTask({
   return createTaskRecordWithFallback(taskFields);
 }
 
+let cachedTaskBatchRecords = [];
+
+function hydrateTaskCreateBatchOptions() {
+  const select = document.getElementById('task-create-batch');
+  if (!select) return;
+  const currentValue = select.value;
+  const options = ['<option value="">No linked batch</option>']
+    .concat(cachedTaskBatchRecords.map((record) => `<option value="${record.id}">${escapeHtml(resolveBatchLabel(record))}</option>`));
+  select.innerHTML = options.join('');
+  if (currentValue) select.value = currentValue;
+}
+
+function toggleTaskCreateForm(forceOpen) {
+  const card = document.getElementById('task-create-card');
+  const input = document.getElementById('task-create-title');
+  if (!card) return;
+  const shouldOpen = typeof forceOpen === 'boolean' ? forceOpen : card.style.display === 'none';
+  card.style.display = shouldOpen ? 'flex' : 'none';
+  if (!shouldOpen) {
+    if (input) input.value = '';
+    const batchSelect = document.getElementById('task-create-batch');
+    if (batchSelect) batchSelect.value = '';
+    return;
+  }
+  hydrateTaskCreateBatchOptions();
+  setTimeout(() => { if (input) input.focus(); }, 0);
+}
+
 async function createTaskFromTasksScreen() {
-  const title = prompt('Task title');
-  const safeTitle = String(title || '').trim();
-  if (!safeTitle) return;
+  const input = document.getElementById('task-create-title');
+  const batchSelect = document.getElementById('task-create-batch');
+  const safeTitle = String(input?.value || '').trim();
+  if (!safeTitle) {
+    toast('Enter a task title');
+    return;
+  }
   const payload = {
     'Task': safeTitle,
     'Status': 'To Do',
     'Source': 'Manual'
   };
+  if (batchSelect?.value) payload['Linked Batch'] = [batchSelect.value];
   console.log('TASK CREATE PAYLOAD', payload);
   try {
     await createTaskRecordWithFallback(payload);
     toast('Task created');
+    toggleTaskCreateForm(false);
     await loadTasks();
     renderWhatsNext();
   } catch (error) {
@@ -3688,6 +3755,8 @@ function maybeShowColorTip() {
 async function init() {
   bootFlow();
   const batchData = await airtable(TABLES.batches, '?sort[0][field]=Date&sort[0][direction]=desc');
+  cachedTaskBatchRecords = batchData.records || [];
+  hydrateTaskCreateBatchOptions();
   for (const record of (batchData.records || [])) {
     runTaskSyncSafely(record, '');
   }
