@@ -1682,10 +1682,8 @@ async function loadBatchDetail(recordId) {
   const el = document.getElementById('batch-detail-content');
   el.innerHTML = '<div class="loading"><div class="spinner"></div></div>';
 
-  const [batchData, logsData] = await Promise.all([
-    airtable(TABLES.batches, `/${recordId}`),
-    airtable(TABLES.brewLogs, `?filterByFormula=FIND("${recordId}",ARRAYJOIN({Batch}))`)
-  ]);
+  const batchData = await airtable(TABLES.batches, `/${recordId}`);
+  const logsData = await getBrewLogsForBatch(recordId, batchData.fields || {});
 
   const f       = batchData.fields;
   const recipe  = Array.isArray(f.Recipe) ? f.Recipe[0] : '';
@@ -1764,7 +1762,7 @@ async function loadBrewLog() {
   currentBatchFields = batchData.fields;
   const recipe = Array.isArray(currentBatchFields.Recipe) ? currentBatchFields.Recipe[0] : '';
   currentTargets = RECIPE_TARGETS[recipe] || {};
-  const logsData = await airtable(TABLES.brewLogs, `?filterByFormula=FIND("${batchId}",ARRAYJOIN({Batch}))`);
+  const logsData = await getBrewLogsForBatch(batchId, currentBatchFields || {});
   currentLogId = logsData.records?.[0]?.id || null;
   currentLogFields = logsData.records?.[0]?.fields || {};
   if (currentLogId) {
@@ -1772,6 +1770,56 @@ async function loadBrewLog() {
     currentStage = saved >= 0 ? saved : STAGES.length - 1;
   } else { currentStage = 0; }
   renderBrewStage();
+}
+
+function normalizeBatchMatchValue(v) {
+  if (v === null || v === undefined) return '';
+  return String(v).replace(/^Batch\s*#?\s*/i, '').trim().toLowerCase();
+}
+
+function extractBatchMatchCandidates(recordId, batchFields = {}) {
+  return new Set([
+    recordId,
+    batchFields['Declaration Number'],
+    batchFields['Batch Number'],
+    batchFields['Display Name'],
+    batchFields['Name'],
+    batchFields['Title']
+  ].filter(Boolean).map(normalizeBatchMatchValue));
+}
+
+function brewLogMatchesBatch(rec, recordId, batchFields = {}) {
+  const f = rec?.fields || {};
+  const candidates = extractBatchMatchCandidates(recordId, batchFields);
+  const possibleValues = [];
+
+  if (Array.isArray(f['Batch'])) possibleValues.push(...f['Batch']);
+  possibleValues.push(
+    f['Batch'],
+    f['Linked Batch ID'],
+    f['Batch ID'],
+    f['Batch Number'],
+    f['Declaration Number'],
+    f['Name'],
+    f['Title']
+  );
+
+  return possibleValues
+    .flatMap(v => Array.isArray(v) ? v : [v])
+    .filter(Boolean)
+    .map(normalizeBatchMatchValue)
+    .some(v => candidates.has(v));
+}
+
+async function getBrewLogsForBatch(recordId, batchFields = {}) {
+  const byLink = await airtable(TABLES.brewLogs, `?filterByFormula=FIND("${recordId}",ARRAYJOIN({Batch}))`);
+  if (byLink.records?.length) return byLink;
+
+  const fallback = await airtable(TABLES.brewLogs, '?maxRecords=100');
+  if (!fallback.records?.length) return fallback;
+
+  const matched = fallback.records.find(r => brewLogMatchesBatch(r, recordId, batchFields));
+  return { ...fallback, records: matched ? [matched] : [] };
 }
 
 function isStageComplete(stage, f) {
