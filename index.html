@@ -1596,12 +1596,26 @@ function resolveBatchLabel(record) {
 
 
 let screenStack = ['screen-home'];
+let isHistoryNavigation = false;
+
+function navigateBack(fallbackScreen = 'screen-home') {
+  if (screenStack.length > 1) {
+    screenStack.pop();
+    const prev = screenStack[screenStack.length - 1] || fallbackScreen;
+    isHistoryNavigation = true;
+    showScreen(prev);
+    isHistoryNavigation = false;
+    return;
+  }
+  showScreen(fallbackScreen);
+}
+
 function goBack() {
-  screenStack.pop();
-  const prev = screenStack[screenStack.length-1] || 'screen-home';
-  document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
-  document.getElementById(prev).classList.add('active');
-  document.getElementById('navBack').style.display = screenStack.length > 1 ? 'flex' : 'none';
+  navigateBack('screen-home');
+}
+
+function goBackToBatches() {
+  navigateBack('screen-batches');
 }
 function toast(msg) {
   const t = document.getElementById('toast');
@@ -1744,7 +1758,7 @@ async function loadBatchDetail(recordId) {
       <h3>Brewer Notes</h3>
       <p style="font-size:14px;line-height:1.6">${log['Brewer Notes']}</p>
     </div>` : ''}
-    <button class="btn btn-secondary" onclick="goBack()">← Back</button>`;
+    <button class="btn btn-secondary" onclick="goBackToBatches()">← Back</button>`;
 }
 
 const STAGES = ['Mash','Boil','Transfer','Ferment','Bottle'];
@@ -1964,7 +1978,20 @@ function showScreen(id) {
   });
   const target = document.getElementById(id);
   if (!target) return;
+
+  if (!isHistoryNavigation) {
+    const current = screenStack[screenStack.length - 1];
+    if (current !== id) {
+      screenStack.push(id);
+    }
+  }
+
   target.style.display = 'flex';
+
+  const navBack = document.getElementById('navBack');
+  if (navBack) {
+    navBack.style.display = screenStack.length > 1 ? 'flex' : 'none';
+  }
   // Reset scroll position on every navigation
   window.scrollTo(0, 0);
   target.scrollTop = 0;
