@@ -1652,9 +1652,14 @@ function buildTaskCreateFields(rawFields = {}) {
   if (source) fields['Source'] = source;
 
   if (rawFields['Due Date']) fields['Due Date'] = rawFields['Due Date'];
+  if (rawFields['Notes']) fields['Notes'] = String(rawFields['Notes']);
+  if (rawFields['Description']) fields['Description'] = String(rawFields['Description']);
+  if (rawFields['Source Key']) fields['Source Key'] = String(rawFields['Source Key']);
 
   const batch = Array.isArray(rawFields['Linked Batch']) ? rawFields['Linked Batch'].filter(Boolean) : [];
   if (batch.length) fields['Linked Batch'] = batch;
+  const brewLog = Array.isArray(rawFields['Linked Brew Log']) ? rawFields['Linked Brew Log'].filter(Boolean) : [];
+  if (brewLog.length) fields['Linked Brew Log'] = brewLog;
 
   return fields;
 }
@@ -1687,9 +1692,8 @@ function deriveTaskBrewLogId(fields = {}) {
   );
 }
 
-async function fetchOpenTasksForOps() {
-  const params = '?maxRecords=200&filterByFormula=AND(NOT({Status}="Done"),NOT({Status}="Completed"),NOT({Status}="done"),NOT({Status}="complete"))';
-  const data = await airtable(TABLES.tasks, params);
+async function fetchTasksForOps() {
+  const data = await airtable(TABLES.tasks, '?maxRecords=200');
   return data.records || [];
 }
 
@@ -1719,15 +1723,13 @@ async function ensureOperationalTask({
   sourceKey
 }) {
   if (!sourceKey || !title) return;
-  const openTasks = await fetchOpenTasksForOps();
-  const duplicate = openTasks.find((rec) => {
+  const allTasks = await fetchTasksForOps();
+  const duplicate = allTasks.find((rec) => {
     const f = rec.fields || {};
     const existingKey = f['Source Key'] || deriveTaskSourceKeyFromDescription(f['Description'] || f['Notes'] || '');
     const existingBatchId = deriveTaskBatchId(f);
     const existingBrewLogId = deriveTaskBrewLogId(f);
-    const status = normalizeTaskStatus(f['Status']);
-    return status !== 'done'
-      && existingKey === sourceKey
+    return existingKey === sourceKey
       && (!batchId || existingBatchId === batchId)
       && (!brewLogId || existingBrewLogId === brewLogId);
   });
@@ -1738,10 +1740,14 @@ async function ensureOperationalTask({
     'Status': 'To Do',
     'Due Date': dueDate || undefined,
     'Notes': buildTaskDescriptionWithMeta(description, sourceKey, source),
-    'Source': source
+    'Source': source,
+    'Source Key': sourceKey
   };
   if (batchId) {
     taskFields['Linked Batch'] = [batchId];
+  }
+  if (brewLogId) {
+    taskFields['Linked Brew Log'] = [brewLogId];
   }
   return createTaskRecordWithFallback(taskFields);
 }
@@ -2092,7 +2098,6 @@ async function loadBatchDetail(recordId) {
   const brewLogRecord = logsData.records?.[0] || null;
   const brewLogId = brewLogRecord?.id || null;
   const log     = logsData.records?.[0]?.fields || {};
-  runTaskSyncSafely(batchData, brewLogId || '');
   batchDetailLoadedState = { recordId, brewLogId, log: { ...log } };
   const status  = sel(f.Status) || 'Unknown';
   const objType = APP_STATE.currentObjectType;
