@@ -1350,11 +1350,15 @@ const SEMANTIC = {
         const lots = context.linkedLots;
         if (Array.isArray(lots)) return lots.length > 0;
         // Fall back to Airtable checkbox if linkedLots not provided
-        const fieldVal = record[condition.airtableField];
+        const fieldVal = (record || {})[condition.airtableField];
+        // Absent field = indeterminate (not a known failure); only explicit false blocks
+        if (fieldVal === undefined || fieldVal === null) return true;
         return fieldVal === true || fieldVal === 1;
       }
     }
-    const value = record[condition.airtableField];
+    const value = (record || {})[condition.airtableField];
+    // Absent field = indeterminate (not a known failure); only explicit false blocks
+    if (value === undefined || value === null) return true;
     return value === true || value === 1;
   },
 
