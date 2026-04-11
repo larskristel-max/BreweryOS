@@ -1546,6 +1546,13 @@ function readinessPanel(fields, objectType) {
     </div>`;
 }
 
+function readinessTaskKeyLabel(label = '') {
+  return String(label || '')
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, '_')
+    .replace(/^_+|_+$/g, '');
+}
+
 const BASE = 'appslXmtOEoDI6lwp';
 const TABLES = {
   batches:  'tblGrw6fTgMyz3ZL5',
@@ -1585,6 +1592,190 @@ async function airtableProxyRequest(payload) {
     })
   });
   return r.json();
+}
+
+function deriveTaskSourceKeyFromDescription(text = '') {
+  const m = String(text || '').match(/\[source_key:([a-z0-9_\-:.]+)\]/i);
+  return m ? m[1] : '';
+}
+
+function normalizeTaskStatus(raw = '') {
+  const s = String(sel(raw) || raw || '').toLowerCase();
+  if (!s) return 'todo';
+  if (['done', 'completed', 'complete'].includes(s)) return 'done';
+  return 'todo';
+}
+
+function normalizeBatchLifecycleStatus(rawStatus = '') {
+  const s = String(sel(rawStatus) || rawStatus || '').toLowerCase();
+  if (s === 'planned') return 'planned';
+  if (s === 'brewing' || s === 'in_progress') return 'brewing';
+  if (s === 'fermenting') return 'fermenting';
+  if (s === 'ready' || s === 'ready_for_execution') return 'ready';
+  return '';
+}
+
+function buildTaskDescriptionWithMeta(baseText = '', sourceKey = '', source = 'automatic') {
+  const lines = [baseText || ''];
+  lines.push(`Source: ${source}`);
+  if (sourceKey) lines.push(`[source_key:${sourceKey}]`);
+  return lines.filter(Boolean).join('\n');
+}
+
+function deriveTaskBatchId(fields = {}) {
+  return (
+    (Array.isArray(fields['Batch']) && fields['Batch'][0]) ||
+    fields['Linked Batch ID'] ||
+    fields['Batch ID'] ||
+    ''
+  );
+}
+
+function deriveTaskBrewLogId(fields = {}) {
+  return (
+    (Array.isArray(fields['Brew Log']) && fields['Brew Log'][0]) ||
+    fields['Linked Brew Log ID'] ||
+    fields['Brew Log ID'] ||
+    ''
+  );
+}
+
+async function fetchOpenTasksForOps() {
+  const params = '?maxRecords=200&filterByFormula=AND(NOT({Status}="Done"),NOT({Status}="Completed"),NOT({Status}="done"),NOT({Status}="complete"))';
+  const data = await airtable(TABLES.tasks, params);
+  return data.records || [];
+}
+
+async function createTaskRecordWithFallback(fields) {
+  const payload = { ...fields };
+  for (let i = 0; i < 8; i++) {
+    const res = await airtableCreate(TABLES.tasks, payload);
+    if (!res?.error) return res;
+    const msg = String(res?.error?.message || '');
+    const match = msg.match(/Unknown field name:\s*\"([^\"]+)\"/i);
+    if (!match) throw new Error(msg || 'Task create failed');
+    delete payload[match[1]];
+  }
+  throw new Error('Task create fallback exhausted');
+}
+
+async function ensureOperationalTask({
+  title,
+  description = '',
+  priority = 'Medium',
+  dueDate = null,
+  batchId = '',
+  brewLogId = '',
+  source = 'automatic',
+  sourceKey
+}) {
+  if (!sourceKey || !title) return;
+  const openTasks = await fetchOpenTasksForOps();
+  const duplicate = openTasks.find((rec) => {
+    const f = rec.fields || {};
+    const existingKey = f['Source Key'] || deriveTaskSourceKeyFromDescription(f['Description'] || f['Notes'] || '');
+    const existingBatchId = deriveTaskBatchId(f);
+    const existingBrewLogId = deriveTaskBrewLogId(f);
+    const status = normalizeTaskStatus(f['Status']);
+    return status !== 'done'
+      && existingKey === sourceKey
+      && (!batchId || existingBatchId === batchId)
+      && (!brewLogId || existingBrewLogId === brewLogId);
+  });
+  if (duplicate) return duplicate;
+
+  const taskFields = {
+    'Task': title,
+    'Status': 'todo',
+    'Priority': priority,
+    'Due Date': dueDate || undefined,
+    'Type': 'task',
+    'Description': buildTaskDescriptionWithMeta(description, sourceKey, source),
+    'Source': source,
+    'Source Key': sourceKey
+  };
+  if (batchId) {
+    taskFields['Batch'] = [batchId];
+    taskFields['Linked Batch ID'] = batchId;
+  }
+  if (brewLogId) {
+    taskFields['Brew Log'] = [brewLogId];
+    taskFields['Linked Brew Log ID'] = brewLogId;
+  }
+  return createTaskRecordWithFallback(taskFields);
+}
+
+async function syncBatchOperationalTasks(batchRecord, brewLogId = '') {
+  const f = batchRecord?.fields || {};
+  const batchId = batchRecord?.id || '';
+  if (!batchId) return;
+  const lifecycle = normalizeBatchLifecycleStatus(f['Status']);
+  const stageTaskMap = {
+    brewing:   'Confirm mash parameters recorded',
+    fermenting:'Monitor fermentation / log gravity',
+    ready:     'Schedule packaging / confirm FG'
+  };
+  if (stageTaskMap[lifecycle]) {
+    await ensureOperationalTask({
+      title: stageTaskMap[lifecycle],
+      description: `Lifecycle transition follow-up for ${resolveBatchLabel(batchRecord)}.`,
+      batchId,
+      brewLogId,
+      source: 'automatic',
+      sourceKey: `batch_stage:${batchId}:${lifecycle}`
+    });
+  }
+  const prevMap = JSON.parse(localStorage.getItem('brewos_batch_stage_map') || '{}');
+  if (prevMap[batchId] !== lifecycle) {
+    prevMap[batchId] = lifecycle;
+    localStorage.setItem('brewos_batch_stage_map', JSON.stringify(prevMap));
+  }
+
+  const readiness = SEMANTIC.computeReadiness(f, {}, APP_READINESS_CONDITIONS);
+  if (!readiness.ready) {
+    const conditionToTask = {
+      material_availability: 'Resolve missing materials for batch',
+      process_completion_state: 'Complete required process steps',
+      system_readiness: 'Resolve system readiness blockers',
+      measurement_reliability: 'Complete or verify required measurements',
+      output_lot_integrity: 'Create or validate output lot records',
+      control_execution_validity: 'Complete required control execution checks'
+    };
+    for (const condition of APP_READINESS_CONDITIONS) {
+      if (!readiness.failing.includes(condition.label)) continue;
+      const title = conditionToTask[condition.sourceKey] || `Resolve readiness block: ${condition.label}`;
+      await ensureOperationalTask({
+        title,
+        description: `Readiness failed for ${resolveBatchLabel(batchRecord)} (${condition.label}).`,
+        batchId,
+        brewLogId,
+        source: 'automatic',
+        sourceKey: `readiness:${batchId}:${condition.sourceKey || readinessTaskKeyLabel(condition.label)}`
+      });
+    }
+  }
+}
+
+async function createOverrideReviewTask({ batchId, batchLabel, reason, brewLogId = '' }) {
+  const safeReason = (reason || '').trim();
+  await ensureOperationalTask({
+    title: `Review overridden readiness for ${batchLabel}`,
+    description: safeReason ? `Override reason: ${safeReason}` : 'Readiness override logged without explicit reason.',
+    batchId,
+    brewLogId,
+    source: 'automatic',
+    sourceKey: `override:${batchId}:${readinessTaskKeyLabel(safeReason || 'no_reason')}`
+  });
+}
+
+async function overrideBatchReadiness(batchId, batchLabel) {
+  const reason = window.prompt('Why are you overriding readiness?', '');
+  if (reason === null) return;
+  const logsData = await getBrewLogsForBatch(batchId, {});
+  const brewLogId = logsData.records?.[0]?.id || '';
+  await createOverrideReviewTask({ batchId, batchLabel, reason, brewLogId });
+  toast('Readiness override logged with review task');
+  loadTasks();
 }
 
 function resolveBatchLabel(record) {
@@ -1830,10 +2021,14 @@ async function loadBatchDetail(recordId) {
   const brewLogRecord = logsData.records?.[0] || null;
   const brewLogId = brewLogRecord?.id || null;
   const log     = logsData.records?.[0]?.fields || {};
+  await syncBatchOperationalTasks(batchData, brewLogId || '');
   batchDetailLoadedState = { recordId, brewLogId, log: { ...log } };
   const status  = sel(f.Status) || 'Unknown';
   const objType = APP_STATE.currentObjectType;
   const isEditing = batchDetailEditState.isEditing && batchDetailEditState.recordId === recordId;
+  const readinessState = objType === 'process_run'
+    ? SEMANTIC.computeReadiness(f, {}, APP_READINESS_CONDITIONS)
+    : { ready: true, failing: [] };
 
   if (isEditing && Object.keys(batchDetailEditState.draft || {}).length === 0) {
     batchDetailEditState.draft = { ...log };
@@ -1872,6 +2067,9 @@ async function loadBatchDetail(recordId) {
         : ''}
     </div>
     ${readinessPanel(f, objType)}
+    ${!readinessState.ready ? `
+    <button class="btn btn-secondary" onclick="overrideBatchReadiness('${recordId}', '${resolveBatchLabel(batchData).replace(/'/g, "\\'")}')">Override readiness and proceed</button>
+    ` : ''}
     <div class="detail-section">
       <h3>Mash</h3>
       <div class="detail-row"><span class="detail-label">Temp</span>${renderField('Mash Temp Actual', compare(log['Mash Temp Actual'], targets.mash))}</div>
@@ -2105,23 +2303,50 @@ async function saveStage(stage) {
 }
 
 async function loadTasks() {
-  const data = await airtable(TABLES.tasks, '?filterByFormula=NOT({Status}="Done")&sort[0][field]=Priority');
+  const data = await airtable(TABLES.tasks, '?maxRecords=200&sort[0][field]=Priority&sort[1][field]=Due Date');
   const el = document.getElementById('task-list');
-  if (!data.records?.length) { el.innerHTML = `<div class="empty">${t('task.no_tasks')}</div>`; return; }
-  el.innerHTML = data.records.map(r => {
+  const records = data.records || [];
+  if (!records.length) { el.innerHTML = `<div class="empty">${t('task.no_tasks')}</div>`; return; }
+  const esc = (v) => String(v || '').replace(/'/g, "\\'");
+  el.innerHTML = records.map(r => {
     const f = r.fields;
     const p = sel(f.Priority);
     const rawStatus = sel(f.Status) || '';
     const rawType = sel(f.Type) || '';
+    const isDone = normalizeTaskStatus(rawStatus) === 'done';
+    const batchId = deriveTaskBatchId(f);
+    const brewLogId = deriveTaskBrewLogId(f);
     return `<div class="batch-card">
-      <div class="batch-card-header">
+      <div class="batch-card-header" onclick="openTaskContext('${esc(batchId)}','${esc(brewLogId)}')">
         <div><div class="batch-name">${f.Task || t('task.unnamed')}</div>
         <div class="batch-date">${f['Due Date'] || t('task.no_due_date')}</div></div>
         <span class="badge indicator-pill ${pillClassFromPriority(p || 'Normal')}" aria-label="${displayStatus(p || 'Normal')}"></span>
       </div>
-      <div class="batch-meta">${displayStatus(rawStatus)}${rawType ? ' · ' + rawType : ''}</div>
+      <div class="batch-meta" style="justify-content:space-between;">
+        <span>${displayStatus(rawStatus)}${rawType ? ' · ' + rawType : ''}</span>
+        <button class="btn btn-secondary" style="width:auto;min-height:auto;padding:6px 10px;margin:0;" onclick="toggleTaskCompletion(event,'${r.id}',${isDone})">${isDone ? 'Reopen' : 'Done'}</button>
+      </div>
     </div>`;
   }).join('');
+}
+
+async function toggleTaskCompletion(event, taskId, isDone) {
+  if (event) event.stopPropagation();
+  await airtablePatch(TABLES.tasks, taskId, { 'Status': isDone ? 'todo' : 'done' });
+  await loadTasks();
+  renderWhatsNext();
+}
+
+async function openTaskContext(batchId, brewLogId) {
+  if (batchId) {
+    await loadBatchDetail(batchId);
+    return;
+  }
+  if (brewLogId) {
+    const logData = await airtable(TABLES.brewLogs, `/${brewLogId}`);
+    const linkedBatchId = Array.isArray(logData?.fields?.Batch) ? logData.fields.Batch[0] : '';
+    if (linkedBatchId) await loadBatchDetail(linkedBatchId);
+  }
 }
 
 function showScreen(id) {
@@ -3334,6 +3559,9 @@ function maybeShowColorTip() {
 async function init() {
   bootFlow();
   const batchData = await airtable(TABLES.batches, '?sort[0][field]=Date&sort[0][direction]=desc');
+  for (const record of (batchData.records || [])) {
+    await syncBatchOperationalTasks(record, '');
+  }
   const sel2 = document.getElementById('brew-batch-select');
   sel2.innerHTML = '<option value="">Select a batch...</option>' +
     (batchData.records||[]).map(r =>
