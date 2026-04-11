@@ -1666,9 +1666,11 @@ async function fetchOpenTasksForOps() {
 async function createTaskRecordWithFallback(fields) {
   const payload = { ...fields };
   for (let i = 0; i < 8; i++) {
+    console.log('TASK CREATE PAYLOAD (attempt ' + (i + 1) + ')', JSON.stringify(payload));
     const res = await airtableCreate(TABLES.tasks, payload);
     if (!res?.error) return res;
     const msg = String(res?.error?.message || '');
+    console.error('TASK CREATE FAILED (attempt ' + (i + 1) + ')', msg, res?.error);
     const match = msg.match(/Unknown field name:\s*\"([^\"]+)\"/i);
     if (!match) throw new Error(msg || 'Task create failed');
     delete payload[match[1]];
@@ -1683,7 +1685,7 @@ async function ensureOperationalTask({
   dueDate = null,
   batchId = '',
   brewLogId = '',
-  source = 'automatic',
+  source = 'System',
   sourceKey
 }) {
   if (!sourceKey || !title) return;
@@ -1704,12 +1706,12 @@ async function ensureOperationalTask({
   const taskFields = {
     'Task': title,
     'Created At': isoNow(),
-    'Status': 'To Do',
-    'Priority': priority,
+    'Status': { name: 'To Do' },
+    'Priority': { name: priority },
     'Due Date': dueDate || undefined,
     'Type': 'task',
     'Description': buildTaskDescriptionWithMeta(description, sourceKey, source),
-    'Source': source,
+    'Source': { name: source },
     'Source Key': sourceKey
   };
   if (batchId) {
@@ -1728,19 +1730,22 @@ async function createTaskFromTasksScreen() {
   const title = prompt('Task title');
   const safeTitle = String(title || '').trim();
   if (!safeTitle) return;
+  const payload = {
+    'Task': safeTitle,
+    'Created At': isoNow(),
+    'Status': { name: 'To Do' },
+    'Priority': { name: 'Medium' },
+    'Type': 'task',
+    'Source': { name: 'Manual' }
+  };
+  console.log('TASK CREATE PAYLOAD', payload);
   try {
-    await createTaskRecordWithFallback({
-      'Task': safeTitle,
-      'Created At': isoNow(),
-      'Status': 'To Do',
-      'Priority': 'Medium',
-      'Type': 'task',
-      'Source': 'manual'
-    });
+    await createTaskRecordWithFallback(payload);
     toast('Task created');
     await loadTasks();
     renderWhatsNext();
   } catch (error) {
+    console.error('TASK CREATE FAILED', error);
     console.warn('Manual task create failed:', error);
     toast('Could not create task');
   }
@@ -1770,7 +1775,7 @@ async function syncBatchOperationalTasks(batchRecord, brewLogId = '') {
       description: `Lifecycle transition follow-up for ${resolveBatchLabel(batchRecord)}.`,
       batchId,
       brewLogId,
-      source: 'automatic',
+      source: 'System',
       sourceKey: `batch_stage:${batchId}:${lifecycle}`
     });
   }
@@ -1798,7 +1803,7 @@ async function syncBatchOperationalTasks(batchRecord, brewLogId = '') {
         description: `Readiness failed for ${resolveBatchLabel(batchRecord)} (${condition.label}).`,
         batchId,
         brewLogId,
-        source: 'automatic',
+        source: 'System',
         sourceKey: `readiness:${batchId}:${condition.sourceKey || readinessTaskKeyLabel(condition.label)}`
       });
     }
@@ -2397,7 +2402,7 @@ async function patchTaskStatusWithFallback(taskId, markDone) {
   const unique = [...new Set(candidates.filter(Boolean))];
   let lastErr = null;
   for (const status of unique) {
-    const res = await airtablePatch(TABLES.tasks, taskId, { 'Status': status });
+    const res = await airtablePatch(TABLES.tasks, taskId, { 'Status': { name: status } });
     if (!res?.error) return res;
     lastErr = res.error;
   }
@@ -2420,6 +2425,7 @@ async function toggleTaskCompletion(event, taskId, isDone) {
 }
 
 async function openTaskContext(taskId, batchId, brewLogId) {
+  console.log('TASK CARD CLICK', { taskId, batchId, brewLogId });
   let resolvedBatchId = '';
   let resolvedBrewLogId = '';
 
@@ -2439,8 +2445,12 @@ async function openTaskContext(taskId, batchId, brewLogId) {
   if (resolvedBrewLogId) {
     const logData = await airtable(TABLES.brewLogs, `/${resolvedBrewLogId}`);
     const linkedBatchId = Array.isArray(logData?.fields?.Batch) ? logData.fields.Batch[0] : '';
-    if (linkedBatchId) await loadBatchDetail(linkedBatchId);
+    if (linkedBatchId) {
+      await loadBatchDetail(linkedBatchId);
+      return;
+    }
   }
+  toast('No linked batch for this task');
 }
 
 function showScreen(id) {
