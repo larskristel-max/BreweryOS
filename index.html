@@ -156,6 +156,14 @@
   .task-create-row { display: flex; gap: 8px; }
   .task-create-row .btn { margin-bottom: 0; width: auto; min-height: auto; padding: 10px 12px; font-size: 14px; border-radius: 10px; }
   .task-create-meta { font-size: 12px; color: var(--muted); margin-top: -4px; }
+  .task-card { position: relative; }
+  .task-card-actions { position: relative; }
+  .task-menu-trigger { width: 30px; min-width: 30px; height: 30px; min-height: 30px; border-radius: 999px; border: 1px solid var(--border); background: #fff; color: var(--ink-700); font-size: 18px; line-height: 1; cursor: pointer; }
+  .task-menu-trigger:active { background: var(--bg-soft); }
+  .task-card-menu { position: absolute; top: 36px; right: 0; z-index: 15; background: #fff; border: 1px solid var(--border); border-radius: 12px; box-shadow: 0 8px 20px rgba(17, 24, 39, 0.08); min-width: 128px; overflow: hidden; }
+  .task-card-menu button { width: 100%; background: #fff; border: 0; border-bottom: 1px solid var(--line-150); padding: 10px 12px; text-align: left; font-size: 14px; color: var(--ink-800); cursor: pointer; }
+  .task-card-menu button:last-child { border-bottom: 0; color: var(--red); }
+  .task-card-menu button:active { background: var(--bg-soft); }
   .spinner { display: inline-block; width: 28px; height: 28px; border: 3px solid var(--border); border-top-color: var(--ink-900); border-radius: 50%; animation: spin 0.8s linear infinite; }
   @keyframes spin { to { transform: rotate(360deg); } }
   .toast { position: fixed; bottom: 24px; left: 50%; transform: translateX(-50%); background: #1e293b; color: white; padding: 12px 20px; border-radius: 10px; font-size: 14px; font-weight: 500; z-index: 999; opacity: 0; transition: opacity 0.3s; pointer-events: none; white-space: nowrap; }
@@ -546,8 +554,8 @@
     </select>
     <p class="task-create-meta">Agenda link is not available yet in the current task schema.</p>
     <div class="task-create-row">
-      <button class="btn btn-secondary" onclick="toggleTaskCreateForm(false)">Cancel</button>
-      <button class="btn btn-primary" onclick="createTaskFromTasksScreen()">Save Task</button>
+      <button class="btn btn-secondary" onclick="cancelTaskCreateOrEdit()">Cancel</button>
+      <button id="task-create-save-btn" class="btn btn-primary" onclick="saveTaskFromTasksScreen()">Save Task</button>
     </div>
   </div>
   <div id="task-list"><div class="loading"><div class="spinner"></div></div></div>
@@ -1786,6 +1794,7 @@ async function ensureOperationalTask({
 }
 
 let cachedTaskBatchRecords = [];
+let taskEditState = { taskId: '' };
 
 function hydrateTaskCreateBatchOptions() {
   const select = document.getElementById('task-create-batch');
@@ -1800,20 +1809,53 @@ function hydrateTaskCreateBatchOptions() {
 function toggleTaskCreateForm(forceOpen) {
   const card = document.getElementById('task-create-card');
   const input = document.getElementById('task-create-title');
+  const saveBtn = document.getElementById('task-create-save-btn');
   if (!card) return;
   const shouldOpen = typeof forceOpen === 'boolean' ? forceOpen : card.style.display === 'none';
   card.style.display = shouldOpen ? 'flex' : 'none';
   if (!shouldOpen) {
+    taskEditState.taskId = '';
     if (input) input.value = '';
     const batchSelect = document.getElementById('task-create-batch');
     if (batchSelect) batchSelect.value = '';
+    if (saveBtn) saveBtn.textContent = 'Save Task';
     return;
   }
+  if (saveBtn) saveBtn.textContent = taskEditState.taskId ? 'Save Changes' : 'Save Task';
   hydrateTaskCreateBatchOptions();
   setTimeout(() => { if (input) input.focus(); }, 0);
 }
 
-async function createTaskFromTasksScreen() {
+function cancelTaskCreateOrEdit() {
+  toggleTaskCreateForm(false);
+}
+
+async function startTaskEdit(event, taskId) {
+  if (event) {
+    event.preventDefault();
+    event.stopPropagation();
+  }
+  closeTaskActionMenus();
+  const input = document.getElementById('task-create-title');
+  const batchSelect = document.getElementById('task-create-batch');
+  try {
+    const taskData = await airtable(TABLES.tasks, `/${taskId}`);
+    const fields = taskData?.fields || {};
+    taskEditState.taskId = taskId;
+    toggleTaskCreateForm(true);
+    if (input) input.value = String(fields['Task'] || '').trim();
+    if (batchSelect) batchSelect.value = deriveTaskBatchId(fields) || '';
+  } catch (error) {
+    console.warn('Unable to load task for edit:', error);
+    toast('Could not open task editor');
+  }
+}
+
+function activeTaskFilterFormula() {
+  return "AND(OR({Is Archived}=FALSE(), {Is Archived}=BLANK()), OR({Is Deleted}=FALSE(), {Is Deleted}=BLANK()))";
+}
+
+async function saveTaskFromTasksScreen() {
   const input = document.getElementById('task-create-title');
   const batchSelect = document.getElementById('task-create-batch');
   const safeTitle = String(input?.value || '').trim();
@@ -1821,23 +1863,32 @@ async function createTaskFromTasksScreen() {
     toast('Enter a task title');
     return;
   }
-  const payload = {
-    'Task': safeTitle,
-    'Status': 'To Do',
-    'Source': 'Manual'
-  };
-  if (batchSelect?.value) payload['Linked Batch'] = [batchSelect.value];
-  console.log('TASK CREATE PAYLOAD', payload);
+  const linkedBatch = String(batchSelect?.value || '').trim();
+  const isEditing = Boolean(taskEditState.taskId);
   try {
-    await createTaskRecordWithFallback(payload);
-    toast('Task created');
+    if (isEditing) {
+      const patchPayload = { 'Task': safeTitle, 'Linked Batch': linkedBatch ? [linkedBatch] : [] };
+      console.log('TASK EDIT PATCH PAYLOAD', { taskId: taskEditState.taskId, payload: patchPayload });
+      await airtablePatch(TABLES.tasks, taskEditState.taskId, patchPayload);
+      toast('Task updated');
+    } else {
+      const createPayload = {
+        'Task': safeTitle,
+        'Status': 'To Do',
+        'Source': 'Manual'
+      };
+      if (linkedBatch) createPayload['Linked Batch'] = [linkedBatch];
+      console.log('TASK CREATE PAYLOAD', createPayload);
+      await createTaskRecordWithFallback(createPayload);
+      toast('Task created');
+    }
     toggleTaskCreateForm(false);
     await loadTasks();
     renderWhatsNext();
   } catch (error) {
-    console.error('TASK CREATE FAILED', error);
-    console.warn('Manual task create failed:', error);
-    toast('Could not create task');
+    console.error(isEditing ? 'TASK EDIT FAILED' : 'TASK CREATE FAILED', error);
+    console.warn(isEditing ? 'Task edit failed:' : 'Manual task create failed:', error);
+    toast(isEditing ? 'Could not update task' : 'Could not create task');
   }
 }
 
@@ -2446,7 +2497,9 @@ async function saveStage(stage) {
 async function loadTasks() {
   const el = document.getElementById('task-list');
   try {
-    const data = await airtable(TABLES.tasks, '?maxRecords=200&sort[0][field]=Priority&sort[1][field]=Due Date');
+    closeTaskActionMenus();
+    const formula = encodeURIComponent(activeTaskFilterFormula());
+    const data = await airtable(TABLES.tasks, `?maxRecords=200&sort[0][field]=Priority&sort[1][field]=Due Date&filterByFormula=${formula}`);
     const records = data.records || [];
     if (!records.length) { el.innerHTML = `<div class="empty">${t('task.no_tasks')}</div>`; return; }
     const esc = (v) => String(v || '').replace(/'/g, "\\'");
@@ -2458,11 +2511,19 @@ async function loadTasks() {
       const isDone = normalizeTaskStatus(rawStatus) === 'done';
       const batchId = deriveTaskBatchId(f);
       const brewLogId = deriveTaskBrewLogId(f);
-      return `<div class="batch-card" data-task-id="${r.id}" data-done="${isDone ? '1' : '0'}" onclick="openTaskContext('${r.id}','${esc(batchId)}','${esc(brewLogId)}')">
+      return `<div class="batch-card task-card" data-task-id="${r.id}" data-done="${isDone ? '1' : '0'}" onclick="openTaskContext('${r.id}','${esc(batchId)}','${esc(brewLogId)}')">
         <div class="batch-card-header">
           <div><div class="batch-name">${f.Task || t('task.unnamed')}</div>
           <div class="batch-date">${f['Due Date'] || t('task.no_due_date')}</div></div>
-          <span class="badge indicator-pill ${pillClassFromPriority(p || 'Normal')}" aria-label="${displayStatus(p || 'Normal')}"></span>
+          <div class="task-card-actions">
+            <span class="badge indicator-pill ${pillClassFromPriority(p || 'Normal')}" aria-label="${displayStatus(p || 'Normal')}"></span>
+            <button class="task-menu-trigger" aria-label="Task actions" onclick="toggleTaskActionMenu(event,'${r.id}')">⋮</button>
+            <div id="task-menu-${r.id}" class="task-card-menu" style="display:none;">
+              <button onclick="startTaskEdit(event,'${r.id}')">Edit</button>
+              <button onclick="archiveTask(event,'${r.id}')">Archive</button>
+              <button onclick="deleteTask(event,'${r.id}')">Delete</button>
+            </div>
+          </div>
         </div>
         <div class="batch-meta" style="justify-content:space-between;">
           <span>${displayStatus(rawStatus)}${rawType ? ' · ' + rawType : ''}</span>
@@ -2473,6 +2534,66 @@ async function loadTasks() {
   } catch (error) {
     console.warn('Unable to load tasks:', error);
     el.innerHTML = `<div class="empty">${t('whats_next_error') || 'Could not load tasks.'}</div>`;
+  }
+}
+
+function closeTaskActionMenus() {
+  document.querySelectorAll('.task-card-menu').forEach((menu) => { menu.style.display = 'none'; });
+}
+
+document.addEventListener('click', (event) => {
+  if (!event.target.closest('.task-card-actions')) closeTaskActionMenus();
+});
+
+function toggleTaskActionMenu(event, taskId) {
+  if (event) {
+    event.preventDefault();
+    event.stopPropagation();
+  }
+  const menu = document.getElementById(`task-menu-${taskId}`);
+  if (!menu) return;
+  const willOpen = menu.style.display === 'none';
+  closeTaskActionMenus();
+  menu.style.display = willOpen ? 'block' : 'none';
+}
+
+async function archiveTask(event, taskId) {
+  if (event) {
+    event.preventDefault();
+    event.stopPropagation();
+  }
+  closeTaskActionMenus();
+  const payload = { 'Is Archived': true, 'Is Deleted': false };
+  console.log('TASK ARCHIVE PATCH PAYLOAD', { taskId, payload });
+  try {
+    await airtablePatch(TABLES.tasks, taskId, payload);
+    await loadTasks();
+    renderWhatsNext();
+    toast('Task archived');
+  } catch (error) {
+    console.warn('Task archive failed:', error);
+    toast('Could not archive task');
+  }
+}
+
+async function deleteTask(event, taskId) {
+  if (event) {
+    event.preventDefault();
+    event.stopPropagation();
+  }
+  closeTaskActionMenus();
+  const shouldDelete = window.confirm('Delete this task?');
+  if (!shouldDelete) return;
+  const payload = { 'Is Deleted': true };
+  console.log('TASK DELETE PATCH PAYLOAD', { taskId, payload });
+  try {
+    await airtablePatch(TABLES.tasks, taskId, payload);
+    await loadTasks();
+    renderWhatsNext();
+    toast('Task deleted');
+  } catch (error) {
+    console.warn('Task delete failed:', error);
+    toast('Could not delete task');
   }
 }
 
@@ -3141,7 +3262,7 @@ async function renderWhatsNext() {
     ].map(f => `fields[]=${encodeURIComponent(f)}`).join('&');
 
     const formula = encodeURIComponent(
-      "AND(NOT({Status}='Done'), NOT({Status}='Completed'))"
+      `AND(${activeTaskFilterFormula()}, NOT({Status}='Done'), NOT({Status}='Completed'))`
     );
 
     const data = await airtable(table, `?${fields}&filterByFormula=${formula}&maxRecords=20`);
