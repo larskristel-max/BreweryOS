@@ -1347,8 +1347,8 @@ const SEMANTIC = {
   evaluateCondition(record, condition, context = {}) {
     if (condition.appComputed) {
       if (condition.sourceKey === 'output_lot_integrity') {
-        const lots = context.linkedLots || [];
-        return lots.length > 0;
+        const lots = context.linkedLots;
+        if (Array.isArray(lots)) return lots.length > 0;
       }
     }
     const value = record[condition.airtableField];
