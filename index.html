@@ -1629,6 +1629,42 @@ function isoNow() {
   return new Date().toISOString();
 }
 
+const TASK_STATUS_ALLOWED = new Set(['To Do', 'In Progress', 'Done', 'Skipped']);
+const TASK_SOURCE_ALLOWED = new Set(['System', 'Manual']);
+
+function asSingleSelectOption(value, allowedSet) {
+  const raw = typeof value === 'object' && value !== null ? value.name : value;
+  const name = String(raw || '').trim();
+  if (!name || !allowedSet.has(name)) return undefined;
+  return { name };
+}
+
+function buildTaskCreateFields(rawFields = {}) {
+  const fields = {};
+  const task = String(rawFields['Task'] || '').trim();
+  if (task) fields['Task'] = task;
+  fields['Created At'] = isoNow();
+
+  const status = asSingleSelectOption(rawFields['Status'] || 'To Do', TASK_STATUS_ALLOWED);
+  if (status) fields['Status'] = status;
+
+  const source = asSingleSelectOption(rawFields['Source'], TASK_SOURCE_ALLOWED);
+  if (source) fields['Source'] = source;
+
+  if (rawFields['Description']) fields['Description'] = String(rawFields['Description']);
+  if (rawFields['Source Key']) fields['Source Key'] = String(rawFields['Source Key']);
+  if (rawFields['Due Date']) fields['Due Date'] = rawFields['Due Date'];
+
+  const batch = Array.isArray(rawFields['Linked Batch']) ? rawFields['Linked Batch'].filter(Boolean) : [];
+  if (batch.length) fields['Linked Batch'] = batch;
+  const brewLog = Array.isArray(rawFields['Linked Brew Log']) ? rawFields['Linked Brew Log'].filter(Boolean) : [];
+  if (brewLog.length) fields['Linked Brew Log'] = brewLog;
+  if (rawFields['Linked Batch ID']) fields['Linked Batch ID'] = String(rawFields['Linked Batch ID']);
+  if (rawFields['Linked Brew Log ID']) fields['Linked Brew Log ID'] = String(rawFields['Linked Brew Log ID']);
+
+  return fields;
+}
+
 function deriveTaskBatchId(fields = {}) {
   const linkedBatch = fields['Linked Batch'];
   const linkedBatchId = Array.isArray(linkedBatch)
@@ -1664,13 +1700,13 @@ async function fetchOpenTasksForOps() {
 }
 
 async function createTaskRecordWithFallback(fields) {
-  const payload = { ...fields };
+  const payload = buildTaskCreateFields(fields);
   for (let i = 0; i < 8; i++) {
-    console.log('TASK CREATE PAYLOAD (attempt ' + (i + 1) + ')', JSON.stringify(payload));
+    console.log('TASK CREATE PAYLOAD (attempt ' + (i + 1) + ')', payload);
     const res = await airtableCreate(TABLES.tasks, payload);
     if (!res?.error) return res;
     const msg = String(res?.error?.message || '');
-    console.error('TASK CREATE FAILED (attempt ' + (i + 1) + ')', msg, res?.error);
+    console.error('TASK CREATE FAILED (attempt ' + (i + 1) + ')', res);
     const match = msg.match(/Unknown field name:\s*\"([^\"]+)\"/i);
     if (!match) throw new Error(msg || 'Task create failed');
     delete payload[match[1]];
@@ -1705,22 +1741,18 @@ async function ensureOperationalTask({
 
   const taskFields = {
     'Task': title,
-    'Created At': isoNow(),
     'Status': { name: 'To Do' },
-    'Priority': { name: priority },
     'Due Date': dueDate || undefined,
-    'Type': 'task',
     'Description': buildTaskDescriptionWithMeta(description, sourceKey, source),
     'Source': { name: source },
     'Source Key': sourceKey
   };
   if (batchId) {
-    taskFields['Batch'] = [batchId];
     taskFields['Linked Batch'] = [batchId];
     taskFields['Linked Batch ID'] = batchId;
   }
   if (brewLogId) {
-    taskFields['Brew Log'] = [brewLogId];
+    taskFields['Linked Brew Log'] = [brewLogId];
     taskFields['Linked Brew Log ID'] = brewLogId;
   }
   return createTaskRecordWithFallback(taskFields);
@@ -1732,10 +1764,7 @@ async function createTaskFromTasksScreen() {
   if (!safeTitle) return;
   const payload = {
     'Task': safeTitle,
-    'Created At': isoNow(),
     'Status': { name: 'To Do' },
-    'Priority': { name: 'Medium' },
-    'Type': 'task',
     'Source': { name: 'Manual' }
   };
   console.log('TASK CREATE PAYLOAD', payload);
@@ -1817,7 +1846,7 @@ async function createOverrideReviewTask({ batchId, batchLabel, reason, brewLogId
     description: safeReason ? `Override reason: ${safeReason}` : 'Readiness override logged without explicit reason.',
     batchId,
     brewLogId,
-    source: 'automatic',
+    source: 'System',
     sourceKey: `override:${batchId}:${readinessTaskKeyLabel(safeReason || 'no_reason')}`
   });
 }
@@ -2402,9 +2431,12 @@ async function patchTaskStatusWithFallback(taskId, markDone) {
   const unique = [...new Set(candidates.filter(Boolean))];
   let lastErr = null;
   for (const status of unique) {
-    const res = await airtablePatch(TABLES.tasks, taskId, { 'Status': { name: status } });
+    const payload = { 'Status': { name: status } };
+    console.log('TASK STATUS PATCH PAYLOAD', { taskId, payload });
+    const res = await airtablePatch(TABLES.tasks, taskId, payload);
     if (!res?.error) return res;
     lastErr = res.error;
+    console.error('TASK STATUS PATCH FAILED', { taskId, payload, response: res });
   }
   throw new Error(lastErr?.message || 'Task status update failed');
 }
