@@ -531,7 +531,10 @@
 
 <!-- TASKS -->
 <div id="screen-tasks" class="screen">
-  <div class="section-title" id="task-screen-title">Open Tasks</div>
+  <div style="display:flex;justify-content:space-between;align-items:center;gap:12px;">
+    <div class="section-title" id="task-screen-title" style="margin-bottom:0;">Open Tasks</div>
+    <button class="btn btn-secondary" style="width:auto;min-height:auto;padding:8px 12px;margin:0;" onclick="createTaskFromTasksScreen()">Add Task</button>
+  </div>
   <div id="task-list"><div class="loading"><div class="spinner"></div></div></div>
 </div>
 
@@ -1622,6 +1625,10 @@ function buildTaskDescriptionWithMeta(baseText = '', sourceKey = '', source = 'a
   return lines.filter(Boolean).join('\n');
 }
 
+function isoNow() {
+  return new Date().toISOString();
+}
+
 function deriveTaskBatchId(fields = {}) {
   const linkedBatch = fields['Linked Batch'];
   const linkedBatchId = Array.isArray(linkedBatch)
@@ -1696,8 +1703,8 @@ async function ensureOperationalTask({
 
   const taskFields = {
     'Task': title,
-    'Created At': new Date().toISOString(),
-    'Status': 'todo',
+    'Created At': isoNow(),
+    'Status': 'To Do',
     'Priority': priority,
     'Due Date': dueDate || undefined,
     'Type': 'task',
@@ -1715,6 +1722,28 @@ async function ensureOperationalTask({
     taskFields['Linked Brew Log ID'] = brewLogId;
   }
   return createTaskRecordWithFallback(taskFields);
+}
+
+async function createTaskFromTasksScreen() {
+  const title = prompt('Task title');
+  const safeTitle = String(title || '').trim();
+  if (!safeTitle) return;
+  try {
+    await createTaskRecordWithFallback({
+      'Task': safeTitle,
+      'Created At': isoNow(),
+      'Status': 'To Do',
+      'Priority': 'Medium',
+      'Type': 'task',
+      'Source': 'manual'
+    });
+    toast('Task created');
+    await loadTasks();
+    renderWhatsNext();
+  } catch (error) {
+    console.warn('Manual task create failed:', error);
+    toast('Could not create task');
+  }
 }
 
 async function runTaskSyncSafely(batchRecord, brewLogId = '') {
@@ -2343,7 +2372,7 @@ async function loadTasks() {
         </div>
         <div class="batch-meta" style="justify-content:space-between;">
           <span>${displayStatus(rawStatus)}${rawType ? ' · ' + rawType : ''}</span>
-          <button class="btn btn-secondary" data-toggle-task-id="${r.id}" style="width:auto;min-height:auto;padding:6px 10px;margin:0;" onclick="toggleTaskCompletion(event,'${r.id}',${isDone},'${esc(rawStatus)}')">${isDone ? 'Reopen' : 'Done'}</button>
+          <button class="btn btn-secondary" data-toggle-task-id="${r.id}" style="width:auto;min-height:auto;padding:6px 10px;margin:0;" onclick="toggleTaskCompletion(event,'${r.id}',${isDone})">${isDone ? 'Reopen' : 'Done'}</button>
         </div>
       </div>`;
     }).join('');
@@ -2361,10 +2390,10 @@ function toggleTaskCardUI(taskId, nextIsDone) {
   btn.textContent = nextIsDone ? 'Reopen' : 'Done';
 }
 
-async function patchTaskStatusWithFallback(taskId, markDone, currentStatusRaw = '') {
+async function patchTaskStatusWithFallback(taskId, markDone) {
   const candidates = markDone
-    ? ['Done', 'Completed', 'done', 'complete']
-    : [currentStatusRaw || '', 'To Do', 'Todo', 'Open', 'Pending', 'In Progress', 'todo'];
+    ? ['Done']
+    : ['To Do', 'In Progress'];
   const unique = [...new Set(candidates.filter(Boolean))];
   let lastErr = null;
   for (const status of unique) {
@@ -2375,12 +2404,12 @@ async function patchTaskStatusWithFallback(taskId, markDone, currentStatusRaw = 
   throw new Error(lastErr?.message || 'Task status update failed');
 }
 
-async function toggleTaskCompletion(event, taskId, isDone, currentStatusRaw = '') {
+async function toggleTaskCompletion(event, taskId, isDone) {
   if (event) event.stopPropagation();
   const nextIsDone = !isDone;
   toggleTaskCardUI(taskId, nextIsDone);
   try {
-    await patchTaskStatusWithFallback(taskId, nextIsDone, currentStatusRaw);
+    await patchTaskStatusWithFallback(taskId, nextIsDone);
     await loadTasks();
     renderWhatsNext();
   } catch (error) {
@@ -2391,15 +2420,17 @@ async function toggleTaskCompletion(event, taskId, isDone, currentStatusRaw = ''
 }
 
 async function openTaskContext(taskId, batchId, brewLogId) {
-  let resolvedBatchId = batchId;
-  let resolvedBrewLogId = brewLogId;
+  let resolvedBatchId = '';
+  let resolvedBrewLogId = '';
 
-  if ((!resolvedBatchId && !resolvedBrewLogId) && taskId) {
+  if (taskId) {
     const taskData = await airtable(TABLES.tasks, `/${taskId}`);
     const fields = taskData?.fields || {};
     resolvedBatchId = deriveTaskBatchId(fields);
     resolvedBrewLogId = deriveTaskBrewLogId(fields);
   }
+  if (!resolvedBatchId) resolvedBatchId = batchId;
+  if (!resolvedBrewLogId) resolvedBrewLogId = brewLogId;
 
   if (resolvedBatchId) {
     await loadBatchDetail(resolvedBatchId);
