@@ -1623,7 +1623,12 @@ function buildTaskDescriptionWithMeta(baseText = '', sourceKey = '', source = 'a
 }
 
 function deriveTaskBatchId(fields = {}) {
+  const linkedBatch = fields['Linked Batch'];
+  const linkedBatchId = Array.isArray(linkedBatch)
+    ? (typeof linkedBatch[0] === 'string' ? linkedBatch[0] : linkedBatch[0]?.id)
+    : '';
   return (
+    linkedBatchId ||
     (Array.isArray(fields['Batch']) && fields['Batch'][0]) ||
     fields['Linked Batch ID'] ||
     fields['Batch ID'] ||
@@ -1632,7 +1637,12 @@ function deriveTaskBatchId(fields = {}) {
 }
 
 function deriveTaskBrewLogId(fields = {}) {
+  const linkedBrewLog = fields['Linked Brew Log'];
+  const linkedBrewLogId = Array.isArray(linkedBrewLog)
+    ? (typeof linkedBrewLog[0] === 'string' ? linkedBrewLog[0] : linkedBrewLog[0]?.id)
+    : '';
   return (
+    linkedBrewLogId ||
     (Array.isArray(fields['Brew Log']) && fields['Brew Log'][0]) ||
     fields['Linked Brew Log ID'] ||
     fields['Brew Log ID'] ||
@@ -1697,6 +1707,7 @@ async function ensureOperationalTask({
   };
   if (batchId) {
     taskFields['Batch'] = [batchId];
+    taskFields['Linked Batch'] = [batchId];
     taskFields['Linked Batch ID'] = batchId;
   }
   if (brewLogId) {
@@ -2076,9 +2087,7 @@ async function loadBatchDetail(recordId) {
         : ''}
     </div>
     ${readinessPanel(f, objType)}
-    ${!readinessState.ready ? `
-    <button class="btn btn-secondary" onclick="overrideBatchReadiness('${recordId}', '${resolveBatchLabel(batchData).replace(/'/g, "\\'")}')">Override readiness and proceed</button>
-    ` : ''}
+    <button class="btn btn-secondary" onclick="overrideBatchReadiness('${recordId}', '${resolveBatchLabel(batchData).replace(/'/g, "\\'")}')">${!readinessState.ready ? 'Override readiness and proceed' : 'Create readiness review task'}</button>
     <div class="detail-section">
       <h3>Mash</h3>
       <div class="detail-row"><span class="detail-label">Temp</span>${renderField('Mash Temp Actual', compare(log['Mash Temp Actual'], targets.mash))}</div>
@@ -2326,15 +2335,15 @@ async function loadTasks() {
       const isDone = normalizeTaskStatus(rawStatus) === 'done';
       const batchId = deriveTaskBatchId(f);
       const brewLogId = deriveTaskBrewLogId(f);
-      return `<div class="batch-card">
-        <div class="batch-card-header" onclick="openTaskContext('${esc(batchId)}','${esc(brewLogId)}')">
+      return `<div class="batch-card" data-task-id="${r.id}" data-done="${isDone ? '1' : '0'}" onclick="openTaskContext('${r.id}','${esc(batchId)}','${esc(brewLogId)}')">
+        <div class="batch-card-header">
           <div><div class="batch-name">${f.Task || t('task.unnamed')}</div>
           <div class="batch-date">${f['Due Date'] || t('task.no_due_date')}</div></div>
           <span class="badge indicator-pill ${pillClassFromPriority(p || 'Normal')}" aria-label="${displayStatus(p || 'Normal')}"></span>
         </div>
         <div class="batch-meta" style="justify-content:space-between;">
           <span>${displayStatus(rawStatus)}${rawType ? ' · ' + rawType : ''}</span>
-          <button class="btn btn-secondary" style="width:auto;min-height:auto;padding:6px 10px;margin:0;" onclick="toggleTaskCompletion(event,'${r.id}',${isDone})">${isDone ? 'Reopen' : 'Done'}</button>
+          <button class="btn btn-secondary" data-toggle-task-id="${r.id}" style="width:auto;min-height:auto;padding:6px 10px;margin:0;" onclick="toggleTaskCompletion(event,'${r.id}',${isDone},'${esc(rawStatus)}')">${isDone ? 'Reopen' : 'Done'}</button>
         </div>
       </div>`;
     }).join('');
@@ -2344,20 +2353,60 @@ async function loadTasks() {
   }
 }
 
-async function toggleTaskCompletion(event, taskId, isDone) {
-  if (event) event.stopPropagation();
-  await airtablePatch(TABLES.tasks, taskId, { 'Status': isDone ? 'todo' : 'done' });
-  await loadTasks();
-  renderWhatsNext();
+function toggleTaskCardUI(taskId, nextIsDone) {
+  const card = document.querySelector(`[data-task-id="${taskId}"]`);
+  const btn = document.querySelector(`[data-toggle-task-id="${taskId}"]`);
+  if (!card || !btn) return;
+  card.dataset.done = nextIsDone ? '1' : '0';
+  btn.textContent = nextIsDone ? 'Reopen' : 'Done';
 }
 
-async function openTaskContext(batchId, brewLogId) {
-  if (batchId) {
-    await loadBatchDetail(batchId);
+async function patchTaskStatusWithFallback(taskId, markDone, currentStatusRaw = '') {
+  const candidates = markDone
+    ? ['Done', 'Completed', 'done', 'complete']
+    : [currentStatusRaw || '', 'To Do', 'Todo', 'Open', 'Pending', 'In Progress', 'todo'];
+  const unique = [...new Set(candidates.filter(Boolean))];
+  let lastErr = null;
+  for (const status of unique) {
+    const res = await airtablePatch(TABLES.tasks, taskId, { 'Status': status });
+    if (!res?.error) return res;
+    lastErr = res.error;
+  }
+  throw new Error(lastErr?.message || 'Task status update failed');
+}
+
+async function toggleTaskCompletion(event, taskId, isDone, currentStatusRaw = '') {
+  if (event) event.stopPropagation();
+  const nextIsDone = !isDone;
+  toggleTaskCardUI(taskId, nextIsDone);
+  try {
+    await patchTaskStatusWithFallback(taskId, nextIsDone, currentStatusRaw);
+    await loadTasks();
+    renderWhatsNext();
+  } catch (error) {
+    toggleTaskCardUI(taskId, isDone);
+    console.warn('Task status toggle failed:', error);
+    toast('Could not update task status');
+  }
+}
+
+async function openTaskContext(taskId, batchId, brewLogId) {
+  let resolvedBatchId = batchId;
+  let resolvedBrewLogId = brewLogId;
+
+  if ((!resolvedBatchId && !resolvedBrewLogId) && taskId) {
+    const taskData = await airtable(TABLES.tasks, `/${taskId}`);
+    const fields = taskData?.fields || {};
+    resolvedBatchId = deriveTaskBatchId(fields);
+    resolvedBrewLogId = deriveTaskBrewLogId(fields);
+  }
+
+  if (resolvedBatchId) {
+    await loadBatchDetail(resolvedBatchId);
     return;
   }
-  if (brewLogId) {
-    const logData = await airtable(TABLES.brewLogs, `/${brewLogId}`);
+  if (resolvedBrewLogId) {
+    const logData = await airtable(TABLES.brewLogs, `/${resolvedBrewLogId}`);
     const linkedBatchId = Array.isArray(logData?.fields?.Batch) ? logData.fields.Batch[0] : '';
     if (linkedBatchId) await loadBatchDetail(linkedBatchId);
   }
