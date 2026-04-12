@@ -4194,6 +4194,7 @@ async function agendaActionToggleDone() {
 }
 
 function agendaActionSetDate() {
+  console.log('SET DATE CLICKED');
   const picker = document.getElementById('agenda-date-picker');
   const item = Array.isArray(window._agendaCache) ? window._agendaCache.find(entry => entry.id === agendaActionItemId) : null;
   if (!picker || !item || !agendaActionItemId) return;
@@ -4217,6 +4218,7 @@ function agendaActionSetDate() {
   picker.showPicker?.();
   picker.click();
 }
+window.agendaActionSetDate = agendaActionSetDate;
 
 async function agendaActionRemoveDate() {
   if (!agendaActionItemId) return;
