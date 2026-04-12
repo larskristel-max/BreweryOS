@@ -3375,7 +3375,7 @@ function renderAgendaForSelectedDay() {
   const selectedDateObj = parseLocalDateKey(selectedDate) || getLocalTodayDate();
 
   const dayItems = cache.filter(item => {
-    if (!item.scheduledTime) return true;
+    if (!item.scheduledTime) return false;
     const scheduled = new Date(item.scheduledTime);
     if (Number.isNaN(scheduled.getTime())) return false;
     return localDateKey(scheduled) === selectedDate;
