@@ -1934,6 +1934,13 @@ function setTaskDueFilter(nextFilter = 'all') {
   loadTasks();
 }
 
+function setAgendaSelectedDate(value = new Date()) {
+  const dateObj = value instanceof Date ? value : new Date(value);
+  if (Number.isNaN(dateObj.getTime())) return;
+  agendaDate = dateObj;
+  window._agendaSelectedDate = dateObj.toISOString().slice(0, 10);
+}
+
 async function saveTaskFromTasksScreen() {
   const input = document.getElementById('task-create-title');
   const batchSelect = document.getElementById('task-create-batch');
@@ -1964,6 +1971,7 @@ async function saveTaskFromTasksScreen() {
     toggleTaskCreateForm(false);
     await loadTasks();
     renderWhatsNext();
+    loadAgendaFromAirtable();
   } catch (error) {
     console.error(isEditing ? 'TASK EDIT FAILED' : 'TASK CREATE FAILED', error);
     console.warn(isEditing ? 'Task edit failed:' : 'Manual task create failed:', error);
@@ -2602,7 +2610,7 @@ async function loadTasks() {
             <button class="task-menu-trigger" aria-label="Task actions" onclick="toggleTaskActionMenu(event,'${r.id}')">⋮</button>
             <div id="task-menu-${r.id}" class="task-card-menu" style="display:none;">
               <button onclick="startTaskEdit(event,'${r.id}')">Edit</button>
-              <button onclick="toggleTaskCompletionFromMenu(event,'${r.id}',${isDone})">${isDone ? 'Reopen' : 'Done'}</button>
+              <button data-toggle-task-id="${r.id}" onclick="toggleTaskCompletionFromMenu(event,'${r.id}',${isDone})">${isDone ? 'Reopen' : 'Done'}</button>
               <button onclick="archiveTask(event,'${r.id}')">Archive</button>
               <button onclick="deleteTask(event,'${r.id}')">Delete</button>
             </div>
@@ -2662,6 +2670,7 @@ async function archiveTask(event, taskId) {
     await airtablePatch(TABLES.tasks, taskId, payload);
     await loadTasks();
     renderWhatsNext();
+    loadAgendaFromAirtable();
     toast('Task archived');
   } catch (error) {
     console.warn('Task archive failed:', error);
@@ -2683,6 +2692,7 @@ async function deleteTask(event, taskId) {
     await airtablePatch(TABLES.tasks, taskId, payload);
     await loadTasks();
     renderWhatsNext();
+    loadAgendaFromAirtable();
     toast('Task deleted');
   } catch (error) {
     console.warn('Task delete failed:', error);
@@ -2807,6 +2817,7 @@ function showScreen(id) {
   if (id === 'screen-financial') target.scrollTop = 0;
   // refresh screen-specific state on navigate
   if (id === 'screen-agenda') { switchAgendaView(agendaView); loadAgendaFromAirtable(); }
+  if (id === 'screen-tasks') { loadTasks(); }
   if (id === 'screen-financial') { renderFinancialPage(); loadFinancialFromAirtable(); }
   if (id === 'screen-settings') { initSettings(); populateSettingsLanguageValue(); }
   if (id === 'screen-home') {
@@ -3294,6 +3305,13 @@ function renderAgendaForSelectedDay() {
 
   const allItems = [...timed, ...untimed];
 
+  const selectedDateObj = parseDateAtMidnight(selectedDate);
+  const header = document.getElementById('agenda-date-label');
+  if (header && selectedDateObj) header.textContent = formatAgendaDate(selectedDateObj);
+  const todayPill = document.getElementById('agenda-today-pill');
+  const todayKey = new Date().toISOString().slice(0, 10);
+  if (todayPill) todayPill.style.display = selectedDate === todayKey ? 'none' : 'inline-block';
+
   const listEl = document.getElementById('agenda-day-list')
     || document.getElementById('agenda-list')
     || document.querySelector('.agenda-items-list')
@@ -3347,8 +3365,7 @@ function deriveAgendaLinkedTaskId(item = {}) {
 }
 
 function isAgendaCompletable(item = {}, linkedTaskId = '') {
-  if (linkedTaskId) return true;
-  return String(item.type || '').toLowerCase() === 'task';
+  return !!linkedTaskId;
 }
 
 async function toggleAgendaTaskCompletion(event, agendaItemId, linkedTaskId = '') {
@@ -3360,14 +3377,14 @@ async function toggleAgendaTaskCompletion(event, agendaItemId, linkedTaskId = ''
     ? window._agendaCache.find((entry) => entry.id === agendaItemId)
     : null;
   if (!item) return;
+  if (!linkedTaskId) {
+    toast('This agenda task is not linked to a task record');
+    return;
+  }
   const nextDone = !item.isCompleted;
   try {
-    if (linkedTaskId) {
-      await toggleTaskStatusEverywhere(linkedTaskId, nextDone);
-      await airtablePatch('tblpkSb7zxoWBcxFA', agendaItemId, { 'Is Completed': nextDone });
-    } else {
-      await airtablePatch('tblpkSb7zxoWBcxFA', agendaItemId, { 'Is Completed': nextDone });
-    }
+    await toggleTaskStatusEverywhere(linkedTaskId, nextDone);
+    await airtablePatch('tblpkSb7zxoWBcxFA', agendaItemId, { 'Is Completed': nextDone });
     item.isCompleted = nextDone;
     renderAgendaForSelectedDay();
   } catch (error) {
@@ -3413,7 +3430,7 @@ async function renderWhatsNext() {
 
     const data = await airtable(table, `?${fields}&filterByFormula=${formula}&maxRecords=20`);
     if (data.error) throw new Error(`Airtable ${data.error.type || 'error'}`);
-    const records = data.records || [];
+    const records = applyTaskDueFilter(data.records || []);
 
     function sel(v) {
       return (v && typeof v === 'object' && v.name) ? v.name : (v || '');
@@ -3727,7 +3744,11 @@ function switchAgendaView(view) {
     if (weekTab) { weekTab.style.background = '#fff'; weekTab.style.color = '#6b7280'; }
     if (dayList)  dayList.style.display = 'block';
     if (weekGrid) weekGrid.style.display = 'none';
-    renderAgendaDay();
+    if (window._agendaCache) {
+      renderAgendaForSelectedDay();
+    } else {
+      loadAgendaFromAirtable();
+    }
   } else {
     if (dayTab)  { dayTab.style.background = '#fff'; dayTab.style.color = '#6b7280'; }
     if (weekTab) { weekTab.style.background = '#111827'; weekTab.style.color = '#fff'; }
@@ -3742,8 +3763,12 @@ function formatAgendaDate(d) {
 }
 
 function goAgendaToday() {
-  agendaDate = new Date();
-  renderAgendaDay();
+  setAgendaSelectedDate(new Date());
+  if (window._agendaCache) {
+    renderAgendaForSelectedDay();
+  } else {
+    loadAgendaFromAirtable();
+  }
 }
 
 function renderAgendaDay() {
@@ -3823,7 +3848,7 @@ function renderAgendaWeek() {
 function selectAgendaWeekDay(index) {
   const d = new Date();
   d.setDate(d.getDate() - d.getDay() + 1 + index);
-  agendaDate = d;
+  setAgendaSelectedDate(d);
   switchAgendaView('day');
 }
 
