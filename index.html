@@ -363,11 +363,17 @@
   <div id="agenda-actions-backdrop" onclick="closeAgendaItemActions()" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,0.2);z-index:580;"></div>
   <div id="agenda-item-actions" style="display:none; position:fixed; left:12px; right:12px; bottom:calc(var(--bottom-nav-height) + env(safe-area-inset-bottom, 0px) + 8px); background:#fff; border-radius:16px; border:1px solid #e5e7eb; padding:8px; z-index:581;">
     <button id="agenda-action-toggle-done" onclick="agendaActionToggleDone()" style="width:100%; text-align:left; background:#fff; border:none; padding:12px; border-radius:10px; font-size:14px; color:#111827;">Mark done</button>
-    <button id="agenda-action-set-date" type="button" style="width:100%; text-align:left; background:#fff; border:none; padding:12px; border-radius:10px; font-size:14px; color:#111827;">Set date</button>
+    <button id="agenda-action-set-date" type="button" onclick="agendaActionSetDate()" style="width:100%; text-align:left; background:#fff; border:none; padding:12px; border-radius:10px; font-size:14px; color:#111827;">Set date</button>
+    <div id="agenda-set-date-inline" style="display:none; padding:12px 8px 4px;">
+      <input id="agenda-set-date-input" type="date" style="width:100%; padding:12px; border:1px solid #e5e7eb; border-radius:10px; font-size:16px; background:#fff; color:#111827;" />
+      <div style="display:flex; gap:8px; margin-top:8px;">
+        <button type="button" onclick="confirmAgendaSetDate()" style="flex:1; padding:10px 12px; border:none; border-radius:10px; background:#111827; color:#fff; font-size:14px; font-weight:600;">Save date</button>
+        <button type="button" onclick="cancelAgendaSetDateInline()" style="flex:1; padding:10px 12px; border:1px solid #e5e7eb; border-radius:10px; background:#fff; color:#6b7280; font-size:14px;">Cancel</button>
+      </div>
+    </div>
     <button onclick="agendaActionRemoveDate()" style="width:100%; text-align:left; background:#fff; border:none; padding:12px; border-radius:10px; font-size:14px; color:#111827;">Remove date</button>
     <button onclick="closeAgendaItemActions()" style="width:100%; text-align:left; background:#fff; border:none; padding:12px; border-radius:10px; font-size:14px; color:#6b7280;">Cancel</button>
   </div>
-  <input id="agenda-date-picker" type="date" style="position:fixed;left:-9999px;top:-9999px;opacity:0;pointer-events:none;" />
 
 </div>
 
@@ -2716,20 +2722,6 @@ document.addEventListener('click', (event) => {
   if (!event.target.closest('.task-card-actions')) closeTaskActionMenus();
 });
 
-let agendaSetDateDelegationBound = false;
-function bindAgendaSetDateDelegation() {
-  if (agendaSetDateDelegationBound) return;
-  agendaSetDateDelegationBound = true;
-  document.addEventListener('click', function(e) {
-    const btn = e.target.closest('#agenda-action-set-date');
-    if (!btn) return;
-
-    e.preventDefault();
-    e.stopPropagation();
-
-    agendaActionSetDate();
-  });
-}
 
 function toggleTaskActionMenu(event, taskId) {
   if (event) {
@@ -4185,13 +4177,9 @@ function openAgendaItemActions(itemId = '') {
 function closeAgendaItemActions() {
   const panel = document.getElementById('agenda-item-actions');
   const backdrop = document.getElementById('agenda-actions-backdrop');
-  const picker = document.getElementById('agenda-date-picker');
   if (backdrop) backdrop.style.display = 'none';
   if (panel) panel.style.display = 'none';
-  if (picker && picker._agendaDateHandler) {
-    picker.removeEventListener('change', picker._agendaDateHandler);
-    picker._agendaDateHandler = null;
-  }
+  hideAgendaSetDateInline();
   agendaActionItemId = '';
 }
 
@@ -4209,40 +4197,34 @@ async function agendaActionToggleDone() {
 }
 
 function agendaActionSetDate() {
-  console.log('SET DATE CLICKED');
-  const picker = document.getElementById('agenda-date-picker');
-  const item = Array.isArray(window._agendaCache) ? window._agendaCache.find(entry => entry.id === agendaActionItemId) : null;
-  if (!picker || !item || !agendaActionItemId) return;
-  const scheduledDateKey = item.scheduledTime ? localDateKey(new Date(item.scheduledTime)) : '';
-  picker.value = parseLocalDateKey(scheduledDateKey) ? scheduledDateKey : selectedAgendaDateKey;
-  if (picker._agendaDateHandler) {
-    picker.removeEventListener('change', picker._agendaDateHandler);
-    picker._agendaDateHandler = null;
-  }
-  const targetItemId = agendaActionItemId;
-  const applyPickedDate = async (event) => {
-    const nextKey = String(event?.target?.value || '').trim();
-    if (!parseLocalDateKey(nextKey)) return;
-    picker.removeEventListener('change', applyPickedDate);
-    picker._agendaDateHandler = null;
-    await setAgendaItemDate(targetItemId, nextKey);
-    closeAgendaItemActions();
-  };
-  picker._agendaDateHandler = applyPickedDate;
-  picker.addEventListener('change', applyPickedDate);
-  // Temporarily bring picker into viewport for iOS Safari showPicker() requirement
-  picker.style.left = '50%';
-  picker.style.top = '50%';
-  picker.style.pointerEvents = 'auto';
-  picker.showPicker?.();
-  picker.click();
-  requestAnimationFrame(() => {
-    picker.style.left = '-9999px';
-    picker.style.top = '-9999px';
-    picker.style.pointerEvents = 'none';
-  });
+  const item = Array.isArray(window._agendaCache)
+    ? window._agendaCache.find(entry => entry.id === agendaActionItemId)
+    : null;
+  const inline = document.getElementById('agenda-set-date-inline');
+  const input = document.getElementById('agenda-set-date-input');
+  if (!item || !inline || !input || !agendaActionItemId) return;
+  const currentKey = item.scheduledTime ? localDateKey(new Date(item.scheduledTime)) : '';
+  input.value = parseLocalDateKey(currentKey) ? currentKey : selectedAgendaDateKey;
+  inline.style.display = 'block';
 }
-window.agendaActionSetDate = agendaActionSetDate;
+
+function hideAgendaSetDateInline() {
+  const inline = document.getElementById('agenda-set-date-inline');
+  if (inline) inline.style.display = 'none';
+}
+
+function cancelAgendaSetDateInline() {
+  hideAgendaSetDateInline();
+}
+
+async function confirmAgendaSetDate() {
+  const input = document.getElementById('agenda-set-date-input');
+  const nextKey = String(input?.value || '').trim();
+  if (!parseLocalDateKey(nextKey) || !agendaActionItemId) return;
+  await setAgendaItemDate(agendaActionItemId, nextKey);
+  hideAgendaSetDateInline();
+  closeAgendaItemActions();
+}
 
 async function agendaActionRemoveDate() {
   if (!agendaActionItemId) return;
@@ -4544,7 +4526,6 @@ function maybeShowColorTip() {
 }
 
 async function init() {
-  bindAgendaSetDateDelegation();
   bootFlow();
   const batchData = await airtable(TABLES.batches, '?sort[0][field]=Date&sort[0][direction]=desc');
   cachedTaskBatchRecords = batchData.records || [];
