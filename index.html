@@ -365,7 +365,6 @@
     <button id="agenda-action-toggle-done" onclick="agendaActionToggleDone()" style="width:100%; text-align:left; background:#fff; border:none; padding:12px; border-radius:10px; font-size:14px; color:#111827;">Mark done</button>
     <button onclick="agendaActionSetDate()" style="width:100%; text-align:left; background:#fff; border:none; padding:12px; border-radius:10px; font-size:14px; color:#111827;">Set date</button>
     <button onclick="agendaActionRemoveDate()" style="width:100%; text-align:left; background:#fff; border:none; padding:12px; border-radius:10px; font-size:14px; color:#111827;">Remove date</button>
-    <button onclick="agendaActionOpenContext()" style="width:100%; text-align:left; background:#fff; border:none; padding:12px; border-radius:10px; font-size:14px; color:#111827;">Open context</button>
     <button onclick="closeAgendaItemActions()" style="width:100%; text-align:left; background:#fff; border:none; padding:12px; border-radius:10px; font-size:14px; color:#6b7280;">Cancel</button>
   </div>
   <input id="agenda-date-picker" type="date" style="position:fixed;left:-9999px;top:-9999px;opacity:0;pointer-events:none;" />
@@ -3541,14 +3540,22 @@ function buildNowLine(dateObj = getLocalTodayDate(), timedItems = []) {
   const now = new Date();
   const nowMinutes = now.getHours() * 60 + now.getMinutes();
   const nowLabel = now.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
-  return `<div data-now-minutes="${nowMinutes}" style="display:flex;align-items:center;gap:8px;padding:6px 0;">
+  const calmPadding = timedItems.length === 0 ? '12px 0 10px' : '6px 0';
+  return `<div data-now-minutes="${nowMinutes}" style="display:flex;align-items:center;gap:8px;padding:${calmPadding};">
     <div style="flex:1;height:1px;background:#ef4444;"></div>
     <span style="font-size:11px;color:#ef4444;font-weight:600;">Now ${nowLabel}</span>
   </div>`;
 }
 
 function buildTimelineBlocks(timedItems = [], dateObj = getLocalTodayDate()) {
-  const sorted = [...timedItems].sort((a, b) => a.scheduledTime.localeCompare(b.scheduledTime));
+  const sorted = [...timedItems].sort((a, b) => {
+    const aMinutes = agendaMinutesFromScheduled(a);
+    const bMinutes = agendaMinutesFromScheduled(b);
+    if (aMinutes === null && bMinutes === null) return 0;
+    if (aMinutes === null) return 1;
+    if (bMinutes === null) return -1;
+    return aMinutes - bMinutes;
+  });
   let html = '';
   let lastHour = null;
   const nowLine = buildNowLine(dateObj, sorted);
@@ -3562,10 +3569,9 @@ function buildTimelineBlocks(timedItems = [], dateObj = getLocalTodayDate()) {
   }
 
   sorted.forEach((item, idx) => {
-    const dt = new Date(item.scheduledTime);
-    if (Number.isNaN(dt.getTime())) return;
-    const hour = dt.getHours();
-    const minutes = hour * 60 + dt.getMinutes();
+    const minutes = agendaMinutesFromScheduled(item);
+    if (minutes === null) return;
+    const hour = Math.floor(minutes / 60);
     if (hour !== lastHour) {
       html += `<div style="display:flex;align-items:center;gap:8px;padding:8px 0 2px;">
         <span style="font-size:11px;color:#9ca3af;min-width:40px;">${String(hour).padStart(2, '0')}:00</span>
@@ -4164,8 +4170,13 @@ function openAgendaItemActions(itemId = '') {
 function closeAgendaItemActions() {
   const panel = document.getElementById('agenda-item-actions');
   const backdrop = document.getElementById('agenda-actions-backdrop');
+  const picker = document.getElementById('agenda-date-picker');
   if (backdrop) backdrop.style.display = 'none';
   if (panel) panel.style.display = 'none';
+  if (picker && picker._agendaDateHandler) {
+    picker.removeEventListener('change', picker._agendaDateHandler);
+    picker._agendaDateHandler = null;
+  }
   agendaActionItemId = '';
 }
 
@@ -4183,14 +4194,25 @@ async function agendaActionToggleDone() {
 
 function agendaActionSetDate() {
   const picker = document.getElementById('agenda-date-picker');
-  if (!picker || !agendaActionItemId) return;
-  picker.value = selectedAgendaDateKey;
-  picker.onchange = async (event) => {
+  const item = Array.isArray(window._agendaCache) ? window._agendaCache.find(entry => entry.id === agendaActionItemId) : null;
+  if (!picker || !item || !agendaActionItemId) return;
+  const scheduledDateKey = item.scheduledTime ? localDateKey(new Date(item.scheduledTime)) : '';
+  picker.value = parseLocalDateKey(scheduledDateKey) ? scheduledDateKey : selectedAgendaDateKey;
+  if (picker._agendaDateHandler) {
+    picker.removeEventListener('change', picker._agendaDateHandler);
+    picker._agendaDateHandler = null;
+  }
+  const targetItemId = agendaActionItemId;
+  const applyPickedDate = async (event) => {
     const nextKey = String(event?.target?.value || '').trim();
     if (!parseLocalDateKey(nextKey)) return;
-    await setAgendaItemDate(agendaActionItemId, nextKey);
+    picker.removeEventListener('change', applyPickedDate);
+    picker._agendaDateHandler = null;
+    await setAgendaItemDate(targetItemId, nextKey);
     closeAgendaItemActions();
   };
+  picker._agendaDateHandler = applyPickedDate;
+  picker.addEventListener('change', applyPickedDate);
   picker.showPicker?.();
   picker.click();
 }
@@ -4198,24 +4220,6 @@ function agendaActionSetDate() {
 async function agendaActionRemoveDate() {
   if (!agendaActionItemId) return;
   await removeAgendaItemDate(agendaActionItemId);
-  closeAgendaItemActions();
-}
-
-function agendaActionOpenContext() {
-  const item = Array.isArray(window._agendaCache) ? window._agendaCache.find(entry => entry.id === agendaActionItemId) : null;
-  if (!item) return;
-  if (String(item.entityType || '').toLowerCase().includes('task') && item.entityId) {
-    showScreen('screen-tasks');
-    loadTasks();
-    closeAgendaItemActions();
-    return;
-  }
-  if (String(item.entityType || '').toLowerCase().includes('batch') && item.entityId) {
-    openBatchDetail(item.entityId);
-    closeAgendaItemActions();
-    return;
-  }
-  toast('No linked context yet');
   closeAgendaItemActions();
 }
 
@@ -4237,9 +4241,25 @@ async function toggleAgendaItemById(id) {
 function combineDateWithExistingTime(dateKey, scheduledTime) {
   const localDate = parseLocalDateKey(dateKey);
   if (!localDate) return null;
-  if (!scheduledTime) return localDate.toISOString();
+  if (!scheduledTime) {
+    const localMidday = new Date(
+      localDate.getFullYear(),
+      localDate.getMonth(),
+      localDate.getDate(),
+      12, 0, 0, 0
+    );
+    return localMidday.toISOString();
+  }
   const existing = new Date(scheduledTime);
-  if (Number.isNaN(existing.getTime())) return localDate.toISOString();
+  if (Number.isNaN(existing.getTime())) {
+    const localMidday = new Date(
+      localDate.getFullYear(),
+      localDate.getMonth(),
+      localDate.getDate(),
+      12, 0, 0, 0
+    );
+    return localMidday.toISOString();
+  }
   const merged = new Date(
     localDate.getFullYear(),
     localDate.getMonth(),
