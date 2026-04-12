@@ -164,6 +164,11 @@
   .task-card-menu button { width: 100%; background: #fff; border: 0; border-bottom: 1px solid var(--line-150); padding: 10px 12px; text-align: left; font-size: 14px; color: var(--ink-800); cursor: pointer; }
   .task-card-menu button:last-child { border-bottom: 0; color: var(--red); }
   .task-card-menu button:active { background: var(--bg-soft); }
+  .task-filter-tabs { display:flex; gap:8px; flex-wrap:wrap; }
+  .task-filter-tab { border:1px solid var(--border); background:#fff; color:var(--muted); border-radius:999px; padding:6px 12px; font-size:12px; font-weight:600; cursor:pointer; }
+  .task-filter-tab.active { background: var(--ink-900); color:#fff; border-color:var(--ink-900); }
+  .task-context-line { font-size:12px; color:var(--muted); line-height:1.35; }
+  .task-category-badge { display:inline-flex; align-items:center; border:1px solid var(--line-200); background:#f9fafb; color:#4b5563; border-radius:999px; padding:2px 8px; font-size:10px; font-weight:600; letter-spacing:0.02em; text-transform:uppercase; }
   .spinner { display: inline-block; width: 28px; height: 28px; border: 3px solid var(--border); border-top-color: var(--ink-900); border-radius: 50%; animation: spin 0.8s linear infinite; }
   @keyframes spin { to { transform: rotate(360deg); } }
   .toast { position: fixed; bottom: 24px; left: 50%; transform: translateX(-50%); background: #1e293b; color: white; padding: 12px 20px; border-radius: 10px; font-size: 14px; font-weight: 500; z-index: 999; opacity: 0; transition: opacity 0.3s; pointer-events: none; white-space: nowrap; }
@@ -546,6 +551,12 @@
   <div style="display:flex;justify-content:space-between;align-items:center;gap:12px;">
     <div class="section-title" id="task-screen-title" style="margin-bottom:0;">Open Tasks</div>
     <button class="btn btn-secondary" style="width:auto;min-height:auto;padding:8px 12px;margin:0;" onclick="toggleTaskCreateForm(true)">Add Task</button>
+  </div>
+  <div class="task-filter-tabs">
+    <button id="task-filter-all" class="task-filter-tab active" onclick="setTaskDueFilter('all')">All</button>
+    <button id="task-filter-today" class="task-filter-tab" onclick="setTaskDueFilter('today')">Today</button>
+    <button id="task-filter-upcoming" class="task-filter-tab" onclick="setTaskDueFilter('upcoming')">Upcoming</button>
+    <button id="task-filter-overdue" class="task-filter-tab" onclick="setTaskDueFilter('overdue')">Overdue</button>
   </div>
   <div id="task-create-card" class="task-create-card" style="display:none;">
     <input id="task-create-title" type="text" placeholder="Task title" />
@@ -1795,6 +1806,7 @@ async function ensureOperationalTask({
 
 let cachedTaskBatchRecords = [];
 let taskEditState = { taskId: '' };
+let taskDueFilter = 'all';
 
 function hydrateTaskCreateBatchOptions() {
   const select = document.getElementById('task-create-batch');
@@ -1853,6 +1865,73 @@ async function startTaskEdit(event, taskId) {
 
 function activeTaskFilterFormula() {
   return "AND(OR({Is Archived}=FALSE(), {Is Archived}=BLANK()), OR({Is Deleted}=FALSE(), {Is Deleted}=BLANK()))";
+}
+
+function parseDateAtMidnight(value) {
+  if (!value) return null;
+  const d = new Date(value);
+  if (Number.isNaN(d.getTime())) return null;
+  d.setHours(0, 0, 0, 0);
+  return d;
+}
+
+function deriveTaskReasonText(fields = {}) {
+  const suggestionReason = String(fields['Suggestion Reason'] || '').trim();
+  if (suggestionReason) return suggestionReason;
+  const suggestionType = sel(fields['Suggestion Type']);
+  if (suggestionType) return `Created from ${suggestionType.toLowerCase()} suggestion`;
+  const source = sel(fields['Source']);
+  if (String(source).toLowerCase() === 'manual') return 'Manual task';
+  if (String(source).toLowerCase() === 'system') return 'Created from batch transition';
+  return 'Readiness check required';
+}
+
+function taskSourceLabel(fields = {}) {
+  const source = sel(fields['Source']);
+  return source || 'System';
+}
+
+function deriveTaskCategory(fields = {}) {
+  const source = String(sel(fields['Source']) || '').toLowerCase();
+  const suggestionType = String(sel(fields['Suggestion Type']) || '').toLowerCase();
+  const reason = `${fields['Suggestion Reason'] || ''} ${fields['Task'] || ''}`.toLowerCase();
+  if (reason.includes('inventory') || reason.includes('stock') || suggestionType.includes('inventory')) return 'Inventory';
+  if (reason.includes('tax') || reason.includes('excise') || reason.includes('compliance') || suggestionType.includes('compliance')) return 'Compliance';
+  if (reason.includes('cost') || reason.includes('invoice') || reason.includes('finance') || suggestionType.includes('finance')) return 'Finance';
+  if (source === 'manual') return 'Brewing';
+  return 'Brewing';
+}
+
+function isTaskOverdue(fields = {}) {
+  const due = parseDateAtMidnight(fields['Due Date']);
+  if (!due) return false;
+  const status = normalizeTaskStatus(fields['Status']);
+  if (status === 'done') return false;
+  const today = parseDateAtMidnight(new Date().toISOString());
+  return due < today;
+}
+
+function applyTaskDueFilter(records = []) {
+  if (taskDueFilter === 'all') return records;
+  const today = parseDateAtMidnight(new Date().toISOString());
+  return records.filter((record) => {
+    const fields = record.fields || {};
+    const due = parseDateAtMidnight(fields['Due Date']);
+    if (!due) return false;
+    if (taskDueFilter === 'today') return due.getTime() === today.getTime();
+    if (taskDueFilter === 'upcoming') return due > today;
+    if (taskDueFilter === 'overdue') return isTaskOverdue(fields);
+    return true;
+  });
+}
+
+function setTaskDueFilter(nextFilter = 'all') {
+  taskDueFilter = nextFilter;
+  ['all', 'today', 'upcoming', 'overdue'].forEach((key) => {
+    const btn = document.getElementById(`task-filter-${key}`);
+    if (btn) btn.classList.toggle('active', key === nextFilter);
+  });
+  loadTasks();
 }
 
 async function saveTaskFromTasksScreen() {
@@ -2500,7 +2579,7 @@ async function loadTasks() {
     closeTaskActionMenus();
     const formula = encodeURIComponent(activeTaskFilterFormula());
     const data = await airtable(TABLES.tasks, `?maxRecords=200&sort[0][field]=Priority&sort[1][field]=Due Date&filterByFormula=${formula}`);
-    const records = data.records || [];
+    const records = applyTaskDueFilter(data.records || []);
     if (!records.length) { el.innerHTML = `<div class="empty">${t('task.no_tasks')}</div>`; return; }
     const esc = (v) => String(v || '').replace(/'/g, "\\'");
     el.innerHTML = records.map(r => {
@@ -2511,6 +2590,9 @@ async function loadTasks() {
       const isDone = normalizeTaskStatus(rawStatus) === 'done';
       const batchId = deriveTaskBatchId(f);
       const brewLogId = deriveTaskBrewLogId(f);
+      const source = taskSourceLabel(f);
+      const reason = deriveTaskReasonText(f);
+      const category = deriveTaskCategory(f);
       return `<div class="batch-card task-card" data-task-id="${r.id}" data-done="${isDone ? '1' : '0'}" onclick="openTaskContext('${r.id}','${esc(batchId)}','${esc(brewLogId)}')">
         <div class="batch-card-header">
           <div><div class="batch-name">${f.Task || t('task.unnamed')}</div>
@@ -2520,14 +2602,16 @@ async function loadTasks() {
             <button class="task-menu-trigger" aria-label="Task actions" onclick="toggleTaskActionMenu(event,'${r.id}')">⋮</button>
             <div id="task-menu-${r.id}" class="task-card-menu" style="display:none;">
               <button onclick="startTaskEdit(event,'${r.id}')">Edit</button>
+              <button onclick="toggleTaskCompletionFromMenu(event,'${r.id}',${isDone})">${isDone ? 'Reopen' : 'Done'}</button>
               <button onclick="archiveTask(event,'${r.id}')">Archive</button>
               <button onclick="deleteTask(event,'${r.id}')">Delete</button>
             </div>
           </div>
         </div>
+        <div class="task-context-line">Source: ${escapeHtml(source)} · ${escapeHtml(reason)}</div>
         <div class="batch-meta" style="justify-content:space-between;">
           <span>${displayStatus(rawStatus)}${rawType ? ' · ' + rawType : ''}</span>
-          <button class="btn btn-secondary" data-toggle-task-id="${r.id}" style="width:auto;min-height:auto;padding:6px 10px;margin:0;" onclick="toggleTaskCompletion(event,'${r.id}',${isDone})">${isDone ? 'Reopen' : 'Done'}</button>
+          <span class="task-category-badge">${escapeHtml(category)}</span>
         </div>
       </div>`;
     }).join('');
@@ -2555,6 +2639,15 @@ function toggleTaskActionMenu(event, taskId) {
   const willOpen = menu.style.display === 'none';
   closeTaskActionMenus();
   menu.style.display = willOpen ? 'block' : 'none';
+}
+
+async function toggleTaskCompletionFromMenu(event, taskId, isDone) {
+  if (event) {
+    event.preventDefault();
+    event.stopPropagation();
+  }
+  closeTaskActionMenus();
+  await toggleTaskCompletion(null, taskId, isDone);
 }
 
 async function archiveTask(event, taskId) {
@@ -2622,14 +2715,25 @@ async function patchTaskStatusWithFallback(taskId, markDone) {
   throw new Error(lastErr?.message || 'Task status update failed');
 }
 
+async function syncTaskViews() {
+  await Promise.allSettled([
+    loadTasks(),
+    renderWhatsNext(),
+    loadAgendaFromAirtable()
+  ]);
+}
+
+async function toggleTaskStatusEverywhere(taskId, nextIsDone) {
+  await patchTaskStatusWithFallback(taskId, nextIsDone);
+  await syncTaskViews();
+}
+
 async function toggleTaskCompletion(event, taskId, isDone) {
   if (event) event.stopPropagation();
   const nextIsDone = !isDone;
   toggleTaskCardUI(taskId, nextIsDone);
   try {
-    await patchTaskStatusWithFallback(taskId, nextIsDone);
-    await loadTasks();
-    renderWhatsNext();
+    await toggleTaskStatusEverywhere(taskId, nextIsDone);
   } catch (error) {
     toggleTaskCardUI(taskId, isDone);
     console.warn('Task status toggle failed:', error);
@@ -3191,6 +3295,7 @@ function renderAgendaForSelectedDay() {
   const allItems = [...timed, ...untimed];
 
   const listEl = document.getElementById('agenda-day-list')
+    || document.getElementById('agenda-list')
     || document.querySelector('.agenda-items-list')
     || document.querySelector('.agenda-day-items');
 
@@ -3205,6 +3310,9 @@ function renderAgendaForSelectedDay() {
   const typeColor = { task: '#1565c0', note: '#6a1b9a', event: '#2e7d32' };
 
   listEl.innerHTML = allItems.map(item => {
+    const linkedTaskId = deriveAgendaLinkedTaskId(item);
+    const isCompletable = isAgendaCompletable(item, linkedTaskId);
+    const completionLabel = item.isCompleted ? 'Reopen' : 'Done';
     const timeLabel = item.scheduledTime
       ? new Date(item.scheduledTime).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
       : '';
@@ -3216,7 +3324,7 @@ function renderAgendaForSelectedDay() {
     return `
       <div class="agenda-item" data-id="${item.id}" data-completed="${item.isCompleted}"
         style="display:flex;align-items:flex-start;gap:12px;padding:12px 0;border-bottom:1px solid #f0f0f0;cursor:pointer;"
-        onclick="toggleAgendaItem(this, '${item.id}')">
+        onclick="${isCompletable ? `toggleAgendaTaskCompletion(event,'${item.id}','${linkedTaskId}')` : `toggleAgendaItem(this, '${item.id}')`}">
         <div style="min-width:44px;text-align:right;color:#9e9e9e;font-size:12px;padding-top:2px;">
           ${timeLabel}
         </div>
@@ -3227,8 +3335,45 @@ function renderAgendaForSelectedDay() {
           </div>
           ${item.entityType ? `<div style="font-size:11px;color:#9e9e9e;margin-top:2px;">${item.entityType} ${item.entityId}</div>` : ''}
         </div>
+        ${isCompletable ? `<button class="btn btn-secondary" style="width:auto;min-height:auto;padding:6px 10px;margin:0;" onclick="toggleAgendaTaskCompletion(event,'${item.id}','${linkedTaskId}')">${completionLabel}</button>` : ''}
       </div>`;
   }).join('');
+}
+
+function deriveAgendaLinkedTaskId(item = {}) {
+  const entityType = String(item.entityType || '').toLowerCase();
+  if (entityType.includes('task') && String(item.entityId || '').startsWith('rec')) return item.entityId;
+  return '';
+}
+
+function isAgendaCompletable(item = {}, linkedTaskId = '') {
+  if (linkedTaskId) return true;
+  return String(item.type || '').toLowerCase() === 'task';
+}
+
+async function toggleAgendaTaskCompletion(event, agendaItemId, linkedTaskId = '') {
+  if (event) {
+    event.preventDefault();
+    event.stopPropagation();
+  }
+  const item = Array.isArray(window._agendaCache)
+    ? window._agendaCache.find((entry) => entry.id === agendaItemId)
+    : null;
+  if (!item) return;
+  const nextDone = !item.isCompleted;
+  try {
+    if (linkedTaskId) {
+      await toggleTaskStatusEverywhere(linkedTaskId, nextDone);
+      await airtablePatch('tblpkSb7zxoWBcxFA', agendaItemId, { 'Is Completed': nextDone });
+    } else {
+      await airtablePatch('tblpkSb7zxoWBcxFA', agendaItemId, { 'Is Completed': nextDone });
+    }
+    item.isCompleted = nextDone;
+    renderAgendaForSelectedDay();
+  } catch (error) {
+    console.warn('[Agenda] completion failed', error);
+    toast('Could not update agenda item');
+  }
 }
 
 function toggleAgendaItem(el, id) {
@@ -3258,7 +3403,8 @@ async function renderWhatsNext() {
 
     const fields = [
       'Task', 'Due Date', 'Priority', 'Status',
-      'Suggestion Type', 'Suggestion Reason', 'Relevance Score'
+      'Suggestion Type', 'Suggestion Reason', 'Relevance Score',
+      'Source', 'Linked Batch', 'Linked Brew Log', 'Type'
     ].map(f => `fields[]=${encodeURIComponent(f)}`).join('&');
 
     const formula = encodeURIComponent(
@@ -3317,10 +3463,6 @@ async function renderWhatsNext() {
       later:       '#757575'
     };
 
-    function targetScreen(rec) {
-      return 'screen-tasks';
-    }
-
     function dueLabel(rec) {
       const d = getField(rec, 'Due Date');
       if (!d) return '';
@@ -3360,10 +3502,15 @@ async function renderWhatsNext() {
 
     container.innerHTML = picked.map(({ rec, pill }) => {
       const task   = getField(rec, 'Task') || '—';
-      const reason = getField(rec, 'Suggestion Reason') || '';
-      const screen = targetScreen(rec);
+      const taskFields = rec.fields || {};
+      const reason = deriveTaskReasonText(taskFields);
+      const source = taskSourceLabel(taskFields);
+      const category = deriveTaskCategory(taskFields);
+      const batchId = deriveTaskBatchId(taskFields);
+      const brewLogId = deriveTaskBrewLogId(taskFields);
+      const isDone = normalizeTaskStatus(getField(rec, 'Status')) === 'done';
       return `
-        <div class="wn-card" onclick="showScreen('${screen}')" style="
+        <div class="wn-card" data-task-id="${rec.id}" onclick="openTaskContext('${rec.id}','${batchId}','${brewLogId}')" style="
           background:#fff;
           border:1px solid #e0e0e0;
           border-radius:10px;
@@ -3394,7 +3541,11 @@ async function renderWhatsNext() {
             ${dueLabel(rec)}
           </div>
           <div style="font-size:14px;font-weight:500;color:#212121;line-height:1.35;">${task}</div>
-          ${reason ? `<div style="font-size:12px;color:#757575;line-height:1.4;">${reason}</div>` : ''}
+          <div class="task-context-line">Source: ${escapeHtml(source)} · ${escapeHtml(reason)}</div>
+          <div style="display:flex;justify-content:space-between;align-items:center;gap:8px;margin-top:2px;">
+            <span class="task-category-badge">${escapeHtml(category)}</span>
+            <button class="btn btn-secondary" style="width:auto;min-height:auto;padding:6px 10px;margin:0;" onclick="toggleWhatsNextTaskCompletion(event,'${rec.id}',${isDone})">${isDone ? 'Reopen' : 'Done'}</button>
+          </div>
         </div>`;
     }).join('');
 
@@ -3404,6 +3555,23 @@ async function renderWhatsNext() {
       <div style="color:#9e9e9e;font-size:13px;padding:12px 0;">
         ${t('whats_next_error') || 'Could not load tasks.'}
       </div>`;
+  }
+}
+
+async function toggleWhatsNextTaskCompletion(event, taskId, isDone) {
+  if (event) {
+    event.preventDefault();
+    event.stopPropagation();
+  }
+  const nextIsDone = !isDone;
+  const card = document.querySelector(`.wn-card[data-task-id="${taskId}"]`);
+  if (card && nextIsDone) card.style.opacity = '0.4';
+  try {
+    await toggleTaskStatusEverywhere(taskId, nextIsDone);
+  } catch (error) {
+    if (card) card.style.opacity = '1';
+    console.warn('[WhatsNext] status toggle failed', error);
+    toast('Could not update task status');
   }
 }
 
