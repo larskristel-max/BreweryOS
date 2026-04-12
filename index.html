@@ -3385,11 +3385,8 @@ function renderAgendaForSelectedDay() {
     .filter(i => i.scheduledTime)
     .sort((a, b) => a.scheduledTime.localeCompare(b.scheduledTime));
 
-  const untimed = dayItems
-    .filter(i => !i.scheduledTime)
+  const undated = getUndatedAgendaItems(cache)
     .sort((a, b) => a.positionIndex - b.positionIndex);
-
-  const allItems = [...timed, ...untimed];
 
   const header = document.getElementById('agenda-date-label');
   if (header && selectedDateObj) header.textContent = formatAgendaDate(selectedDateObj);
@@ -3404,16 +3401,37 @@ function renderAgendaForSelectedDay() {
 
   if (!listEl) return;
 
-  if (allItems.length === 0) {
+  if (timed.length === 0 && undated.length === 0) {
     listEl.innerHTML = `<div style="color:#9e9e9e;font-size:13px;padding:16px 0;text-align:center;">Nothing scheduled for this day.</div>`;
     renderAgendaWeek();
     return;
   }
 
+  let html = '';
+  if (timed.length > 0) {
+    html += renderAgendaItemsListHtml(timed);
+  }
+  if (undated.length > 0) {
+    html += `
+      <div style="padding-top:${timed.length > 0 ? '14px' : '4px'};">
+        <p style="font-size:12px;font-weight:600;color:#6b7280;margin:0 0 6px;">No date</p>
+      </div>`;
+    html += renderAgendaItemsListHtml(undated);
+  }
+
+  listEl.innerHTML = html;
+  renderAgendaWeek();
+}
+
+function getUndatedAgendaItems(items = []) {
+  return (items || []).filter(item => !item.scheduledTime);
+}
+
+function renderAgendaItemsListHtml(items = []) {
   const typeIcon  = { task: '☑', note: '✎', event: '◆' };
   const typeColor = { task: '#1565c0', note: '#6a1b9a', event: '#2e7d32' };
 
-  listEl.innerHTML = allItems.map(item => {
+  return items.map(item => {
     const linkedTaskId = deriveAgendaLinkedTaskId(item);
     const isCompletable = isAgendaCompletable(item, linkedTaskId);
     const completionLabel = item.isCompleted ? 'Reopen' : 'Done';
@@ -3442,7 +3460,6 @@ function renderAgendaForSelectedDay() {
         ${isCompletable ? `<button class="btn btn-secondary" style="width:auto;min-height:auto;padding:6px 10px;margin:0;" onclick="toggleAgendaTaskCompletion(event,'${item.id}','${linkedTaskId}')">${completionLabel}</button>` : ''}
       </div>`;
   }).join('');
-  renderAgendaWeek();
 }
 
 function deriveAgendaLinkedTaskId(item = {}) {
@@ -3955,6 +3972,25 @@ function renderAgendaWeek() {
       <p style="font-size:16px; font-weight:600; margin:0;">${date.getDate()}</p>
     </div>`;
   }).join('');
+
+  const cache = window._agendaCache;
+  const undated = Array.isArray(cache)
+    ? getUndatedAgendaItems(cache).sort((a, b) => a.positionIndex - b.positionIndex)
+    : [];
+  const weekView = document.getElementById('agenda-week-view');
+  if (!weekView) return;
+  const existingUndated = document.getElementById('agenda-week-undated');
+  if (existingUndated) existingUndated.remove();
+  if (undated.length > 0) {
+    const section = document.createElement('div');
+    section.id = 'agenda-week-undated';
+    section.style.marginTop = '16px';
+    section.innerHTML = `
+      <p style="font-size:12px;font-weight:600;color:#6b7280;margin:0 0 6px;">No date</p>
+      ${renderAgendaItemsListHtml(undated)}
+    `;
+    weekView.appendChild(section);
+  }
 }
 
 function selectAgendaWeekDay(dateKey) {
