@@ -363,14 +363,16 @@
   <div id="agenda-actions-backdrop" onclick="closeAgendaItemActions()" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,0.2);z-index:580;"></div>
   <div id="agenda-item-actions" style="display:none; position:fixed; left:12px; right:12px; bottom:calc(var(--bottom-nav-height) + env(safe-area-inset-bottom, 0px) + 8px); background:#fff; border-radius:16px; border:1px solid #e5e7eb; padding:8px; z-index:581;">
     <button id="agenda-action-toggle-done" onclick="agendaActionToggleDone()" style="width:100%; text-align:left; background:#fff; border:none; padding:12px; border-radius:10px; font-size:14px; color:#111827;">Mark done</button>
-    <button id="agenda-action-set-date" type="button" onclick="agendaActionSetDate()" style="width:100%; text-align:left; background:#fff; border:none; padding:12px; border-radius:10px; font-size:14px; color:#111827;">Set date</button>
+    <button id="agenda-action-set-date" type="button" onclick="agendaActionSetDate()" style="width:100%; text-align:left; background:#fff; border:none; padding:12px; border-radius:10px; font-size:14px; color:#111827;">Set date / time</button>
     <div id="agenda-set-date-inline" style="display:none; padding:12px 8px 4px;">
       <input id="agenda-set-date-input" type="date" style="width:100%; padding:12px; border:1px solid #e5e7eb; border-radius:10px; font-size:16px; background:#fff; color:#111827;" />
+      <input id="agenda-set-time-input" type="time" style="width:100%; padding:12px; border:1px solid #e5e7eb; border-radius:10px; font-size:16px; background:#fff; color:#111827; margin-top:8px;" />
       <div style="display:flex; gap:8px; margin-top:8px;">
-        <button type="button" onclick="confirmAgendaSetDate()" style="flex:1; padding:10px 12px; border:none; border-radius:10px; background:#111827; color:#fff; font-size:14px; font-weight:600;">Save date</button>
+        <button type="button" onclick="confirmAgendaSetDateTime()" style="flex:1; padding:10px 12px; border:none; border-radius:10px; background:#111827; color:#fff; font-size:14px; font-weight:600;">Save</button>
         <button type="button" onclick="cancelAgendaSetDateInline()" style="flex:1; padding:10px 12px; border:1px solid #e5e7eb; border-radius:10px; background:#fff; color:#6b7280; font-size:14px;">Cancel</button>
       </div>
     </div>
+    <button onclick="agendaActionRemoveTime()" style="width:100%; text-align:left; background:#fff; border:none; padding:12px; border-radius:10px; font-size:14px; color:#111827;">Remove time</button>
     <button onclick="agendaActionRemoveDate()" style="width:100%; text-align:left; background:#fff; border:none; padding:12px; border-radius:10px; font-size:14px; color:#111827;">Remove date</button>
     <button onclick="closeAgendaItemActions()" style="width:100%; text-align:left; background:#fff; border:none; padding:12px; border-radius:10px; font-size:14px; color:#6b7280;">Cancel</button>
   </div>
@@ -3403,9 +3405,13 @@ function renderAgendaForSelectedDay() {
     return localDateKey(scheduled) === selectedDate;
   });
 
-  const timed = dayItems
-    .filter(i => i.scheduledTime)
+  const timedDayItems = dayItems
+    .filter(i => !isUntimedDateItem(i))
     .sort((a, b) => a.scheduledTime.localeCompare(b.scheduledTime));
+
+  const untimedDayItems = dayItems
+    .filter(isUntimedDateItem)
+    .sort((a, b) => (a.positionIndex || 0) - (b.positionIndex || 0));
 
   const undated = getUndatedAgendaItems(cache)
     .sort((a, b) => a.positionIndex - b.positionIndex);
@@ -3424,18 +3430,24 @@ function renderAgendaForSelectedDay() {
   if (!listEl) return;
 
   let html = '';
-  html += buildTimelineBlocks(timed, selectedDateObj);
-  if (timed.length === 0) {
+  html += buildTimelineBlocks(timedDayItems, selectedDateObj);
+  if (timedDayItems.length === 0) {
     html += `<div style="color:#9e9e9e;font-size:13px;padding:8px 0 2px;">No timed items for this day.</div>`;
   }
+  if (untimedDayItems.length > 0) {
+    html += `<div style="padding-top:${timedDayItems.length > 0 ? '14px' : '4px'};">
+      <p style="font-size:12px;font-weight:600;color:#6b7280;margin:0 0 6px;">No time</p>
+    </div>`;
+    html += renderAgendaItemsListHtml(untimedDayItems);
+  }
   html += `
-    <div style="padding-top:${timed.length > 0 ? '14px' : '8px'};">
+    <div style="padding-top:${(timedDayItems.length > 0 || untimedDayItems.length > 0) ? '14px' : '8px'};">
       <p style="font-size:12px;font-weight:600;color:#6b7280;margin:0 0 6px;">No date</p>
     </div>`;
   html += undated.length > 0
     ? renderAgendaItemsListHtml(undated)
     : `<div style="color:#9e9e9e;font-size:13px;padding:2px 0 6px;">No undated items.</div>`;
-  if (timed.length === 0 && undated.length === 0) {
+  if (timedDayItems.length === 0 && untimedDayItems.length === 0 && undated.length === 0) {
     html += `<div style="color:#9e9e9e;font-size:13px;padding:8px 0;">Nothing scheduled for this day.</div>`;
   }
 
@@ -4201,10 +4213,17 @@ function agendaActionSetDate() {
     ? window._agendaCache.find(entry => entry.id === agendaActionItemId)
     : null;
   const inline = document.getElementById('agenda-set-date-inline');
-  const input = document.getElementById('agenda-set-date-input');
-  if (!item || !inline || !input || !agendaActionItemId) return;
+  const dateInput = document.getElementById('agenda-set-date-input');
+  const timeInput = document.getElementById('agenda-set-time-input');
+  if (!item || !inline || !dateInput || !timeInput || !agendaActionItemId) return;
   const currentKey = item.scheduledTime ? localDateKey(new Date(item.scheduledTime)) : '';
-  input.value = parseLocalDateKey(currentKey) ? currentKey : selectedAgendaDateKey;
+  dateInput.value = parseLocalDateKey(currentKey) ? currentKey : selectedAgendaDateKey;
+  if (item.scheduledTime && !isUntimedDateItem(item)) {
+    const dt = new Date(item.scheduledTime);
+    timeInput.value = String(dt.getHours()).padStart(2, '0') + ':' + String(dt.getMinutes()).padStart(2, '0');
+  } else {
+    timeInput.value = '';
+  }
   inline.style.display = 'block';
 }
 
@@ -4217,12 +4236,62 @@ function cancelAgendaSetDateInline() {
   hideAgendaSetDateInline();
 }
 
-async function confirmAgendaSetDate() {
-  const input = document.getElementById('agenda-set-date-input');
-  const nextKey = String(input?.value || '').trim();
+async function confirmAgendaSetDateTime() {
+  const dateInput = document.getElementById('agenda-set-date-input');
+  const timeInput = document.getElementById('agenda-set-time-input');
+  const nextKey = String(dateInput?.value || '').trim();
+  const timeValue = String(timeInput?.value || '').trim();
   if (!parseLocalDateKey(nextKey) || !agendaActionItemId) return;
-  await setAgendaItemDate(agendaActionItemId, nextKey);
+  const nextScheduled = buildScheduledTimeFromInputs(nextKey, timeValue);
+  if (!nextScheduled) return;
+  const item = Array.isArray(window._agendaCache) ? window._agendaCache.find(e => e.id === agendaActionItemId) : null;
+  if (!item) return;
+  await airtablePatch('tblpkSb7zxoWBcxFA', agendaActionItemId, { 'Scheduled Time': nextScheduled });
+  item.scheduledTime = nextScheduled;
+  setAgendaSelectedDate(nextKey);
+  renderAgendaForSelectedDay();
+  renderAgendaWeek();
+  renderAgendaMonth();
   hideAgendaSetDateInline();
+  closeAgendaItemActions();
+}
+
+function buildScheduledTimeFromInputs(dateKey, timeValue) {
+  const localDate = parseLocalDateKey(dateKey);
+  if (!localDate) return null;
+  const trimmed = String(timeValue || '').trim();
+  if (trimmed) {
+    const parts = trimmed.split(':');
+    const hours = parseInt(parts[0], 10);
+    const minutes = parseInt(parts[1] || '0', 10);
+    if (!Number.isNaN(hours) && !Number.isNaN(minutes)) {
+      return new Date(localDate.getFullYear(), localDate.getMonth(), localDate.getDate(), hours, minutes, 0, 0).toISOString();
+    }
+  }
+  // No time: local midnight is the sentinel for "dated but untimed"
+  return new Date(localDate.getFullYear(), localDate.getMonth(), localDate.getDate(), 0, 0, 0, 0).toISOString();
+}
+
+function isUntimedDateItem(item) {
+  if (!item || !item.scheduledTime) return false;
+  const dt = new Date(item.scheduledTime);
+  if (Number.isNaN(dt.getTime())) return false;
+  return dt.getHours() === 0 && dt.getMinutes() === 0 && dt.getSeconds() === 0;
+}
+
+async function agendaActionRemoveTime() {
+  const item = Array.isArray(window._agendaCache)
+    ? window._agendaCache.find(entry => entry.id === agendaActionItemId)
+    : null;
+  if (!item || !item.scheduledTime || !agendaActionItemId) return;
+  const dateKey = localDateKey(new Date(item.scheduledTime));
+  const untimed = buildScheduledTimeFromInputs(dateKey, '');
+  if (!untimed) return;
+  await airtablePatch('tblpkSb7zxoWBcxFA', agendaActionItemId, { 'Scheduled Time': untimed });
+  item.scheduledTime = untimed;
+  renderAgendaForSelectedDay();
+  renderAgendaWeek();
+  renderAgendaMonth();
   closeAgendaItemActions();
 }
 
