@@ -4230,8 +4230,17 @@ function agendaActionSetDate() {
   };
   picker._agendaDateHandler = applyPickedDate;
   picker.addEventListener('change', applyPickedDate);
+  // Temporarily bring picker into viewport for iOS Safari showPicker() requirement
+  picker.style.left = '50%';
+  picker.style.top = '50%';
+  picker.style.pointerEvents = 'auto';
   picker.showPicker?.();
   picker.click();
+  requestAnimationFrame(() => {
+    picker.style.left = '-9999px';
+    picker.style.top = '-9999px';
+    picker.style.pointerEvents = 'none';
+  });
 }
 window.agendaActionSetDate = agendaActionSetDate;
 
