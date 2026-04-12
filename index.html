@@ -60,7 +60,8 @@
     --bottom-nav-height: 64px;
     --safe-bottom-space: calc(var(--bottom-nav-height) + env(safe-area-inset-bottom, 0px) + 16px);
   }
-  body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; background: var(--bg); color: var(--text); min-height: 100vh; }
+  html, body { height: 100%; overflow-x: hidden; }
+  body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; background: var(--bg); color: var(--text); min-height: 100%; padding-bottom: var(--safe-bottom-space); }
   .nav { background: var(--card); border-bottom: 1px solid var(--border); padding: 16px 20px; display: flex; align-items: center; justify-content: space-between; position: sticky; top: 0; z-index: 100; }
   .nav-title { font-size: 17px; font-weight: 600; color: var(--ink-900); letter-spacing: -0.01em; }
   .nav-back { font-size: 15px; color: var(--gray-500); cursor: pointer; display: flex; align-items: center; gap: 4px; }
@@ -156,8 +157,14 @@
   .task-create-row { display: flex; gap: 8px; }
   .task-create-row .btn { margin-bottom: 0; width: auto; min-height: auto; padding: 10px 12px; font-size: 14px; border-radius: 10px; }
   .task-create-meta { font-size: 12px; color: var(--muted); margin-top: -4px; }
-  .task-card { position: relative; }
-  .task-card-actions { position: relative; }
+  .task-card { position: relative; padding: 14px; border-radius: 14px; border: 1px solid var(--line-150); background: #fff; }
+  .task-card.is-done { background: #fafafa; border-color: #eef0f2; }
+  .task-card-body { display: flex; align-items: flex-start; justify-content: space-between; gap: 12px; }
+  .task-card-main { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 6px; padding-right: 2px; }
+  .task-card-title { font-size: 15px; font-weight: 600; color: #111827; line-height: 1.35; }
+  .task-card.is-done .task-card-title { color: #6b7280; text-decoration: line-through; }
+  .task-card-meta-row { display:flex; justify-content:space-between; align-items:center; gap:8px; }
+  .task-card-actions { position: relative; display:flex; align-items:center; gap:8px; flex-shrink:0; }
   .task-menu-trigger { width: 30px; min-width: 30px; height: 30px; min-height: 30px; border-radius: 999px; border: 1px solid var(--border); background: #fff; color: var(--ink-700); font-size: 18px; line-height: 1; cursor: pointer; }
   .task-menu-trigger:active { background: var(--bg-soft); }
   .task-card-menu { position: absolute; top: 36px; right: 0; z-index: 15; background: #fff; border: 1px solid var(--border); border-radius: 12px; box-shadow: 0 8px 20px rgba(17, 24, 39, 0.08); min-width: 128px; overflow: hidden; }
@@ -173,7 +180,7 @@
   @keyframes spin { to { transform: rotate(360deg); } }
   .toast { position: fixed; bottom: 24px; left: 50%; transform: translateX(-50%); background: #1e293b; color: white; padding: 12px 20px; border-radius: 10px; font-size: 14px; font-weight: 500; z-index: 999; opacity: 0; transition: opacity 0.3s; pointer-events: none; white-space: nowrap; }
   .toast.show { opacity: 1; }
-  .bottom-nav { position: fixed; bottom: 0; left: 0; right: 0; height: calc(var(--bottom-nav-height) + env(safe-area-inset-bottom, 0px)); background: #fff; border-top: 1px solid #e5e7eb; display: flex; align-items: flex-start; padding: 8px 4px env(safe-area-inset-bottom, 0px); z-index: 500; }
+  .bottom-nav { position: fixed; inset: auto 0 0 0; height: calc(var(--bottom-nav-height) + env(safe-area-inset-bottom, 0px)); background: #fff; border-top: 1px solid #e5e7eb; display: flex; align-items: flex-start; padding: 8px 4px env(safe-area-inset-bottom, 0px); z-index: 3000; transform: translateZ(0); }
   .bottom-nav-item { flex: 1; min-width: 0; background: none; border: none; display: flex; flex-direction: column; align-items: center; justify-content: flex-start; gap: 5px; cursor: pointer; color: #6b7280; padding: 0 2px; }
   .bottom-nav-icon { width: 20px; height: 20px; display: flex; align-items: center; justify-content: center; color: currentColor; }
   .bottom-nav-label { width: 100%; max-width: 68px; text-align: center; font-size: 11px; line-height: 1.15; font-weight: 500; min-height: 24px; text-wrap: balance; overflow-wrap: anywhere; }
@@ -293,7 +300,7 @@
   <button onclick="enterDemo()" style="width:100%; padding:16px; border-radius:14px; background:#111827; color:#fff; font-size:16px; font-weight:600; border:none; cursor:pointer;" id="value-cta-btn">See BrewOS in action</button>
 </div>
 
-<div id="screen-agenda" style="display:none; flex-direction:column; height:100vh; overflow:hidden; background:#fff;">
+<div id="screen-agenda" style="display:none; flex-direction:column; height:100dvh; overflow:hidden; background:#fff;">
 
   <!-- Header -->
   <div style="padding:20px 20px 0; display:flex; justify-content:space-between; align-items:center;">
@@ -462,23 +469,24 @@
     <button onclick="showScreen('screen-settings')" style="background:#f3f4f6; border:none; border-radius:50%; width:36px; height:36px; font-size:14px; color:#6b7280; cursor:pointer; font-weight:600; flex-shrink:0;">···</button>
   </div>
 
+  <div id="guidance-helper" class="home-helper-card">
+    <p style="font-size:13px; color:#6b7280; margin:0;" id="guidance-helper-text">Tap any card to go directly to that step.</p>
+    <button onclick="dismissGuidance()" style="background:none; border:none; color:#9ca3af; font-size:16px; cursor:pointer; padding:0; flex-shrink:0;">✕</button>
+  </div>
+  <div id="home-color-guide" class="home-helper-card home-color-guide" style="display:none;">
+    <div class="color-tip-head">
+      <p class="color-tip-title">Color guide</p>
+      <button onclick="dismissColorTip()" aria-label="Dismiss color guide" style="background:none; border:none; color:#9ca3af; font-size:16px; cursor:pointer; padding:0; flex-shrink:0;">✕</button>
+    </div>
+    <p class="color-tip-line">🟢 Low / Done</p>
+    <p class="color-tip-line">🟡 Medium</p>
+    <p class="color-tip-line">🔴 High / Blocked</p>
+    <p class="color-tip-line">🔵 In progress</p>
+  </div>
+
   <!-- WHAT'S NEXT -->
   <div class="home-section">
     <p class="section-label" id="home-whats-next-label">What's next</p>
-    <div id="guidance-helper" class="home-helper-card">
-      <p style="font-size:13px; color:#6b7280; margin:0;" id="guidance-helper-text">Tap any card to go directly to that step.</p>
-      <button onclick="dismissGuidance()" style="background:none; border:none; color:#9ca3af; font-size:16px; cursor:pointer; padding:0; flex-shrink:0;">✕</button>
-    </div>
-    <div id="home-color-guide" class="home-helper-card home-color-guide" style="display:none;">
-      <div class="color-tip-head">
-        <p class="color-tip-title">Color guide</p>
-        <button onclick="dismissColorTip()" aria-label="Dismiss color guide" style="background:none; border:none; color:#9ca3af; font-size:16px; cursor:pointer; padding:0; flex-shrink:0;">✕</button>
-      </div>
-      <p class="color-tip-line">🟢 Low / Done</p>
-      <p class="color-tip-line">🟡 Medium</p>
-      <p class="color-tip-line">🔴 High / Blocked</p>
-      <p class="color-tip-line">🔵 In progress</p>
-    </div>
     <div id="whats-next-cards" style="display:flex; flex-direction:column; gap:12px;"></div>
   </div>
 
@@ -1875,6 +1883,55 @@ function parseDateAtMidnight(value) {
   return d;
 }
 
+function getLocalTodayDate() {
+  return startOfLocalDay(new Date());
+}
+
+function localDateKey(date) {
+  if (!(date instanceof Date) || Number.isNaN(date.getTime())) return '';
+  const y = date.getFullYear();
+  const m = String(date.getMonth() + 1).padStart(2, '0');
+  const d = String(date.getDate()).padStart(2, '0');
+  return `${y}-${m}-${d}`;
+}
+
+function parseLocalDateKey(key) {
+  const match = String(key || '').match(/^(\d{4})-(\d{2})-(\d{2})$/);
+  if (!match) return null;
+  const [, y, m, d] = match;
+  const date = new Date(Number(y), Number(m) - 1, Number(d));
+  if (Number.isNaN(date.getTime())) return null;
+  if (date.getFullYear() !== Number(y) || date.getMonth() !== Number(m) - 1 || date.getDate() !== Number(d)) return null;
+  return startOfLocalDay(date);
+}
+
+function startOfLocalDay(date) {
+  const out = new Date(date.getTime());
+  out.setHours(0, 0, 0, 0);
+  return out;
+}
+
+function startOfLocalWeek(date) {
+  const out = startOfLocalDay(date);
+  const day = out.getDay();
+  const delta = day === 0 ? -6 : 1 - day;
+  out.setDate(out.getDate() + delta);
+  return out;
+}
+
+function addDaysLocal(date, n) {
+  const out = startOfLocalDay(date);
+  out.setDate(out.getDate() + n);
+  return out;
+}
+
+function isSameLocalDay(a, b) {
+  if (!(a instanceof Date) || !(b instanceof Date)) return false;
+  return a.getFullYear() === b.getFullYear()
+    && a.getMonth() === b.getMonth()
+    && a.getDate() === b.getDate();
+}
+
 function deriveTaskReasonText(fields = {}) {
   const suggestionReason = String(fields['Suggestion Reason'] || '').trim();
   if (suggestionReason) return suggestionReason;
@@ -1935,10 +1992,14 @@ function setTaskDueFilter(nextFilter = 'all') {
 }
 
 function setAgendaSelectedDate(value = new Date()) {
-  const dateObj = value instanceof Date ? value : new Date(value);
-  if (Number.isNaN(dateObj.getTime())) return;
-  agendaDate = dateObj;
-  window._agendaSelectedDate = dateObj.toISOString().slice(0, 10);
+  let dateObj = null;
+  if (typeof value === 'string') dateObj = parseLocalDateKey(value);
+  else dateObj = value instanceof Date ? new Date(value.getTime()) : new Date(value);
+  if (!(dateObj instanceof Date) || Number.isNaN(dateObj.getTime())) return;
+  const normalized = startOfLocalDay(dateObj);
+  selectedAgendaDateKey = localDateKey(normalized);
+  window._agendaSelectedDate = selectedAgendaDateKey;
+  agendaDate = normalized;
 }
 
 async function saveTaskFromTasksScreen() {
@@ -2077,6 +2138,7 @@ function resolveBatchLabel(record) {
 
 let screenStack = ['screen-home'];
 let isHistoryNavigation = false;
+let homeScrollY = 0;
 
 function navigateBack(fallbackScreen = 'screen-home') {
   if (screenStack.length > 1) {
@@ -2601,10 +2663,17 @@ async function loadTasks() {
       const source = taskSourceLabel(f);
       const reason = deriveTaskReasonText(f);
       const category = deriveTaskCategory(f);
-      return `<div class="batch-card task-card" data-task-id="${r.id}" data-done="${isDone ? '1' : '0'}" onclick="openTaskContext('${r.id}','${esc(batchId)}','${esc(brewLogId)}')">
-        <div class="batch-card-header">
-          <div><div class="batch-name">${f.Task || t('task.unnamed')}</div>
-          <div class="batch-date">${f['Due Date'] || t('task.no_due_date')}</div></div>
+      return `<div class="batch-card task-card ${isDone ? 'is-done' : ''}" data-task-id="${r.id}" data-done="${isDone ? '1' : '0'}" onclick="openTaskContext('${r.id}','${esc(batchId)}','${esc(brewLogId)}')">
+        <div class="task-card-body">
+          <div class="task-card-main">
+            <div class="task-card-title">${f.Task || t('task.unnamed')}</div>
+            <div class="batch-date">${f['Due Date'] || t('task.no_due_date')}</div>
+            <div class="task-context-line">Source: ${escapeHtml(source)} · ${escapeHtml(reason)}</div>
+            <div class="task-card-meta-row">
+              <span>${displayStatus(rawStatus)}${rawType ? ' · ' + rawType : ''}</span>
+              <span class="task-category-badge">${escapeHtml(category)}</span>
+            </div>
+          </div>
           <div class="task-card-actions">
             <span class="badge indicator-pill ${pillClassFromPriority(p || 'Normal')}" aria-label="${displayStatus(p || 'Normal')}"></span>
             <button class="task-menu-trigger" aria-label="Task actions" onclick="toggleTaskActionMenu(event,'${r.id}')">⋮</button>
@@ -2615,11 +2684,6 @@ async function loadTasks() {
               <button onclick="deleteTask(event,'${r.id}')">Delete</button>
             </div>
           </div>
-        </div>
-        <div class="task-context-line">Source: ${escapeHtml(source)} · ${escapeHtml(reason)}</div>
-        <div class="batch-meta" style="justify-content:space-between;">
-          <span>${displayStatus(rawStatus)}${rawType ? ' · ' + rawType : ''}</span>
-          <span class="task-category-badge">${escapeHtml(category)}</span>
         </div>
       </div>`;
     }).join('');
@@ -2705,6 +2769,7 @@ function toggleTaskCardUI(taskId, nextIsDone) {
   const btn = document.querySelector(`[data-toggle-task-id="${taskId}"]`);
   if (!card || !btn) return;
   card.dataset.done = nextIsDone ? '1' : '0';
+  card.classList.toggle('is-done', nextIsDone);
   btn.textContent = nextIsDone ? 'Reopen' : 'Done';
 }
 
@@ -2781,6 +2846,11 @@ async function openTaskContext(taskId, batchId, brewLogId) {
 }
 
 function showScreen(id) {
+  const previousScreen = screenStack[screenStack.length - 1];
+  if (previousScreen === 'screen-home' && previousScreen !== id) {
+    const homeScreen = document.getElementById('screen-home');
+    homeScrollY = Math.max(window.scrollY || 0, homeScreen?.scrollTop || 0, homeScrollY || 0);
+  }
   document.querySelectorAll('[id^="screen-"]').forEach(s => {
     s.style.display = 'none';
   });
@@ -2800,9 +2870,16 @@ function showScreen(id) {
   if (navBack) {
     navBack.style.display = screenStack.length > 1 ? 'flex' : 'none';
   }
-  // Reset scroll position on every navigation
-  window.scrollTo(0, 0);
-  target.scrollTop = 0;
+  const shouldRestoreHomeScroll = id === 'screen-home' && previousScreen === 'screen-batch-detail' && homeScrollY > 0;
+  if (shouldRestoreHomeScroll) {
+    requestAnimationFrame(() => {
+      window.scrollTo(0, homeScrollY);
+      target.scrollTop = homeScrollY;
+    });
+  } else {
+    window.scrollTo(0, 0);
+    target.scrollTop = 0;
+  }
   // Also reset inner scroll containers for screens that manage their own scroll
   const innerScrollIds = {
     'screen-agenda':    ['agenda-list', 'agenda-week-view'],
@@ -2816,7 +2893,12 @@ function showScreen(id) {
   }
   if (id === 'screen-financial') target.scrollTop = 0;
   // refresh screen-specific state on navigate
-  if (id === 'screen-agenda') { switchAgendaView(agendaView); loadAgendaFromAirtable(); }
+  if (id === 'screen-agenda') {
+    const maybeSelected = parseLocalDateKey(selectedAgendaDateKey);
+    if (!maybeSelected) setAgendaSelectedDate(getLocalTodayDate());
+    switchAgendaView(agendaView);
+    loadAgendaFromAirtable();
+  }
   if (id === 'screen-tasks') { loadTasks(); }
   if (id === 'screen-financial') { renderFinancialPage(); loadFinancialFromAirtable(); }
   if (id === 'screen-settings') { initSettings(); populateSettingsLanguageValue(); }
@@ -3286,13 +3368,17 @@ function renderAgendaForSelectedDay() {
   const cache = window._agendaCache;
   if (!cache) return;
 
-  const selectedDate = window._agendaSelectedDate
-    || (typeof agendaSelectedDate !== 'undefined' ? agendaSelectedDate : null)
-    || new Date().toISOString().slice(0, 10);
+  if (!selectedAgendaDateKey || !parseLocalDateKey(selectedAgendaDateKey)) {
+    setAgendaSelectedDate(getLocalTodayDate());
+  }
+  const selectedDate = selectedAgendaDateKey;
+  const selectedDateObj = parseLocalDateKey(selectedDate) || getLocalTodayDate();
 
   const dayItems = cache.filter(item => {
     if (!item.scheduledTime) return true;
-    return item.scheduledTime.slice(0, 10) === selectedDate;
+    const scheduled = new Date(item.scheduledTime);
+    if (Number.isNaN(scheduled.getTime())) return false;
+    return localDateKey(scheduled) === selectedDate;
   });
 
   const timed = dayItems
@@ -3305,11 +3391,10 @@ function renderAgendaForSelectedDay() {
 
   const allItems = [...timed, ...untimed];
 
-  const selectedDateObj = parseDateAtMidnight(selectedDate);
   const header = document.getElementById('agenda-date-label');
   if (header && selectedDateObj) header.textContent = formatAgendaDate(selectedDateObj);
   const todayPill = document.getElementById('agenda-today-pill');
-  const todayKey = new Date().toISOString().slice(0, 10);
+  const todayKey = localDateKey(getLocalTodayDate());
   if (todayPill) todayPill.style.display = selectedDate === todayKey ? 'none' : 'inline-block';
 
   const listEl = document.getElementById('agenda-day-list')
@@ -3321,6 +3406,7 @@ function renderAgendaForSelectedDay() {
 
   if (allItems.length === 0) {
     listEl.innerHTML = `<div style="color:#9e9e9e;font-size:13px;padding:16px 0;text-align:center;">Nothing scheduled for this day.</div>`;
+    renderAgendaWeek();
     return;
   }
 
@@ -3356,6 +3442,7 @@ function renderAgendaForSelectedDay() {
         ${isCompletable ? `<button class="btn btn-secondary" style="width:auto;min-height:auto;padding:6px 10px;margin:0;" onclick="toggleAgendaTaskCompletion(event,'${item.id}','${linkedTaskId}')">${completionLabel}</button>` : ''}
       </div>`;
   }).join('');
+  renderAgendaWeek();
 }
 
 function deriveAgendaLinkedTaskId(item = {}) {
@@ -3413,7 +3500,7 @@ async function renderWhatsNext() {
   const container = document.getElementById('whats-next-cards');
   if (!container) return;
 
-  container.innerHTML = '<div class="wn-loading">Loading…</div>';
+  container.innerHTML = `<div style="color:#9ca3af;font-size:13px;padding:12px 0;">Loading…</div>`;
 
   try {
     const table = 'tblxyLhvY6wyWogqq';
@@ -3430,7 +3517,8 @@ async function renderWhatsNext() {
 
     const data = await airtable(table, `?${fields}&filterByFormula=${formula}&maxRecords=20`);
     if (data.error) throw new Error(`Airtable ${data.error.type || 'error'}`);
-    const records = applyTaskDueFilter(data.records || []);
+    const rawRecords = data.records || [];
+    const records = applyTaskDueFilter(rawRecords);
 
     function sel(v) {
       return (v && typeof v === 'object' && v.name) ? v.name : (v || '');
@@ -3438,18 +3526,26 @@ async function renderWhatsNext() {
 
     const priorityWeight = { High: 3, Medium: 2, Low: 1 };
 
-    records.sort((a, b) => {
-      const scoreA = a.cellValuesByFieldId?.['Relevance Score'] || a.fields?.['Relevance Score'] || 0;
-      const scoreB = b.cellValuesByFieldId?.['Relevance Score'] || b.fields?.['Relevance Score'] || 0;
-      if (scoreB !== scoreA) return scoreB - scoreA;
-      const prA = priorityWeight[sel(a.cellValuesByFieldId?.['Priority'] || a.fields?.['Priority'])] || 0;
-      const prB = priorityWeight[sel(b.cellValuesByFieldId?.['Priority'] || b.fields?.['Priority'])] || 0;
-      return prB - prA;
-    });
+    function getRecordFields(rec = {}) {
+      if (rec.fields && typeof rec.fields === 'object') return rec.fields;
+      if (rec.cellValuesByFieldId && typeof rec.cellValuesByFieldId === 'object') return rec.cellValuesByFieldId;
+      return null;
+    }
 
     function getField(rec, name) {
-      return rec.fields?.[name] ?? rec.cellValuesByFieldId?.[name];
+      const fields = getRecordFields(rec);
+      if (!fields) return undefined;
+      return fields[name];
     }
+
+    records.sort((a, b) => {
+      const scoreA = getField(a, 'Relevance Score') || 0;
+      const scoreB = getField(b, 'Relevance Score') || 0;
+      if (scoreB !== scoreA) return scoreB - scoreA;
+      const prA = priorityWeight[sel(getField(a, 'Priority'))] || 0;
+      const prB = priorityWeight[sel(getField(b, 'Priority'))] || 0;
+      return prB - prA;
+    });
 
     function assignPill(rec) {
       const st = sel(getField(rec, 'Suggestion Type'));
@@ -3518,8 +3614,9 @@ async function renderWhatsNext() {
     }
 
     container.innerHTML = picked.map(({ rec, pill }) => {
+      const taskFields = getRecordFields(rec);
+      if (!taskFields) throw new Error('Task record missing fields payload');
       const task   = getField(rec, 'Task') || '—';
-      const taskFields = rec.fields || {};
       const reason = deriveTaskReasonText(taskFields);
       const source = taskSourceLabel(taskFields);
       const category = deriveTaskCategory(taskFields);
@@ -3719,7 +3816,8 @@ function toggleGuidance(on) {
 
 // ── AGENDA ───────────────────────────────────────────────────────────────────
 let agendaView = localStorage.getItem('brewos_agenda_view') || 'day';
-let agendaDate = new Date();
+let agendaDate = getLocalTodayDate();
+let selectedAgendaDateKey = localDateKey(agendaDate);
 
 const AGENDA_ITEMS_DEMO = [
   { id: 1, time: '08:00', title: 'Check mash temperature — Batch 4', system: true,  done: false, type: 'task'  },
@@ -3733,6 +3831,9 @@ let agendaItems = [...AGENDA_ITEMS_DEMO];
 let quickAddType = 'task';
 
 function switchAgendaView(view) {
+  if (!selectedAgendaDateKey || !parseLocalDateKey(selectedAgendaDateKey)) {
+    setAgendaSelectedDate(getLocalTodayDate());
+  }
   agendaView = view;
   localStorage.setItem('brewos_agenda_view', view);
   const dayTab = document.getElementById('agenda-tab-day');
@@ -3763,7 +3864,8 @@ function formatAgendaDate(d) {
 }
 
 function goAgendaToday() {
-  setAgendaSelectedDate(new Date());
+  setAgendaSelectedDate(getLocalTodayDate());
+  renderAgendaWeek();
   if (window._agendaCache) {
     renderAgendaForSelectedDay();
   } else {
@@ -3772,10 +3874,12 @@ function goAgendaToday() {
 }
 
 function renderAgendaDay() {
+  const selectedDateObj = parseLocalDateKey(selectedAgendaDateKey) || getLocalTodayDate();
+  agendaDate = selectedDateObj;
   const header = document.getElementById('agenda-date-label');
-  if (header) header.textContent = formatAgendaDate(agendaDate);
+  if (header) header.textContent = formatAgendaDate(selectedDateObj);
   const todayPill = document.getElementById('agenda-today-pill');
-  const isToday = agendaDate.toDateString() === new Date().toDateString();
+  const isToday = isSameLocalDay(selectedDateObj, getLocalTodayDate());
   if (todayPill) todayPill.style.display = isToday ? 'none' : 'inline-block';
 
   const timed = agendaItems.filter(i => i.time).sort((a,b) => a.time.localeCompare(b.time));
@@ -3834,21 +3938,29 @@ function renderAgendaWeek() {
   const days = ['Mon','Tue','Wed','Thu','Fri','Sat','Sun'];
   const grid = document.getElementById('agenda-week-grid');
   if (!grid) return;
-  const today = new Date().getDay();
+  const selectedDate = parseLocalDateKey(selectedAgendaDateKey) || getLocalTodayDate();
+  const weekStart = startOfLocalWeek(selectedDate);
+  const today = getLocalTodayDate();
   grid.innerHTML = days.map((d, i) => {
-    const isToday = (i + 1) % 7 === today % 7;
-    return `<div onclick="selectAgendaWeekDay(${i})"
-      style="padding:8px 4px; border-radius:10px; cursor:pointer; background:${isToday ? '#111827' : '#f9fafb'}; color:${isToday ? '#fff' : '#6b7280'};">
+    const date = addDaysLocal(weekStart, i);
+    const dateKey = localDateKey(date);
+    const isSelected = dateKey === selectedAgendaDateKey;
+    const isToday = isSameLocalDay(date, today);
+    const bg = isSelected ? '#111827' : '#f9fafb';
+    const fg = isSelected ? '#fff' : '#6b7280';
+    const ring = !isSelected && isToday ? 'border:1px solid #9ca3af;' : '';
+    return `<div onclick="selectAgendaWeekDay('${dateKey}')"
+      style="padding:8px 4px; border-radius:10px; cursor:pointer; background:${bg}; color:${fg}; ${ring}">
       <p style="font-size:11px; margin:0 0 4px;">${d}</p>
-      <p style="font-size:16px; font-weight:600; margin:0;">${i+5}</p>
+      <p style="font-size:16px; font-weight:600; margin:0;">${date.getDate()}</p>
     </div>`;
   }).join('');
 }
 
-function selectAgendaWeekDay(index) {
-  const d = new Date();
-  d.setDate(d.getDate() - d.getDay() + 1 + index);
-  setAgendaSelectedDate(d);
+function selectAgendaWeekDay(dateKey) {
+  const selected = parseLocalDateKey(dateKey);
+  if (!selected) return;
+  setAgendaSelectedDate(selected);
   switchAgendaView('day');
 }
 
