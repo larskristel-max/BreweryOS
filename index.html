@@ -363,7 +363,7 @@
   <div id="agenda-actions-backdrop" onclick="closeAgendaItemActions()" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,0.2);z-index:580;"></div>
   <div id="agenda-item-actions" style="display:none; position:fixed; left:12px; right:12px; bottom:calc(var(--bottom-nav-height) + env(safe-area-inset-bottom, 0px) + 8px); background:#fff; border-radius:16px; border:1px solid #e5e7eb; padding:8px; z-index:581;">
     <button id="agenda-action-toggle-done" onclick="agendaActionToggleDone()" style="width:100%; text-align:left; background:#fff; border:none; padding:12px; border-radius:10px; font-size:14px; color:#111827;">Mark done</button>
-    <button id="agenda-action-set-date" type="button" onclick="agendaActionSetDate()" style="width:100%; text-align:left; background:#fff; border:none; padding:12px; border-radius:10px; font-size:14px; color:#111827;">Set date</button>
+    <button id="agenda-action-set-date" type="button" style="width:100%; text-align:left; background:#fff; border:none; padding:12px; border-radius:10px; font-size:14px; color:#111827;">Set date</button>
     <button onclick="agendaActionRemoveDate()" style="width:100%; text-align:left; background:#fff; border:none; padding:12px; border-radius:10px; font-size:14px; color:#111827;">Remove date</button>
     <button onclick="closeAgendaItemActions()" style="width:100%; text-align:left; background:#fff; border:none; padding:12px; border-radius:10px; font-size:14px; color:#6b7280;">Cancel</button>
   </div>
@@ -2716,6 +2716,21 @@ document.addEventListener('click', (event) => {
   if (!event.target.closest('.task-card-actions')) closeTaskActionMenus();
 });
 
+let agendaSetDateDelegationBound = false;
+function bindAgendaSetDateDelegation() {
+  if (agendaSetDateDelegationBound) return;
+  agendaSetDateDelegationBound = true;
+  document.addEventListener('click', function(e) {
+    const btn = e.target.closest('#agenda-action-set-date');
+    if (!btn) return;
+
+    e.preventDefault();
+    e.stopPropagation();
+
+    agendaActionSetDate();
+  });
+}
+
 function toggleTaskActionMenu(event, taskId) {
   if (event) {
     event.preventDefault();
@@ -4520,6 +4535,7 @@ function maybeShowColorTip() {
 }
 
 async function init() {
+  bindAgendaSetDateDelegation();
   bootFlow();
   const batchData = await airtable(TABLES.batches, '?sort[0][field]=Date&sort[0][direction]=desc');
   cachedTaskBatchRecords = batchData.records || [];
