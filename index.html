@@ -364,16 +364,15 @@
   <div id="agenda-item-actions" style="display:none; position:fixed; left:12px; right:12px; bottom:calc(var(--bottom-nav-height) + env(safe-area-inset-bottom, 0px) + 8px); background:#fff; border-radius:16px; border:1px solid #e5e7eb; padding:8px; z-index:581;">
     <button id="agenda-action-toggle-done" onclick="agendaActionToggleDone()" style="width:100%; text-align:left; background:#fff; border:none; padding:12px; border-radius:10px; font-size:14px; color:#111827;">Mark done</button>
     <button id="agenda-action-set-date" type="button" onclick="agendaActionSetDate()" style="width:100%; text-align:left; background:#fff; border:none; padding:12px; border-radius:10px; font-size:14px; color:#111827;">Set date / time</button>
-    <div id="agenda-set-date-inline" style="display:none; padding:12px 8px 4px;">
-      <input id="agenda-set-date-input" type="date" style="width:100%; padding:12px; border:1px solid #e5e7eb; border-radius:10px; font-size:16px; background:#fff; color:#111827;" />
-      <input id="agenda-set-time-input" type="time" style="width:100%; padding:12px; border:1px solid #e5e7eb; border-radius:10px; font-size:16px; background:#fff; color:#111827; margin-top:8px;" />
-      <div style="display:flex; gap:8px; margin-top:8px;">
+    <div id="agenda-set-date-inline" style="display:none; margin:2px 0 6px; padding:10px 12px 12px; border:1px solid #e5e7eb; border-radius:12px; background:#f9fafb;">
+      <input id="agenda-set-date-input" type="date" style="width:100%; box-sizing:border-box; padding:11px 12px; border:1px solid #d1d5db; border-radius:10px; font-size:15px; background:#fff; color:#111827;" />
+      <input id="agenda-set-time-input" type="time" style="width:100%; box-sizing:border-box; padding:11px 12px; border:1px solid #d1d5db; border-radius:10px; font-size:15px; background:#fff; color:#111827; margin-top:8px;" />
+      <p style="margin:8px 0 0; font-size:11px; color:#6b7280;">Leave time empty for no time. Clear date for no date.</p>
+      <div style="display:flex; gap:8px; margin-top:10px;">
         <button type="button" onclick="confirmAgendaSetDateTime()" style="flex:1; padding:10px 12px; border:none; border-radius:10px; background:#111827; color:#fff; font-size:14px; font-weight:600;">Save</button>
-        <button type="button" onclick="cancelAgendaSetDateInline()" style="flex:1; padding:10px 12px; border:1px solid #e5e7eb; border-radius:10px; background:#fff; color:#6b7280; font-size:14px;">Cancel</button>
+        <button type="button" onclick="cancelAgendaSetDateInline()" style="flex:1; padding:10px 12px; border:1px solid #d1d5db; border-radius:10px; background:#fff; color:#6b7280; font-size:14px;">Cancel</button>
       </div>
     </div>
-    <button onclick="agendaActionRemoveTime()" style="width:100%; text-align:left; background:#fff; border:none; padding:12px; border-radius:10px; font-size:14px; color:#111827;">Remove time</button>
-    <button onclick="agendaActionRemoveDate()" style="width:100%; text-align:left; background:#fff; border:none; padding:12px; border-radius:10px; font-size:14px; color:#111827;">Remove date</button>
     <button onclick="closeAgendaItemActions()" style="width:100%; text-align:left; background:#fff; border:none; padding:12px; border-radius:10px; font-size:14px; color:#6b7280;">Cancel</button>
   </div>
 
@@ -594,7 +593,7 @@
     <select id="task-create-batch">
       <option value="">No linked batch</option>
     </select>
-    <p class="task-create-meta">Agenda link is not available yet in the current task schema.</p>
+    <p class="task-create-meta">Tasks are canonical and appear in Agenda when scheduled.</p>
     <div class="task-create-row">
       <button class="btn btn-secondary" onclick="cancelTaskCreateOrEdit()">Cancel</button>
       <button id="task-create-save-btn" class="btn btn-primary" onclick="saveTaskFromTasksScreen()">Save Task</button>
@@ -3347,33 +3346,30 @@ function renderFinancialFromCache() {
 }
 
 async function fetchAgendaItems() {
-  const table = 'tblpkSb7zxoWBcxFA';
-
   const fields = [
-    'Title', 'Type', 'Scheduled Time', 'Is Completed',
-    'Is System Generated', 'Linked Entity Type', 'Linked Entity ID', 'Position Index'
-  ].map(f => `fields[]=${encodeURIComponent(f)}`).join('&');
+    'Task', 'Due Date', 'Status', 'Source',
+    'Linked Batch', 'Linked Brew Log', 'Is Archived', 'Is Deleted'
+  ].map((f) => `fields[]=${encodeURIComponent(f)}`).join('&');
+  const formula = encodeURIComponent(activeTaskFilterFormula());
+  const query = `?${fields}&filterByFormula=${formula}&maxRecords=200&sort[0][field]=Due Date&sort[0][direction]=asc`;
+  const data = await airtable(TABLES.tasks, query);
+  if (data.error) throw new Error(`Airtable tasks ${data.error.type || 'error'}`);
 
-  const data = await airtable(table, `?${fields}&maxRecords=100`);
-  if (data.error) throw new Error(`Airtable agenda ${data.error.type || 'error'}`);
-
-  function sel(v) {
-    return (v && typeof v === 'object' && v.name) ? v.name : (v || '');
-  }
-
-  return (data.records || []).map(rec => {
+  return (data.records || []).map((rec, idx) => {
     const f = rec.fields || rec.cellValuesByFieldId || {};
-    const getF = name => f[name] ?? undefined;
+    const getF = (name) => f[name] ?? undefined;
+    const linkedBatchId = deriveTaskBatchId(f);
+    const linkedBrewLogId = deriveTaskBrewLogId(f);
     return {
-      id:            rec.id,
-      title:         getF('Title') || '—',
-      type:          sel(getF('Type')) || 'task',
-      scheduledTime: getF('Scheduled Time') || null,
-      isCompleted:   getF('Is Completed') || false,
-      isSystem:      getF('Is System Generated') || false,
-      entityType:    sel(getF('Linked Entity Type')) || '',
-      entityId:      getF('Linked Entity ID') || '',
-      positionIndex: getF('Position Index') || 999,
+      id: rec.id,
+      title: getF('Task') || '—',
+      type: 'task',
+      scheduledTime: getF('Due Date') || null,
+      isCompleted: normalizeTaskStatus(getF('Status')) === 'done',
+      isSystem: String(sel(getF('Source')) || '').toLowerCase() === 'system',
+      entityType: linkedBatchId ? 'Batch' : (linkedBrewLogId ? 'Brew Log' : ''),
+      entityId: linkedBatchId || linkedBrewLogId || '',
+      positionIndex: idx,
     };
   });
 }
@@ -3468,7 +3464,7 @@ function renderAgendaItemsListHtml(items = []) {
     const linkedTaskId = deriveAgendaLinkedTaskId(item);
     const isCompletable = isAgendaCompletable(item, linkedTaskId);
     const completionLabel = item.isCompleted ? 'Reopen' : 'Done';
-    const timeLabel = item.scheduledTime
+    const timeLabel = (item.scheduledTime && !isUntimedDateItem(item))
       ? new Date(item.scheduledTime).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
       : '';
     const systemMark = item.isSystem ? ' <span style="color:#f57f17;font-size:10px;">✦</span>' : '';
@@ -3496,9 +3492,7 @@ function renderAgendaItemsListHtml(items = []) {
 }
 
 function deriveAgendaLinkedTaskId(item = {}) {
-  const entityType = String(item.entityType || '').toLowerCase();
-  if (entityType.includes('task') && String(item.entityId || '').startsWith('rec')) return item.entityId;
-  return '';
+  return String(item?.id || '').startsWith('rec') ? String(item.id) : '';
 }
 
 function isAgendaCompletable(item = {}, linkedTaskId = '') {
@@ -3515,13 +3509,12 @@ async function toggleAgendaTaskCompletion(event, agendaItemId, linkedTaskId = ''
     : null;
   if (!item) return;
   if (!linkedTaskId) {
-    toast('This agenda task is not linked to a task record');
+    toast('This agenda item is not linked to a task record');
     return;
   }
   const nextDone = !item.isCompleted;
   try {
     await toggleTaskStatusEverywhere(linkedTaskId, nextDone);
-    await airtablePatch('tblpkSb7zxoWBcxFA', agendaItemId, { 'Is Completed': nextDone });
     item.isCompleted = nextDone;
     renderAgendaForSelectedDay();
   } catch (error) {
@@ -3542,7 +3535,7 @@ function toggleAgendaItem(el, id) {
     const item = window._agendaCache.find(i => i.id === id);
     if (item) item.isCompleted = !isDone;
   }
-  airtablePatch('tblpkSb7zxoWBcxFA', id, { 'Is Completed': !isDone })
+  patchTaskStatusWithFallback(id, !isDone)
     .catch(err => console.warn('[Agenda] patch failed', err));
 }
 
@@ -4241,14 +4234,14 @@ async function confirmAgendaSetDateTime() {
   const timeInput = document.getElementById('agenda-set-time-input');
   const nextKey = String(dateInput?.value || '').trim();
   const timeValue = String(timeInput?.value || '').trim();
-  if (!parseLocalDateKey(nextKey) || !agendaActionItemId) return;
-  const nextScheduled = buildScheduledTimeFromInputs(nextKey, timeValue);
-  if (!nextScheduled) return;
+  if (!agendaActionItemId) return;
   const item = Array.isArray(window._agendaCache) ? window._agendaCache.find(e => e.id === agendaActionItemId) : null;
   if (!item) return;
-  await airtablePatch('tblpkSb7zxoWBcxFA', agendaActionItemId, { 'Scheduled Time': nextScheduled });
+  if (nextKey && !parseLocalDateKey(nextKey)) return;
+  const nextScheduled = nextKey ? buildScheduledTimeFromInputs(nextKey, timeValue) : null;
+  await airtablePatch(TABLES.tasks, agendaActionItemId, { 'Due Date': nextScheduled });
   item.scheduledTime = nextScheduled;
-  setAgendaSelectedDate(nextKey);
+  if (nextKey && parseLocalDateKey(nextKey)) setAgendaSelectedDate(nextKey);
   renderAgendaForSelectedDay();
   renderAgendaWeek();
   renderAgendaMonth();
@@ -4279,35 +4272,13 @@ function isUntimedDateItem(item) {
   return dt.getHours() === 0 && dt.getMinutes() === 0 && dt.getSeconds() === 0;
 }
 
-async function agendaActionRemoveTime() {
-  const item = Array.isArray(window._agendaCache)
-    ? window._agendaCache.find(entry => entry.id === agendaActionItemId)
-    : null;
-  if (!item || !item.scheduledTime || !agendaActionItemId) return;
-  const dateKey = localDateKey(new Date(item.scheduledTime));
-  const untimed = buildScheduledTimeFromInputs(dateKey, '');
-  if (!untimed) return;
-  await airtablePatch('tblpkSb7zxoWBcxFA', agendaActionItemId, { 'Scheduled Time': untimed });
-  item.scheduledTime = untimed;
-  renderAgendaForSelectedDay();
-  renderAgendaWeek();
-  renderAgendaMonth();
-  closeAgendaItemActions();
-}
-
-async function agendaActionRemoveDate() {
-  if (!agendaActionItemId) return;
-  await removeAgendaItemDate(agendaActionItemId);
-  closeAgendaItemActions();
-}
-
 async function toggleAgendaItemById(id) {
   const item = Array.isArray(window._agendaCache) ? window._agendaCache.find(i => i.id === id) : null;
   if (!item) return;
   const nextDone = !item.isCompleted;
   item.isCompleted = nextDone;
   try {
-    await airtablePatch('tblpkSb7zxoWBcxFA', id, { 'Is Completed': nextDone });
+    await patchTaskStatusWithFallback(id, nextDone);
     renderAgendaForSelectedDay();
   } catch (err) {
     item.isCompleted = !nextDone;
@@ -4355,7 +4326,7 @@ async function setAgendaItemDate(itemId, dateKey) {
   if (!item) return;
   const nextScheduled = combineDateWithExistingTime(dateKey, item.scheduledTime);
   if (!nextScheduled) return;
-  await airtablePatch('tblpkSb7zxoWBcxFA', itemId, { 'Scheduled Time': nextScheduled });
+  await airtablePatch(TABLES.tasks, itemId, { 'Due Date': nextScheduled });
   item.scheduledTime = nextScheduled;
   setAgendaSelectedDate(dateKey);
   renderAgendaForSelectedDay();
@@ -4366,7 +4337,7 @@ async function setAgendaItemDate(itemId, dateKey) {
 async function removeAgendaItemDate(itemId) {
   const item = Array.isArray(window._agendaCache) ? window._agendaCache.find(entry => entry.id === itemId) : null;
   if (!item) return;
-  await airtablePatch('tblpkSb7zxoWBcxFA', itemId, { 'Scheduled Time': null });
+  await airtablePatch(TABLES.tasks, itemId, { 'Due Date': null });
   item.scheduledTime = null;
   renderAgendaForSelectedDay();
   renderAgendaWeek();
