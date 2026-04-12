@@ -309,12 +309,14 @@
     <div style="width:32px;"></div>
   </div>
 
-  <!-- Day / Week toggle -->
+  <!-- Day / Week / Month toggle -->
   <div style="padding:12px 20px 0; display:flex; gap:0;">
     <button id="agenda-tab-day" onclick="switchAgendaView('day')"
       style="flex:1; padding:8px; border:1.5px solid #e5e7eb; border-radius:10px 0 0 10px; background:#111827; color:#fff; font-size:14px; font-weight:500; cursor:pointer;">Day</button>
     <button id="agenda-tab-week" onclick="switchAgendaView('week')"
-      style="flex:1; padding:8px; border:1.5px solid #e5e7eb; border-left:none; border-radius:0 10px 10px 0; background:#fff; color:#6b7280; font-size:14px; font-weight:500; cursor:pointer;">Week</button>
+      style="flex:1; padding:8px; border:1.5px solid #e5e7eb; border-left:none; border-radius:0; background:#fff; color:#6b7280; font-size:14px; font-weight:500; cursor:pointer;">Week</button>
+    <button id="agenda-tab-month" onclick="switchAgendaView('month')"
+      style="flex:1; padding:8px; border:1.5px solid #e5e7eb; border-left:none; border-radius:0 10px 10px 0; background:#fff; color:#6b7280; font-size:14px; font-weight:500; cursor:pointer;">Month</button>
   </div>
 
   <!-- Day header -->
@@ -332,6 +334,9 @@
   <!-- Week view (hidden by default) -->
   <div id="agenda-week-view" style="display:none; flex:1; overflow-y:auto; padding:12px 20px; padding-bottom:var(--safe-bottom-space);">
     <div id="agenda-week-grid" style="display:grid; grid-template-columns:repeat(7,1fr); gap:4px; text-align:center;"></div>
+  </div>
+  <div id="agenda-month-view" style="display:none; flex:1; overflow-y:auto; padding:12px 20px; padding-bottom:var(--safe-bottom-space);">
+    <div id="agenda-month-grid"></div>
   </div>
 
   <!-- FAB add button -->
@@ -353,6 +358,17 @@
       <button onclick="saveQuickAdd()" id="quick-add-save" style="flex:1; padding:12px; border-radius:10px; border:none; background:#111827; color:#fff; font-size:15px; font-weight:600; cursor:pointer;">Save</button>
     </div>
   </div>
+
+  <!-- Agenda item actions -->
+  <div id="agenda-actions-backdrop" onclick="closeAgendaItemActions()" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,0.2);z-index:580;"></div>
+  <div id="agenda-item-actions" style="display:none; position:fixed; left:12px; right:12px; bottom:calc(var(--bottom-nav-height) + env(safe-area-inset-bottom, 0px) + 8px); background:#fff; border-radius:16px; border:1px solid #e5e7eb; padding:8px; z-index:581;">
+    <button id="agenda-action-toggle-done" onclick="agendaActionToggleDone()" style="width:100%; text-align:left; background:#fff; border:none; padding:12px; border-radius:10px; font-size:14px; color:#111827;">Mark done</button>
+    <button onclick="agendaActionSetDate()" style="width:100%; text-align:left; background:#fff; border:none; padding:12px; border-radius:10px; font-size:14px; color:#111827;">Set date</button>
+    <button onclick="agendaActionRemoveDate()" style="width:100%; text-align:left; background:#fff; border:none; padding:12px; border-radius:10px; font-size:14px; color:#111827;">Remove date</button>
+    <button onclick="agendaActionOpenContext()" style="width:100%; text-align:left; background:#fff; border:none; padding:12px; border-radius:10px; font-size:14px; color:#111827;">Open context</button>
+    <button onclick="closeAgendaItemActions()" style="width:100%; text-align:left; background:#fff; border:none; padding:12px; border-radius:10px; font-size:14px; color:#6b7280;">Cancel</button>
+  </div>
+  <input id="agenda-date-picker" type="date" style="position:fixed;left:-9999px;top:-9999px;opacity:0;pointer-events:none;" />
 
 </div>
 
@@ -3401,26 +3417,25 @@ function renderAgendaForSelectedDay() {
 
   if (!listEl) return;
 
-  if (timed.length === 0 && undated.length === 0) {
-    listEl.innerHTML = `<div style="color:#9e9e9e;font-size:13px;padding:16px 0;text-align:center;">Nothing scheduled for this day.</div>`;
-    renderAgendaWeek();
-    return;
-  }
-
   let html = '';
-  if (timed.length > 0) {
-    html += renderAgendaItemsListHtml(timed);
+  html += buildTimelineBlocks(timed, selectedDateObj);
+  if (timed.length === 0) {
+    html += `<div style="color:#9e9e9e;font-size:13px;padding:8px 0 2px;">No timed items for this day.</div>`;
   }
-  if (undated.length > 0) {
-    html += `
-      <div style="padding-top:${timed.length > 0 ? '14px' : '4px'};">
-        <p style="font-size:12px;font-weight:600;color:#6b7280;margin:0 0 6px;">No date</p>
-      </div>`;
-    html += renderAgendaItemsListHtml(undated);
+  html += `
+    <div style="padding-top:${timed.length > 0 ? '14px' : '8px'};">
+      <p style="font-size:12px;font-weight:600;color:#6b7280;margin:0 0 6px;">No date</p>
+    </div>`;
+  html += undated.length > 0
+    ? renderAgendaItemsListHtml(undated)
+    : `<div style="color:#9e9e9e;font-size:13px;padding:2px 0 6px;">No undated items.</div>`;
+  if (timed.length === 0 && undated.length === 0) {
+    html += `<div style="color:#9e9e9e;font-size:13px;padding:8px 0;">Nothing scheduled for this day.</div>`;
   }
 
   listEl.innerHTML = html;
   renderAgendaWeek();
+  renderAgendaMonth();
 }
 
 function getUndatedAgendaItems(items = []) {
@@ -3446,7 +3461,7 @@ function renderAgendaItemsListHtml(items = []) {
     return `
       <div class="agenda-item" data-id="${item.id}" data-completed="${item.isCompleted}"
         style="display:flex;align-items:flex-start;gap:12px;padding:12px 0;border-bottom:1px solid #f0f0f0;cursor:pointer;"
-        onclick="${isCompletable ? `toggleAgendaTaskCompletion(event,'${item.id}','${linkedTaskId}')` : `toggleAgendaItem(this, '${item.id}')`}">
+        onclick="openAgendaItemActions('${item.id}')">
         <div style="min-width:44px;text-align:right;color:#9e9e9e;font-size:12px;padding-top:2px;">
           ${timeLabel}
         </div>
@@ -3511,6 +3526,64 @@ function toggleAgendaItem(el, id) {
   }
   airtablePatch('tblpkSb7zxoWBcxFA', id, { 'Is Completed': !isDone })
     .catch(err => console.warn('[Agenda] patch failed', err));
+}
+
+function agendaMinutesFromScheduled(item = {}) {
+  if (!item || !item.scheduledTime) return null;
+  const dt = new Date(item.scheduledTime);
+  if (Number.isNaN(dt.getTime())) return null;
+  return dt.getHours() * 60 + dt.getMinutes();
+}
+
+function buildNowLine(dateObj = getLocalTodayDate(), timedItems = []) {
+  const todayKey = localDateKey(getLocalTodayDate());
+  if (localDateKey(dateObj) !== todayKey) return '';
+  const now = new Date();
+  const nowMinutes = now.getHours() * 60 + now.getMinutes();
+  const nowLabel = now.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+  return `<div data-now-minutes="${nowMinutes}" style="display:flex;align-items:center;gap:8px;padding:6px 0;">
+    <div style="flex:1;height:1px;background:#ef4444;"></div>
+    <span style="font-size:11px;color:#ef4444;font-weight:600;">Now ${nowLabel}</span>
+  </div>`;
+}
+
+function buildTimelineBlocks(timedItems = [], dateObj = getLocalTodayDate()) {
+  const sorted = [...timedItems].sort((a, b) => a.scheduledTime.localeCompare(b.scheduledTime));
+  let html = '';
+  let lastHour = null;
+  const nowLine = buildNowLine(dateObj, sorted);
+  const nowMinutes = localDateKey(dateObj) === localDateKey(getLocalTodayDate())
+    ? (new Date().getHours() * 60 + new Date().getMinutes())
+    : null;
+  let nowInserted = false;
+
+  if (sorted.length === 0) {
+    return nowLine + html;
+  }
+
+  sorted.forEach((item, idx) => {
+    const dt = new Date(item.scheduledTime);
+    if (Number.isNaN(dt.getTime())) return;
+    const hour = dt.getHours();
+    const minutes = hour * 60 + dt.getMinutes();
+    if (hour !== lastHour) {
+      html += `<div style="display:flex;align-items:center;gap:8px;padding:8px 0 2px;">
+        <span style="font-size:11px;color:#9ca3af;min-width:40px;">${String(hour).padStart(2, '0')}:00</span>
+        <div style="flex:1;height:1px;background:#e5e7eb;"></div>
+      </div>`;
+      lastHour = hour;
+    }
+    if (!nowInserted && nowLine && nowMinutes !== null && nowMinutes <= minutes) {
+      html += nowLine;
+      nowInserted = true;
+    }
+    html += renderAgendaItemsListHtml([item]);
+    if (!nowInserted && nowLine && nowMinutes !== null && idx === sorted.length - 1) {
+      html += nowLine;
+      nowInserted = true;
+    }
+  });
+  return html;
 }
 
 async function renderWhatsNext() {
@@ -3846,6 +3919,8 @@ const AGENDA_ITEMS_DEMO = [
 
 let agendaItems = [...AGENDA_ITEMS_DEMO];
 let quickAddType = 'task';
+let agendaMonthBaseDate = parseLocalDateKey(selectedAgendaDateKey) || getLocalTodayDate();
+let agendaActionItemId = '';
 
 function switchAgendaView(view) {
   if (!selectedAgendaDateKey || !parseLocalDateKey(selectedAgendaDateKey)) {
@@ -3855,24 +3930,34 @@ function switchAgendaView(view) {
   localStorage.setItem('brewos_agenda_view', view);
   const dayTab = document.getElementById('agenda-tab-day');
   const weekTab = document.getElementById('agenda-tab-week');
+  const monthTab = document.getElementById('agenda-tab-month');
   const dayList = document.getElementById('agenda-list');
   const weekGrid = document.getElementById('agenda-week-view');
+  const monthView = document.getElementById('agenda-month-view');
+  if (dayTab)  { dayTab.style.background = view === 'day' ? '#111827' : '#fff'; dayTab.style.color = view === 'day' ? '#fff' : '#6b7280'; }
+  if (weekTab) { weekTab.style.background = view === 'week' ? '#111827' : '#fff'; weekTab.style.color = view === 'week' ? '#fff' : '#6b7280'; }
+  if (monthTab) { monthTab.style.background = view === 'month' ? '#111827' : '#fff'; monthTab.style.color = view === 'month' ? '#fff' : '#6b7280'; }
+
   if (view === 'day') {
-    if (dayTab)  { dayTab.style.background = '#111827'; dayTab.style.color = '#fff'; }
-    if (weekTab) { weekTab.style.background = '#fff'; weekTab.style.color = '#6b7280'; }
     if (dayList)  dayList.style.display = 'block';
     if (weekGrid) weekGrid.style.display = 'none';
+    if (monthView) monthView.style.display = 'none';
     if (window._agendaCache) {
       renderAgendaForSelectedDay();
     } else {
       loadAgendaFromAirtable();
     }
-  } else {
-    if (dayTab)  { dayTab.style.background = '#fff'; dayTab.style.color = '#6b7280'; }
-    if (weekTab) { weekTab.style.background = '#111827'; weekTab.style.color = '#fff'; }
+  } else if (view === 'week') {
     if (dayList)  dayList.style.display = 'none';
     if (weekGrid) weekGrid.style.display = 'block';
+    if (monthView) monthView.style.display = 'none';
     renderAgendaWeek();
+  } else {
+    if (dayList) dayList.style.display = 'none';
+    if (weekGrid) weekGrid.style.display = 'none';
+    if (monthView) monthView.style.display = 'block';
+    agendaMonthBaseDate = parseLocalDateKey(selectedAgendaDateKey) || getLocalTodayDate();
+    renderAgendaMonth();
   }
 }
 
@@ -3882,7 +3967,9 @@ function formatAgendaDate(d) {
 
 function goAgendaToday() {
   setAgendaSelectedDate(getLocalTodayDate());
+  agendaMonthBaseDate = parseLocalDateKey(selectedAgendaDateKey) || getLocalTodayDate();
   renderAgendaWeek();
+  renderAgendaMonth();
   if (window._agendaCache) {
     renderAgendaForSelectedDay();
   } else {
@@ -3981,16 +4068,211 @@ function renderAgendaWeek() {
   if (!weekView) return;
   const existingUndated = document.getElementById('agenda-week-undated');
   if (existingUndated) existingUndated.remove();
-  if (undated.length > 0) {
-    const section = document.createElement('div');
-    section.id = 'agenda-week-undated';
-    section.style.marginTop = '16px';
-    section.innerHTML = `
-      <p style="font-size:12px;font-weight:600;color:#6b7280;margin:0 0 6px;">No date</p>
-      ${renderAgendaItemsListHtml(undated)}
-    `;
-    weekView.appendChild(section);
+  const section = document.createElement('div');
+  section.id = 'agenda-week-undated';
+  section.style.marginTop = '16px';
+  section.innerHTML = `
+    <p style="font-size:12px;font-weight:600;color:#6b7280;margin:0 0 6px;">No date</p>
+    ${undated.length > 0 ? renderAgendaItemsListHtml(undated) : `<div style="color:#9e9e9e;font-size:13px;padding:4px 0;">No undated items.</div>`}
+  `;
+  weekView.appendChild(section);
+}
+
+function getAgendaItemsForDate(dateKey) {
+  const cache = Array.isArray(window._agendaCache) ? window._agendaCache : [];
+  return cache.filter(item => {
+    if (!item.scheduledTime) return false;
+    const scheduled = new Date(item.scheduledTime);
+    if (Number.isNaN(scheduled.getTime())) return false;
+    return localDateKey(scheduled) === dateKey;
+  });
+}
+
+function getMonthGridDates(baseDate = getLocalTodayDate()) {
+  const monthStart = new Date(baseDate.getFullYear(), baseDate.getMonth(), 1);
+  const monthEnd = new Date(baseDate.getFullYear(), baseDate.getMonth() + 1, 0);
+  const leading = (monthStart.getDay() + 6) % 7;
+  const totalCells = Math.ceil((leading + monthEnd.getDate()) / 7) * 7;
+  const gridStart = addDaysLocal(monthStart, -leading);
+  return Array.from({ length: totalCells }, (_, idx) => addDaysLocal(gridStart, idx));
+}
+
+function renderAgendaMonth() {
+  const monthRoot = document.getElementById('agenda-month-grid');
+  if (!monthRoot) return;
+  const selectedDate = parseLocalDateKey(selectedAgendaDateKey) || getLocalTodayDate();
+  if (!agendaMonthBaseDate) agendaMonthBaseDate = selectedDate;
+  const todayKey = localDateKey(getLocalTodayDate());
+  const selectedKey = localDateKey(selectedDate);
+  const monthLabel = agendaMonthBaseDate.toLocaleDateString('en-GB', { month: 'long', year: 'numeric' });
+  const gridDates = getMonthGridDates(agendaMonthBaseDate);
+  const baseMonth = agendaMonthBaseDate.getMonth();
+  const dayNames = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
+
+  let html = `<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px;">
+    <button onclick="shiftAgendaMonth(-1)" style="border:1px solid #e5e7eb;background:#fff;border-radius:10px;padding:8px 10px;font-size:14px;color:#374151;">‹</button>
+    <p style="margin:0;font-size:15px;font-weight:600;color:#111827;">${monthLabel}</p>
+    <button onclick="shiftAgendaMonth(1)" style="border:1px solid #e5e7eb;background:#fff;border-radius:10px;padding:8px 10px;font-size:14px;color:#374151;">›</button>
+  </div>`;
+  html += `<div style="display:grid;grid-template-columns:repeat(7,1fr);gap:4px;text-align:center;margin-bottom:4px;">${dayNames.map(d => `<div style="font-size:11px;color:#9ca3af;padding:4px 0;">${d}</div>`).join('')}</div>`;
+  html += `<div style="display:grid;grid-template-columns:repeat(7,1fr);gap:4px;">`;
+  gridDates.forEach((dateObj) => {
+    const dateKey = localDateKey(dateObj);
+    const inMonth = dateObj.getMonth() === baseMonth;
+    const isToday = dateKey === todayKey;
+    const isSelected = dateKey === selectedKey;
+    const items = getAgendaItemsForDate(dateKey);
+    const dots = Math.min(items.length, 3);
+    const dotColor = isSelected ? '#fff' : '#111827';
+    html += `<button onclick="selectAgendaMonthDay('${dateKey}')" style="min-height:56px;border:1px solid ${isSelected ? '#111827' : '#e5e7eb'};border-radius:10px;background:${isSelected ? '#111827' : '#fff'};color:${isSelected ? '#fff' : (inMonth ? '#111827' : '#9ca3af')};padding:6px 4px;display:flex;flex-direction:column;align-items:center;justify-content:flex-start;gap:4px;">
+      <span style="font-size:13px;font-weight:${isToday || isSelected ? '700' : '500'};${isToday && !isSelected ? 'text-decoration:underline;' : ''}">${dateObj.getDate()}</span>
+      <span style="display:flex;gap:3px;min-height:8px;align-items:center;">${Array.from({length:dots}, () => `<span style="width:5px;height:5px;border-radius:50%;background:${dotColor};opacity:${isSelected ? '0.95' : '0.65'};"></span>`).join('')}${items.length > 3 ? `<span style="font-size:10px;color:${isSelected ? '#fff' : '#6b7280'};">${items.length}</span>` : ''}</span>
+    </button>`;
+  });
+  html += `</div>`;
+  const undated = getUndatedAgendaItems(Array.isArray(window._agendaCache) ? window._agendaCache : []).sort((a, b) => a.positionIndex - b.positionIndex);
+  html += `<div style="margin-top:14px;"><p style="font-size:12px;font-weight:600;color:#6b7280;margin:0 0 6px;">No date</p>${undated.length ? renderAgendaItemsListHtml(undated) : `<div style="color:#9e9e9e;font-size:13px;padding:4px 0;">No undated items.</div>`}</div>`;
+  monthRoot.innerHTML = html;
+}
+
+function shiftAgendaMonth(delta = 0) {
+  const base = agendaMonthBaseDate || parseLocalDateKey(selectedAgendaDateKey) || getLocalTodayDate();
+  agendaMonthBaseDate = new Date(base.getFullYear(), base.getMonth() + delta, 1);
+  renderAgendaMonth();
+}
+
+function selectAgendaMonthDay(dateKey) {
+  const selected = parseLocalDateKey(dateKey);
+  if (!selected) return;
+  setAgendaSelectedDate(selected);
+  agendaMonthBaseDate = new Date(selected.getFullYear(), selected.getMonth(), 1);
+  switchAgendaView('day');
+}
+
+function openAgendaItemActions(itemId = '') {
+  const item = Array.isArray(window._agendaCache) ? window._agendaCache.find(entry => entry.id === itemId) : null;
+  if (!item) return;
+  agendaActionItemId = itemId;
+  const toggleBtn = document.getElementById('agenda-action-toggle-done');
+  if (toggleBtn) toggleBtn.textContent = item.isCompleted ? 'Reopen' : 'Mark done';
+  const panel = document.getElementById('agenda-item-actions');
+  const backdrop = document.getElementById('agenda-actions-backdrop');
+  if (backdrop) backdrop.style.display = 'block';
+  if (panel) panel.style.display = 'block';
+}
+
+function closeAgendaItemActions() {
+  const panel = document.getElementById('agenda-item-actions');
+  const backdrop = document.getElementById('agenda-actions-backdrop');
+  if (backdrop) backdrop.style.display = 'none';
+  if (panel) panel.style.display = 'none';
+  agendaActionItemId = '';
+}
+
+async function agendaActionToggleDone() {
+  const item = Array.isArray(window._agendaCache) ? window._agendaCache.find(entry => entry.id === agendaActionItemId) : null;
+  if (!item) return;
+  const linkedTaskId = deriveAgendaLinkedTaskId(item);
+  if (isAgendaCompletable(item, linkedTaskId)) {
+    await toggleAgendaTaskCompletion(null, item.id, linkedTaskId);
+  } else {
+    await toggleAgendaItemById(item.id);
   }
+  closeAgendaItemActions();
+}
+
+function agendaActionSetDate() {
+  const picker = document.getElementById('agenda-date-picker');
+  if (!picker || !agendaActionItemId) return;
+  picker.value = selectedAgendaDateKey;
+  picker.onchange = async (event) => {
+    const nextKey = String(event?.target?.value || '').trim();
+    if (!parseLocalDateKey(nextKey)) return;
+    await setAgendaItemDate(agendaActionItemId, nextKey);
+    closeAgendaItemActions();
+  };
+  picker.showPicker?.();
+  picker.click();
+}
+
+async function agendaActionRemoveDate() {
+  if (!agendaActionItemId) return;
+  await removeAgendaItemDate(agendaActionItemId);
+  closeAgendaItemActions();
+}
+
+function agendaActionOpenContext() {
+  const item = Array.isArray(window._agendaCache) ? window._agendaCache.find(entry => entry.id === agendaActionItemId) : null;
+  if (!item) return;
+  if (String(item.entityType || '').toLowerCase().includes('task') && item.entityId) {
+    showScreen('screen-tasks');
+    loadTasks();
+    closeAgendaItemActions();
+    return;
+  }
+  if (String(item.entityType || '').toLowerCase().includes('batch') && item.entityId) {
+    openBatchDetail(item.entityId);
+    closeAgendaItemActions();
+    return;
+  }
+  toast('No linked context yet');
+  closeAgendaItemActions();
+}
+
+async function toggleAgendaItemById(id) {
+  const item = Array.isArray(window._agendaCache) ? window._agendaCache.find(i => i.id === id) : null;
+  if (!item) return;
+  const nextDone = !item.isCompleted;
+  item.isCompleted = nextDone;
+  try {
+    await airtablePatch('tblpkSb7zxoWBcxFA', id, { 'Is Completed': nextDone });
+    renderAgendaForSelectedDay();
+  } catch (err) {
+    item.isCompleted = !nextDone;
+    console.warn('[Agenda] patch failed', err);
+    toast('Could not update agenda item');
+  }
+}
+
+function combineDateWithExistingTime(dateKey, scheduledTime) {
+  const localDate = parseLocalDateKey(dateKey);
+  if (!localDate) return null;
+  if (!scheduledTime) return localDate.toISOString();
+  const existing = new Date(scheduledTime);
+  if (Number.isNaN(existing.getTime())) return localDate.toISOString();
+  const merged = new Date(
+    localDate.getFullYear(),
+    localDate.getMonth(),
+    localDate.getDate(),
+    existing.getHours(),
+    existing.getMinutes(),
+    existing.getSeconds(),
+    existing.getMilliseconds()
+  );
+  return merged.toISOString();
+}
+
+async function setAgendaItemDate(itemId, dateKey) {
+  const item = Array.isArray(window._agendaCache) ? window._agendaCache.find(entry => entry.id === itemId) : null;
+  if (!item) return;
+  const nextScheduled = combineDateWithExistingTime(dateKey, item.scheduledTime);
+  if (!nextScheduled) return;
+  await airtablePatch('tblpkSb7zxoWBcxFA', itemId, { 'Scheduled Time': nextScheduled });
+  item.scheduledTime = nextScheduled;
+  setAgendaSelectedDate(dateKey);
+  renderAgendaForSelectedDay();
+  renderAgendaWeek();
+  renderAgendaMonth();
+}
+
+async function removeAgendaItemDate(itemId) {
+  const item = Array.isArray(window._agendaCache) ? window._agendaCache.find(entry => entry.id === itemId) : null;
+  if (!item) return;
+  await airtablePatch('tblpkSb7zxoWBcxFA', itemId, { 'Scheduled Time': null });
+  item.scheduledTime = null;
+  renderAgendaForSelectedDay();
+  renderAgendaWeek();
+  renderAgendaMonth();
 }
 
 function selectAgendaWeekDay(dateKey) {
@@ -4059,7 +4341,7 @@ function saveQuickAdd() {
   };
   agendaItems = [...agendaItems, newItem];
   closeQuickAdd();
-  renderAgendaDay();
+  renderAgendaForSelectedDay();
   renderAgendaPreview();
 }
 
