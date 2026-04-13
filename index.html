@@ -193,6 +193,20 @@
   .color-tip-line { font-size: 12px; color: #6b7280; line-height: 1.35; margin: 0; }
   .quick-add-open #quick-add-fab { opacity: 0; pointer-events: none; transform: scale(0.92); }
   .quick-add-open #quick-add-sheet { display: flex !important; }
+  #quick-add-sheet,
+  #agenda-set-date-inline { overflow-x: hidden; }
+  #quick-add-sheet input,
+  #agenda-set-date-inline input {
+    box-sizing: border-box;
+    width: 100%;
+    max-width: 100%;
+    min-width: 0;
+  }
+  #quick-add-sheet input[type="time"],
+  #agenda-set-date-inline input[type="time"] {
+    flex: 1 1 auto;
+    min-width: 0;
+  }
 
   /* ── Onboarding screens (language + entry) — ONE centering system ── */
   .onboarding-inner {
