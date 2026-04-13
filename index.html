@@ -217,6 +217,14 @@
     flex: 1 1 auto;
     min-width: 0;
   }
+  #quick-add-input,
+  #quick-add-time {
+    height: 46px;
+    padding: 12px;
+    border-radius: 10px;
+    font-size: 15px;
+    line-height: 1.2;
+  }
 
   /* ── Onboarding screens (language + entry) — ONE centering system ── */
   .onboarding-inner {
@@ -4388,6 +4396,13 @@ function openQuickAdd() {
   const sheet = document.getElementById('quick-add-sheet');
   if (sheet) sheet.style.display = 'flex';
   document.body.classList.add('quick-add-open');
+  const timeInput = document.getElementById('quick-add-time');
+  if (timeInput && !timeInput.value) {
+    const now = new Date();
+    const hh = String(now.getHours()).padStart(2, '0');
+    const mm = String(now.getMinutes()).padStart(2, '0');
+    timeInput.value = `${hh}:${mm}`;
+  }
   setQuickType('task');
   // backdrop
   let bd = document.getElementById('quick-add-backdrop');
