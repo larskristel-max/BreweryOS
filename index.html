@@ -621,7 +621,7 @@
 <div id="screen-tasks" class="screen">
   <div style="display:flex;justify-content:space-between;align-items:center;gap:12px;">
     <div class="section-title" id="task-screen-title" style="margin-bottom:0;">Open Tasks</div>
-    <button class="btn btn-secondary" style="width:auto;min-height:auto;padding:8px 12px;margin:0;" onclick="toggleTaskCreateForm(true)">Add Task</button>
+    <button class="btn btn-secondary" aria-label="Add task" title="Add task" style="width:36px;min-width:36px;height:36px;min-height:36px;padding:0;margin:0;border-radius:999px;display:inline-flex;align-items:center;justify-content:center;font-size:22px;line-height:1;" onclick="toggleTaskCreateForm(true)">+</button>
   </div>
   <div class="task-filter-tabs">
     <button id="task-filter-all" class="task-filter-tab active" onclick="setTaskDueFilter('all')">All</button>
@@ -4396,13 +4396,6 @@ function openQuickAdd() {
   const sheet = document.getElementById('quick-add-sheet');
   if (sheet) sheet.style.display = 'flex';
   document.body.classList.add('quick-add-open');
-  const timeInput = document.getElementById('quick-add-time');
-  if (timeInput && !timeInput.value) {
-    const now = new Date();
-    const hh = String(now.getHours()).padStart(2, '0');
-    const mm = String(now.getMinutes()).padStart(2, '0');
-    timeInput.value = `${hh}:${mm}`;
-  }
   setQuickType('task');
   // backdrop
   let bd = document.getElementById('quick-add-backdrop');
@@ -4445,15 +4438,44 @@ function setQuickType(type) {
   });
 }
 
-function saveQuickAdd() {
+async function saveQuickAdd() {
   const input = document.getElementById('quick-add-input');
   const timeEl = document.getElementById('quick-add-time');
   const title = input ? input.value.trim() : '';
   if (!title) return;
+  const timeValue = timeEl && timeEl.value ? timeEl.value.trim() : '';
+  const selectedDateKey = parseLocalDateKey(selectedAgendaDateKey)
+    ? selectedAgendaDateKey
+    : localDateKey(getLocalTodayDate());
+
+  if (quickAddType === 'task') {
+    const scheduledTime = selectedDateKey ? buildScheduledTimeFromInputs(selectedDateKey, timeValue) : null;
+    const createPayload = {
+      'Task': title,
+      'Status': 'To Do',
+      'Source': 'Manual',
+      'Due Date': scheduledTime || undefined
+    };
+    try {
+      await createTaskRecordWithFallback(createPayload);
+      closeQuickAdd();
+      await loadTasks();
+      await loadAgendaFromAirtable();
+      renderAgendaWeek();
+      renderAgendaMonth();
+      renderAgendaPreview();
+      toast('Task created');
+    } catch (error) {
+      console.error('AGENDA QUICK ADD TASK CREATE FAILED', error);
+      toast('Could not create task');
+    }
+    return;
+  }
+
   const newItem = {
     id: Date.now(),
     title,
-    time: timeEl && timeEl.value ? timeEl.value : null,
+    time: timeValue || null,
     type: quickAddType,
     system: false,
     done: false,
