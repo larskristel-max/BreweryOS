@@ -621,7 +621,7 @@
 <div id="screen-tasks" class="screen">
   <div style="display:flex;justify-content:space-between;align-items:center;gap:12px;">
     <div class="section-title" id="task-screen-title" style="margin-bottom:0;">Open Tasks</div>
-    <button class="btn btn-secondary" aria-label="Add task" title="Add task" style="width:36px;min-width:36px;height:36px;min-height:36px;padding:0;margin:0;border-radius:999px;display:inline-flex;align-items:center;justify-content:center;font-size:22px;line-height:1;" onclick="toggleTaskCreateForm(true)">+</button>
+    <button class="btn" aria-label="Add task" title="Add task" style="width:36px;min-width:36px;height:36px;min-height:36px;padding:0;margin:0;border-radius:999px;display:inline-flex;align-items:center;justify-content:center;font-size:22px;line-height:1;background:#111827;color:#fff;border:none;box-shadow:0 2px 8px rgba(0,0,0,0.12);" onclick="toggleTaskCreateForm(true)">+</button>
   </div>
   <div class="task-filter-tabs">
     <button id="task-filter-all" class="task-filter-tab active" onclick="setTaskDueFilter('all')">All</button>
@@ -1968,6 +1968,20 @@ function parseLocalDateKey(key) {
   return startOfLocalDay(date);
 }
 
+function normalizeTaskDueDateForAgenda(value) {
+  const raw = String(value || '').trim();
+  if (!raw) return null;
+  const dateOnlyMatch = raw.match(/^(\d{4})-(\d{2})-(\d{2})$/);
+  if (dateOnlyMatch) {
+    const local = parseLocalDateKey(raw);
+    if (!local) return null;
+    return new Date(local.getFullYear(), local.getMonth(), local.getDate(), 0, 0, 0, 0).toISOString();
+  }
+  const dt = new Date(raw);
+  if (Number.isNaN(dt.getTime())) return null;
+  return raw;
+}
+
 function startOfLocalDay(date) {
   const out = new Date(date.getTime());
   out.setHours(0, 0, 0, 0);
@@ -1993,6 +2007,16 @@ function isSameLocalDay(a, b) {
   return a.getFullYear() === b.getFullYear()
     && a.getMonth() === b.getMonth()
     && a.getDate() === b.getDate();
+}
+
+function scheduledItemToDate(value) {
+  const raw = String(value || '').trim();
+  if (!raw) return null;
+  const dateOnlyMatch = raw.match(/^(\d{4})-(\d{2})-(\d{2})$/);
+  if (dateOnlyMatch) return parseLocalDateKey(raw);
+  const dt = new Date(raw);
+  if (Number.isNaN(dt.getTime())) return null;
+  return dt;
 }
 
 function deriveTaskReasonText(fields = {}) {
@@ -3405,7 +3429,7 @@ async function fetchAgendaItems() {
       id: rec.id,
       title: getF('Task') || '—',
       type: 'task',
-      scheduledTime: getF('Due Date') || null,
+      scheduledTime: normalizeTaskDueDateForAgenda(getF('Due Date')),
       isCompleted: normalizeTaskStatus(getF('Status')) === 'done',
       isSystem: String(sel(getF('Source')) || '').toLowerCase() === 'system',
       entityType: linkedBatchId ? 'Batch' : (linkedBrewLogId ? 'Brew Log' : ''),
@@ -3437,8 +3461,8 @@ function renderAgendaForSelectedDay() {
 
   const dayItems = cache.filter(item => {
     if (!item.scheduledTime) return false;
-    const scheduled = new Date(item.scheduledTime);
-    if (Number.isNaN(scheduled.getTime())) return false;
+    const scheduled = scheduledItemToDate(item.scheduledTime);
+    if (!scheduled) return false;
     return localDateKey(scheduled) === selectedDate;
   });
 
@@ -3505,8 +3529,9 @@ function renderAgendaItemsListHtml(items = []) {
     const linkedTaskId = deriveAgendaLinkedTaskId(item);
     const isCompletable = isAgendaCompletable(item, linkedTaskId);
     const completionLabel = item.isCompleted ? 'Reopen' : 'Done';
-    const timeLabel = (item.scheduledTime && !isUntimedDateItem(item))
-      ? new Date(item.scheduledTime).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
+    const scheduledDate = scheduledItemToDate(item.scheduledTime);
+    const timeLabel = (item.scheduledTime && !isUntimedDateItem(item) && scheduledDate)
+      ? scheduledDate.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
       : '';
     const systemMark = item.isSystem ? ' <span style="color:#f57f17;font-size:10px;">✦</span>' : '';
     const doneStyle  = item.isCompleted ? 'opacity:0.45;text-decoration:line-through;' : '';
@@ -3582,8 +3607,8 @@ function toggleAgendaItem(el, id) {
 
 function agendaMinutesFromScheduled(item = {}) {
   if (!item || !item.scheduledTime) return null;
-  const dt = new Date(item.scheduledTime);
-  if (Number.isNaN(dt.getTime())) return null;
+  const dt = scheduledItemToDate(item.scheduledTime);
+  if (!dt) return null;
   return dt.getHours() * 60 + dt.getMinutes();
 }
 
@@ -4141,8 +4166,8 @@ function getAgendaItemsForDate(dateKey) {
   const cache = Array.isArray(window._agendaCache) ? window._agendaCache : [];
   return cache.filter(item => {
     if (!item.scheduledTime) return false;
-    const scheduled = new Date(item.scheduledTime);
-    if (Number.isNaN(scheduled.getTime())) return false;
+    const scheduled = scheduledItemToDate(item.scheduledTime);
+    if (!scheduled) return false;
     return localDateKey(scheduled) === dateKey;
   });
 }
@@ -4250,10 +4275,16 @@ function agendaActionSetDate() {
   const dateInput = document.getElementById('agenda-set-date-input');
   const timeInput = document.getElementById('agenda-set-time-input');
   if (!item || !inline || !dateInput || !timeInput || !agendaActionItemId) return;
-  const currentKey = item.scheduledTime ? localDateKey(new Date(item.scheduledTime)) : '';
+  const currentScheduled = item.scheduledTime ? scheduledItemToDate(item.scheduledTime) : null;
+  const currentKey = currentScheduled ? localDateKey(currentScheduled) : '';
   dateInput.value = parseLocalDateKey(currentKey) ? currentKey : selectedAgendaDateKey;
   if (item.scheduledTime && !isUntimedDateItem(item)) {
-    const dt = new Date(item.scheduledTime);
+    const dt = scheduledItemToDate(item.scheduledTime);
+    if (!dt) {
+      timeInput.value = '';
+      inline.style.display = 'block';
+      return;
+    }
     timeInput.value = String(dt.getHours()).padStart(2, '0') + ':' + String(dt.getMinutes()).padStart(2, '0');
   } else {
     timeInput.value = '';
@@ -4308,8 +4339,10 @@ function buildScheduledTimeFromInputs(dateKey, timeValue) {
 
 function isUntimedDateItem(item) {
   if (!item || !item.scheduledTime) return false;
-  const dt = new Date(item.scheduledTime);
-  if (Number.isNaN(dt.getTime())) return false;
+  const raw = String(item.scheduledTime || '').trim();
+  if (/^\d{4}-\d{2}-\d{2}$/.test(raw)) return true;
+  const dt = scheduledItemToDate(raw);
+  if (!dt) return false;
   return dt.getHours() === 0 && dt.getMinutes() === 0 && dt.getSeconds() === 0;
 }
 
@@ -4396,6 +4429,13 @@ function openQuickAdd() {
   const sheet = document.getElementById('quick-add-sheet');
   if (sheet) sheet.style.display = 'flex';
   document.body.classList.add('quick-add-open');
+  const timeInput = document.getElementById('quick-add-time');
+  if (timeInput && !timeInput.value) {
+    const now = new Date();
+    const hh = String(now.getHours()).padStart(2, '0');
+    const mm = String(now.getMinutes()).padStart(2, '0');
+    timeInput.value = `${hh}:${mm}`;
+  }
   setQuickType('task');
   // backdrop
   let bd = document.getElementById('quick-add-backdrop');
