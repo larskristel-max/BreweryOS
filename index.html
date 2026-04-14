@@ -85,7 +85,7 @@
     --safe-right-space: env(safe-area-inset-right, 0px);
     --safe-bottom-space: env(safe-area-inset-bottom, 0px);
     --safe-left-space: env(safe-area-inset-left, 0px);
-    --content-bottom-padding: calc(var(--bottom-nav-height) + var(--safe-bottom-space) + var(--space-md));
+    --content-bottom-padding: calc(var(--bottom-nav-height) + var(--safe-bottom-space));
     --fab-size: 52px;
     --fab-clearance: calc(var(--fab-size) + 24px);
   }
@@ -94,7 +94,7 @@
   .nav { background: var(--card); border-bottom: 1px solid var(--border); padding: calc(10px + var(--safe-top-space)) 20px 14px; display: flex; align-items: center; justify-content: space-between; position: sticky; top: 0; z-index: 100; }
   .nav-title { font-size: 17px; font-weight: 600; color: var(--ink-900); letter-spacing: -0.01em; }
   .nav-back { font-size: 15px; color: var(--gray-500); cursor: pointer; display: flex; align-items: center; gap: 4px; }
-  .screen { display: none; flex-direction: column; width: 100%; max-width: 100%; min-height: 100%; overflow-y: auto; padding: var(--space-md) var(--space-lg) var(--content-bottom-padding); gap: var(--space-xl); }
+  .screen { display: none; flex-direction: column; width: 100%; max-width: 100%; min-height: 100%; overflow-y: auto; padding: var(--space-md) var(--space-lg) var(--content-bottom-padding); gap: var(--space-xl); background: var(--bg); }
   .screen.active { display: flex; }
   /* ── Home layout ── */
   .home-header { display: flex; justify-content: space-between; align-items: center; width: 100%; }
@@ -210,7 +210,7 @@
   @keyframes spin { to { transform: rotate(360deg); } }
   .toast { position: fixed; bottom: 24px; left: 50%; transform: translateX(-50%); background: #1e293b; color: white; padding: 12px 20px; border-radius: 10px; font-size: 14px; font-weight: 500; z-index: 999; opacity: 0; transition: opacity 0.3s; pointer-events: none; white-space: nowrap; }
   .toast.show { opacity: 1; }
-  .bottom-nav { position: fixed; left: 0; right: 0; bottom: 0; height: calc(var(--bottom-nav-height) + var(--safe-bottom-space)); background: #fff; border-top: 1px solid #e5e7eb; display: flex; align-items: center; padding: 8px calc(4px + var(--safe-right-space)) calc(8px + var(--safe-bottom-space)) calc(4px + var(--safe-left-space)); z-index: 3000; transform: translateZ(0); }
+  .bottom-nav { position: fixed; left: 0; right: 0; bottom: 0; height: var(--bottom-nav-height); background: #fff; border-top: 1px solid #e5e7eb; display: flex; align-items: center; padding-top: 8px; padding-right: calc(4px + var(--safe-right-space)); padding-bottom: var(--safe-bottom-space); padding-left: calc(4px + var(--safe-left-space)); z-index: 3000; transform: translateZ(0); }
   .bottom-nav-item { flex: 1; min-width: 0; background: none; border: none; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 5px; cursor: pointer; color: #6b7280; padding: 0 2px; }
   .bottom-nav-icon { width: 20px; height: 20px; display: flex; align-items: center; justify-content: center; color: currentColor; }
   .bottom-nav-label { width: 100%; max-width: 68px; text-align: center; font-size: 11px; line-height: 1.15; font-weight: 500; min-height: 24px; text-wrap: balance; overflow-wrap: anywhere; }
@@ -237,6 +237,11 @@
   .metric-delta.compact { font-size: 11px; }
   .sheet-title { font-size: var(--font-card-title); font-weight: 600; color: #111827; margin: 0 0 12px; }
   .sheet-help { font-size: var(--font-meta); color: #6b7280; margin: 8px 0 0; }
+  .text-section { font-size: var(--font-section-title); font-weight: 600; color: #6b7280; margin: 0 0 6px; }
+  .text-card-title { font-size: var(--font-card-title); font-weight: 500; color: #212121; line-height: 1.35; margin: 0; }
+  .text-meta { font-size: var(--font-meta); color: #9ca3af; margin: 0; }
+  .text-meta-strong { font-size: var(--font-meta); font-weight: 600; margin: 0; }
+  .text-empty { font-size: var(--font-secondary); color: #9e9e9e; }
   #task-create-backdrop { z-index:4190 !important; display:none; opacity:0; pointer-events:none; transition: opacity 0.16s ease; }
   #task-create-sheet { z-index:4200 !important; display:none; opacity:0; pointer-events:none; transform: translateY(8px); transition: opacity 0.16s ease, transform 0.16s ease; }
   #task-create-backdrop.open { display:block; opacity:1; pointer-events:auto; }
@@ -397,7 +402,7 @@
   <button onclick="enterDemo()" style="width:100%; padding:16px; border-radius:14px; background:#111827; color:#fff; font-size:16px; font-weight:600; border:none; cursor:pointer;" id="value-cta-btn">See BrewOS in action</button>
 </div>
 
-<div id="screen-agenda" style="display:none; flex-direction:column; height:100dvh; overflow:hidden; background:#fff; padding-bottom:var(--content-bottom-padding);">
+<div id="screen-agenda" style="display:none; flex-direction:column; height:100dvh; overflow:hidden; padding-bottom:var(--content-bottom-padding);">
 
   <!-- Header -->
   <div class="main-tab-header">
@@ -508,10 +513,10 @@
   </div>
 </div>
 
-<div id="screen-financial" style="display:none; flex-direction:column; background:#fff; padding-bottom:var(--content-bottom-padding);">
+<div id="screen-financial" style="display:none; flex-direction:column; padding-bottom:var(--content-bottom-padding);">
 
   <!-- Header -->
-  <div class="main-tab-header" style="position:sticky; top:0; background:#fff; z-index:10;">
+  <div class="main-tab-header" style="position:sticky; top:0; background:var(--bg); z-index:10;">
     <p class="main-tab-title" id="fin-page-title">Finances</p>
     <button class="fab-btn" onclick="handleMainTabFab('financial')" aria-label="Ajouter dans finances" title="Ajouter">+</button>
   </div>
@@ -3810,13 +3815,13 @@ function renderAgendaForSelectedDay() {
   }
   html += `
     <div style="padding-top:${(timedDayItems.length > 0 || untimedDayItems.length > 0) ? '14px' : '8px'};">
-      <p style="font-size:12px;font-weight:600;color:#6b7280;margin:0 0 6px;">Sans date</p>
+      <p class="text-section">Sans date</p>
     </div>`;
   html += undated.length > 0
     ? renderAgendaItemsListHtml(undated)
-    : `<div style="color:#9e9e9e;font-size:13px;padding:2px 0 6px;">Aucun élément sans date.</div>`;
+    : `<div class="text-empty" style="padding:2px 0 6px;">Aucun élément sans date.</div>`;
   if (timedDayItems.length === 0 && untimedDayItems.length === 0 && undated.length === 0) {
-    html += `<div style="color:#9e9e9e;font-size:13px;padding:8px 0;">${t('agenda.none_scheduled')}</div>`;
+    html += `<div class="text-empty" style="padding:8px 0;">${t('agenda.none_scheduled')}</div>`;
   }
 
   listEl.innerHTML = html;
@@ -3840,7 +3845,7 @@ function renderAgendaItemsListHtml(items = []) {
     const timeLabel = (item.scheduledTime && !isUntimedDateItem(item) && scheduledDate)
       ? scheduledDate.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
       : '';
-    const systemMark = item.isSystem ? ' <span style="color:#f57f17;font-size:10px;">✦</span>' : '';
+    const systemMark = item.isSystem ? ' <span class="text-meta" style="color:#f57f17;">✦</span>' : '';
     const doneStyle  = item.isCompleted ? 'opacity:0.45;text-decoration:line-through;' : '';
     const icon       = typeIcon[item.type] || '☑';
     const color      = typeColor[item.type] || '#1565c0';
@@ -3849,15 +3854,15 @@ function renderAgendaItemsListHtml(items = []) {
       <div class="agenda-item" data-id="${item.id}" data-completed="${item.isCompleted}"
         style="display:flex;align-items:flex-start;gap:12px;padding:12px 0;border-bottom:1px solid #f0f0f0;cursor:pointer;"
         onclick="openAgendaItemActions('${item.id}')">
-        <div style="min-width:44px;text-align:right;color:#9e9e9e;font-size:12px;padding-top:2px;">
+        <div class="text-meta" style="min-width:44px;text-align:right;padding-top:2px;">
           ${timeLabel}
         </div>
         <div style="flex:1;${doneStyle}">
-          <div style="font-size:14px;font-weight:500;color:#212121;line-height:1.35;">
-            <span style="color:${color};font-size:12px;margin-right:4px;">${icon}</span>
+          <div class="text-card-title">
+            <span class="text-meta" style="color:${color};margin-right:4px;">${icon}</span>
             ${item.title}${systemMark}
           </div>
-          ${item.entityType ? `<div style="font-size:11px;color:#9e9e9e;margin-top:2px;">${item.entityType} ${item.entityId}</div>` : ''}
+          ${item.entityType ? `<div class="text-meta" style="margin-top:2px;">${item.entityType} ${item.entityId}</div>` : ''}
         </div>
         ${isCompletable ? `<button class="btn btn-secondary" style="width:auto;min-height:auto;padding:6px 10px;margin:0;" onclick="toggleAgendaTaskCompletion(event,'${item.id}','${linkedTaskId}')">${completionLabel}</button>` : ''}
       </div>`;
@@ -3928,7 +3933,7 @@ function buildNowLine(dateObj = getLocalTodayDate(), timedItems = []) {
   const calmPadding = timedItems.length === 0 ? '12px 0 10px' : '6px 0';
   return `<div data-now-minutes="${nowMinutes}" style="display:flex;align-items:center;gap:8px;padding:${calmPadding};">
     <div style="flex:1;height:1px;background:#ef4444;"></div>
-    <span style="font-size:11px;color:#ef4444;font-weight:600;">Now ${nowLabel}</span>
+    <span class="text-meta-strong" style="color:#ef4444;">Now ${nowLabel}</span>
   </div>`;
 }
 
@@ -3959,7 +3964,7 @@ function buildTimelineBlocks(timedItems = [], dateObj = getLocalTodayDate()) {
     const hour = Math.floor(minutes / 60);
     if (hour !== lastHour) {
       html += `<div style="display:flex;align-items:center;gap:8px;padding:8px 0 2px;">
-        <span style="font-size:11px;color:#9ca3af;min-width:40px;">${String(hour).padStart(2, '0')}:00</span>
+        <span class="text-meta" style="min-width:40px;">${String(hour).padStart(2, '0')}:00</span>
         <div style="flex:1;height:1px;background:#e5e7eb;"></div>
       </div>`;
       lastHour = hour;
@@ -4397,7 +4402,7 @@ function renderAgendaDay() {
   }
 
   if (untimed.length) {
-    html += `<p style="font-size:12px; color:#9ca3af; margin:16px 0 8px; text-transform:uppercase; letter-spacing:0.06em;">${t('agenda.untimed')}</p>`;
+    html += `<p class="section-label" style="margin:16px 0 8px;">${t('agenda.untimed')}</p>`;
     untimed.forEach(item => { html += renderAgendaItem(item); });
   }
 
@@ -4408,12 +4413,12 @@ function renderAgendaDay() {
 function renderAgendaItem(item) {
   const fade = item.done ? 'opacity:0.45;' : '';
   const done = item.done ? 'text-decoration:line-through; color:#9ca3af;' : 'color:#111827;';
-  const systemIcon = item.system ? '<span style="font-size:11px; color:#9ca3af;" title="Système">✦</span>' : '<span style="min-width:14px; display:inline-block;"></span>';
+  const systemIcon = item.system ? '<span class="text-meta" title="Système">✦</span>' : '<span style="min-width:14px; display:inline-block;"></span>';
   return `<div onclick="toggleAgendaDone(${item.id})"
     style="background:#fff; border:1.5px solid #f3f4f6; border-radius:12px; padding:12px 14px; display:flex; align-items:center; gap:12px; margin-bottom:8px; cursor:pointer; ${fade}">
-    <span style="font-size:12px; color:#9ca3af; min-width:36px;">${item.time || ''}</span>
+    <span class="text-meta" style="min-width:36px;">${item.time || ''}</span>
     ${systemIcon}
-    <p style="font-size:14px; margin:0; flex:1; ${done}">${item.title}</p>
+    <p class="text-card-title" style="flex:1; ${done}">${item.title}</p>
   </div>`;
 }
 
@@ -4922,21 +4927,21 @@ function renderFinancialPage() {
   if (flow) flow.innerHTML = d.flow.map(f => `
     <div style="background:#f9fafb; border-radius:12px; padding:14px 16px; display:flex; justify-content:space-between; align-items:center;">
       <div>
-        <p style="font-size:14px; font-weight:500; color:#111827; margin:0 0 2px;">${f.label}</p>
-        <p style="font-size:12px; color:#9ca3af; margin:0;">${f.note}</p>
+        <p class="text-card-title" style="color:#111827; margin:0 0 2px;">${f.label}</p>
+        <p class="text-meta">${f.note}</p>
       </div>
-      <p style="font-size:16px; font-weight:700; color:${f.color}; margin:0;">${f.value}</p>
+      <p class="card-title" style="color:${f.color}; margin:0;">${f.value}</p>
     </div>`).join('');
 
   const costBreak = document.getElementById('fp-cost-breakdown');
   if (costBreak) costBreak.innerHTML = d.costs.map(c => `
     <div style="display:flex; justify-content:space-between; align-items:center;">
-      <p style="font-size:14px; color:#374151; margin:0;">${c.label}</p>
+      <p class="secondary-text" style="color:#374151; margin:0;">${c.label}</p>
       <div style="display:flex; align-items:center; gap:10px;">
         <div style="width:80px; height:6px; background:#e5e7eb; border-radius:3px; overflow:hidden;">
           <div style="width:${c.pct}%; height:100%; background:#111827; border-radius:3px;"></div>
         </div>
-        <p style="font-size:13px; color:#6b7280; margin:0; min-width:60px; text-align:right;">${c.value}</p>
+        <p class="secondary-text" style="margin:0; min-width:60px; text-align:right;">${c.value}</p>
       </div>
     </div>`).join('');
 
@@ -4945,10 +4950,10 @@ function renderFinancialPage() {
   if (oblig) oblig.innerHTML = d.obligations.map(o => `
     <div style="background:#f9fafb; border-radius:12px; padding:14px 16px; display:flex; justify-content:space-between; align-items:center;">
       <div>
-        <p style="font-size:14px; font-weight:500; color:#111827; margin:0 0 2px;">${o.label}</p>
-        <p style="font-size:12px; color:#9ca3af; margin:0;">${o.date}</p>
+        <p class="text-card-title" style="color:#111827; margin:0 0 2px;">${o.label}</p>
+        <p class="text-meta">${o.date}</p>
       </div>
-      <span style="font-size:11px; font-weight:600; color:${statusColors[o.status] || '#9ca3af'}; text-transform:capitalize;">${o.status}</span>
+      <span class="text-meta-strong" style="color:${statusColors[o.status] || '#9ca3af'}; text-transform:capitalize;">${o.status}</span>
     </div>`).join('');
 
   setEl('fp-rev-label', t('financial.revenue'));
