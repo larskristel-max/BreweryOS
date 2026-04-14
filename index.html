@@ -2751,13 +2751,20 @@ async function loadTasks() {
     const formula = encodeURIComponent(activeTaskFilterFormula());
     const data = await airtable(TABLES.tasks, `?maxRecords=200&sort[0][field]=Priority&sort[1][field]=Due Date&filterByFormula=${formula}`);
     const records = applyTaskDueFilter(data.records || []);
-    if (!records.length) { el.innerHTML = `<div class="empty">${t('task.no_tasks')}</div>`; return; }
+    if (!records.length) {
+      window._taskScheduleCache = {};
+      el.innerHTML = `<div class="empty">${t('task.no_tasks')}</div>`;
+      return;
+    }
     const esc = (v) => String(v || '').replace(/'/g, "\\'");
+    const taskScheduleCache = {};
     el.innerHTML = records.map(r => {
       const f = r.fields;
       const p = sel(f.Priority);
       const rawStatus = sel(f.Status) || '';
       const rawType = sel(f.Type) || '';
+      const scheduledTime = normalizeTaskScheduledValue(f['Scheduled Time'], null);
+      taskScheduleCache[r.id] = scheduledTime || '';
       const isDone = normalizeTaskStatus(rawStatus) === 'done';
       const batchId = deriveTaskBatchId(f);
       const brewLogId = deriveTaskBrewLogId(f);
@@ -2781,6 +2788,15 @@ async function loadTasks() {
             <div id="task-menu-${r.id}" class="task-card-menu" style="display:none;">
               <button onclick="startTaskEdit(event,'${r.id}')">Edit</button>
               <button data-toggle-task-id="${r.id}" onclick="toggleTaskCompletionFromMenu(event,'${r.id}',${isDone})">${isDone ? 'Reopen' : 'Done'}</button>
+              <button onclick="openTaskSetDateInline(event,'${r.id}')">Set date / time</button>
+              <div id="task-set-date-inline-${r.id}" style="display:none; margin:2px 0 6px; padding:10px 12px 12px; border:1px solid #e5e7eb; border-radius:12px; background:#f9fafb;" onclick="event.stopPropagation()">
+                <input id="task-set-date-input-${r.id}" type="date" style="width:100%; box-sizing:border-box; padding:11px 12px; border:1px solid #d1d5db; border-radius:10px; font-size:15px; background:#fff; color:#111827;" />
+                <input id="task-set-time-input-${r.id}" type="time" style="width:100%; box-sizing:border-box; padding:11px 12px; border:1px solid #d1d5db; border-radius:10px; font-size:15px; background:#fff; color:#111827; margin-top:8px;" />
+                <div style="display:flex; gap:8px; margin-top:10px;">
+                  <button style="flex:1;" onclick="confirmTaskSetDateTime(event,'${r.id}')">Save</button>
+                  <button style="flex:1;" onclick="cancelTaskSetDateInline(event,'${r.id}')">Cancel</button>
+                </div>
+              </div>
               <button onclick="archiveTask(event,'${r.id}')">Archive</button>
               <button onclick="deleteTask(event,'${r.id}')">Delete</button>
             </div>
@@ -2788,8 +2804,10 @@ async function loadTasks() {
         </div>
       </div>`;
     }).join('');
+    window._taskScheduleCache = taskScheduleCache;
   } catch (error) {
     console.warn('Unable to load tasks:', error);
+    window._taskScheduleCache = {};
     el.innerHTML = `<div class="empty">${t('whats_next_error') || 'Could not load tasks.'}</div>`;
   }
 }
@@ -2813,6 +2831,69 @@ function toggleTaskActionMenu(event, taskId) {
   const willOpen = menu.style.display === 'none';
   closeTaskActionMenus();
   menu.style.display = willOpen ? 'block' : 'none';
+}
+
+function openTaskSetDateInline(event, taskId) {
+  if (event) {
+    event.preventDefault();
+    event.stopPropagation();
+  }
+  const inline = document.getElementById(`task-set-date-inline-${taskId}`);
+  const dateInput = document.getElementById(`task-set-date-input-${taskId}`);
+  const timeInput = document.getElementById(`task-set-time-input-${taskId}`);
+  if (!inline || !dateInput || !timeInput) return;
+  const scheduledTime = (window._taskScheduleCache && window._taskScheduleCache[taskId]) || '';
+  const scheduledDate = scheduledTime ? scheduledItemToDate(scheduledTime) : null;
+  const scheduledKey = scheduledDate ? localDateKey(scheduledDate) : '';
+  const fallbackDateKey = parseLocalDateKey(selectedAgendaDateKey)
+    ? selectedAgendaDateKey
+    : localDateKey(getLocalTodayDate());
+  dateInput.value = parseLocalDateKey(scheduledKey) ? scheduledKey : fallbackDateKey;
+  if (scheduledTime && !isUntimedDateItem({ scheduledTime })) {
+    const dt = scheduledItemToDate(scheduledTime);
+    timeInput.value = dt
+      ? `${String(dt.getHours()).padStart(2, '0')}:${String(dt.getMinutes()).padStart(2, '0')}`
+      : '';
+  } else {
+    timeInput.value = '';
+  }
+  inline.style.display = 'block';
+}
+
+function cancelTaskSetDateInline(event, taskId) {
+  if (event) {
+    event.preventDefault();
+    event.stopPropagation();
+  }
+  const inline = document.getElementById(`task-set-date-inline-${taskId}`);
+  if (inline) inline.style.display = 'none';
+}
+
+async function confirmTaskSetDateTime(event, taskId) {
+  if (event) {
+    event.preventDefault();
+    event.stopPropagation();
+  }
+  const dateInput = document.getElementById(`task-set-date-input-${taskId}`);
+  const timeInput = document.getElementById(`task-set-time-input-${taskId}`);
+  const nextDateKey = String(dateInput?.value || '').trim();
+  const nextTimeValue = String(timeInput?.value || '').trim();
+  if (nextDateKey && !parseLocalDateKey(nextDateKey)) return;
+  const nextScheduled = nextDateKey ? buildScheduledTimeFromInputs(nextDateKey, nextTimeValue) : null;
+  try {
+    await airtablePatch(TABLES.tasks, taskId, { 'Scheduled Time': nextScheduled });
+    if (nextDateKey && parseLocalDateKey(nextDateKey)) setAgendaSelectedDate(nextDateKey);
+    closeTaskActionMenus();
+    await loadTasks();
+    await loadAgendaFromAirtable();
+    renderAgendaForSelectedDay();
+    renderAgendaWeek();
+    renderAgendaMonth();
+    toast('Task schedule updated');
+  } catch (error) {
+    console.warn('Task schedule update failed:', error);
+    toast('Could not update task schedule');
+  }
 }
 
 async function toggleTaskCompletionFromMenu(event, taskId, isDone) {
