@@ -83,18 +83,16 @@
     --bottom-nav-height: 56px;
     --safe-top-space: env(safe-area-inset-top, 0px);
     --safe-right-space: env(safe-area-inset-right, 0px);
-    --safe-bottom-space: env(safe-area-inset-bottom, 0px);
     --safe-left-space: env(safe-area-inset-left, 0px);
-    --content-bottom-padding: calc(56px + env(safe-area-inset-bottom));
     --fab-size: 52px;
     --fab-clearance: calc(var(--fab-size) + 24px);
   }
-  html, body { height: 100%; overflow-x: hidden; }
-  body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; background: var(--bg); color: var(--text); min-height: 100%; padding: 0 var(--safe-right-space) 0 var(--safe-left-space); }
+  html, body { height: 100%; margin: 0; padding: 0; overflow-x: hidden; }
+  body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; background: var(--bg); color: var(--text); min-height: 100%; }
   .nav { background: var(--card); border-bottom: 1px solid var(--border); padding: calc(10px + var(--safe-top-space)) 20px 14px; display: flex; align-items: center; justify-content: space-between; position: sticky; top: 0; z-index: 100; }
   .nav-title { font-size: 17px; font-weight: 600; color: var(--ink-900); letter-spacing: -0.01em; }
   .nav-back { font-size: 15px; color: var(--gray-500); cursor: pointer; display: flex; align-items: center; gap: 4px; }
-  .screen { display: none; flex-direction: column; width: 100%; max-width: 100%; min-height: 100%; overflow-y: auto; padding: var(--space-md) var(--space-lg) var(--content-bottom-padding); gap: var(--space-xl); background: var(--bg); }
+  .screen { display: none; flex-direction: column; width: 100%; max-width: 100%; min-height: 100%; overflow-y: auto; padding: var(--space-md) var(--space-lg) calc(56px + env(safe-area-inset-bottom)); gap: var(--space-xl); background: var(--bg); }
   .screen.active { display: flex; }
   /* ── Home layout ── */
   .home-header { display: flex; justify-content: space-between; align-items: center; width: 100%; }
@@ -210,7 +208,20 @@
   @keyframes spin { to { transform: rotate(360deg); } }
   .toast { position: fixed; bottom: 24px; left: 50%; transform: translateX(-50%); background: #1e293b; color: white; padding: 12px 20px; border-radius: 10px; font-size: 14px; font-weight: 500; z-index: 999; opacity: 0; transition: opacity 0.3s; pointer-events: none; white-space: nowrap; }
   .toast.show { opacity: 1; }
-  .bottom-nav { position: fixed; left: 0; right: 0; bottom: 0; box-sizing: border-box; height: calc(56px + env(safe-area-inset-bottom)); padding: 6px calc(4px + env(safe-area-inset-right)) env(safe-area-inset-bottom) calc(4px + env(safe-area-inset-left)); background: #fff; border-top: 1px solid #e5e7eb; display: flex; align-items: center; z-index: 3000; transform: translateZ(0); }
+  .bottom-nav {
+    position: fixed;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    height: 56px;
+    padding-bottom: env(safe-area-inset-bottom);
+    display: flex;
+    align-items: center;
+    justify-content: space-around;
+    background: #fff;
+    border-top: 1px solid #e5e7eb;
+    z-index: 1000;
+  }
   .bottom-nav-item { flex: 1; min-width: 0; background: none; border: none; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 5px; cursor: pointer; color: #6b7280; padding: 0 2px; }
   .bottom-nav-icon { width: 20px; height: 20px; display: flex; align-items: center; justify-content: center; color: currentColor; }
   .bottom-nav-label { width: 100%; max-width: 68px; text-align: center; font-size: 11px; line-height: 1.15; font-weight: 500; min-height: 24px; text-wrap: balance; overflow-wrap: anywhere; }
@@ -402,7 +413,7 @@
   <button onclick="enterDemo()" style="width:100%; padding:16px; border-radius:14px; background:#111827; color:#fff; font-size:16px; font-weight:600; border:none; cursor:pointer;" id="value-cta-btn">See BrewOS in action</button>
 </div>
 
-<div id="screen-agenda" style="display:none; flex-direction:column; height:100dvh; overflow:hidden; padding-bottom:var(--content-bottom-padding);">
+<div id="screen-agenda" style="display:none; flex-direction:column; height:100dvh; overflow:hidden; padding-bottom:calc(56px + env(safe-area-inset-bottom));">
 
   <!-- Header -->
   <div class="main-tab-header">
@@ -428,15 +439,15 @@
   </div>
 
   <!-- Current time line + item list -->
-  <div id="agenda-list" style="flex:1; overflow-y:auto; padding:12px 20px; padding-bottom:var(--content-bottom-padding);">
+  <div id="agenda-list" style="flex:1; overflow-y:auto; padding:12px 20px; padding-bottom:calc(56px + env(safe-area-inset-bottom));">
     <!-- populated by renderAgendaDay() -->
   </div>
 
   <!-- Week view (hidden by default) -->
-  <div id="agenda-week-view" style="display:none; flex:1; overflow-y:auto; padding:12px 20px; padding-bottom:var(--content-bottom-padding);">
+  <div id="agenda-week-view" style="display:none; flex:1; overflow-y:auto; padding:12px 20px; padding-bottom:calc(56px + env(safe-area-inset-bottom));">
     <div id="agenda-week-grid" style="display:grid; grid-template-columns:repeat(7,1fr); gap:4px; text-align:center;"></div>
   </div>
-  <div id="agenda-month-view" style="display:none; flex:1; overflow-y:auto; padding:12px 20px; padding-bottom:var(--content-bottom-padding);">
+  <div id="agenda-month-view" style="display:none; flex:1; overflow-y:auto; padding:12px 20px; padding-bottom:calc(56px + env(safe-area-inset-bottom));">
     <div id="agenda-month-grid"></div>
   </div>
 
@@ -455,7 +466,7 @@
       </div>
       <div style="height:12px;"></div>
     </div>
-    <div style="display:flex; gap:8px; padding:12px 20px calc(var(--bottom-nav-height) + var(--safe-bottom-space) + 12px); border-top:1px solid #eef0f2; background:#fff;">
+    <div style="display:flex; gap:8px; padding:12px 20px calc(56px + env(safe-area-inset-bottom) + 12px); border-top:1px solid #eef0f2; background:#fff;">
       <button onclick="closeQuickAdd()" id="quick-add-cancel" style="flex:1; padding:12px; border-radius:10px; border:1.5px solid #e5e7eb; background:#fff; color:#6b7280; font-size:15px; cursor:pointer;">Annuler</button>
       <button onclick="saveQuickAdd()" id="quick-add-save" style="flex:1; padding:12px; border-radius:10px; border:none; background:#111827; color:#fff; font-size:15px; font-weight:600; cursor:pointer;">Enregistrer</button>
     </div>
@@ -463,7 +474,7 @@
 
   <!-- Agenda item actions -->
   <div id="agenda-actions-backdrop" onclick="closeAgendaItemActions()" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,0.2);z-index:580;"></div>
-  <div id="agenda-item-actions" style="display:none; position:fixed; left:12px; right:12px; bottom:calc(var(--bottom-nav-height) + var(--safe-bottom-space) + 8px); background:#fff; border-radius:16px; border:1px solid #e5e7eb; padding:8px; z-index:581;">
+  <div id="agenda-item-actions" style="display:none; position:fixed; left:12px; right:12px; bottom:calc(56px + env(safe-area-inset-bottom) + 8px); background:#fff; border-radius:16px; border:1px solid #e5e7eb; padding:8px; z-index:581;">
     <button id="agenda-action-toggle-done" onclick="agendaActionToggleDone()" style="width:100%; text-align:left; background:#fff; border:none; padding:12px; border-radius:10px; font-size:14px; color:#111827;">Marquer terminé</button>
     <button id="agenda-action-set-date" type="button" onclick="agendaActionSetDate()" style="width:100%; text-align:left; background:#fff; border:none; padding:12px; border-radius:10px; font-size:14px; color:#111827;">Définir date / heure</button>
     <div id="agenda-set-date-inline" style="display:none; margin:2px 0 6px; padding:10px 12px 12px; border:1px solid #e5e7eb; border-radius:12px; background:#f9fafb;">
@@ -482,7 +493,7 @@
 
 <!-- Task schedule bottom sheet -->
 <div id="task-schedule-backdrop" aria-hidden="true" onclick="handleTaskScheduleBackdropClick(event)" style="position:fixed;inset:0;background:rgba(0,0,0,0.2);z-index:580;"></div>
-<div id="task-schedule-sheet" aria-hidden="true" onclick="event.stopPropagation()" style="position:fixed; left:12px; right:12px; bottom:calc(var(--bottom-nav-height) + var(--safe-bottom-space) + 8px); background:#fff; border-radius:16px; border:1px solid #e5e7eb; padding:16px; z-index:581;">
+<div id="task-schedule-sheet" aria-hidden="true" onclick="event.stopPropagation()" style="position:fixed; left:12px; right:12px; bottom:calc(56px + env(safe-area-inset-bottom) + 8px); background:#fff; border-radius:16px; border:1px solid #e5e7eb; padding:16px; z-index:581;">
   <p class="sheet-title" id="task-schedule-title">Définir date / heure</p>
   <input id="task-schedule-date-input" type="date" style="padding:11px 12px; border:1px solid #d1d5db; border-radius:10px; font-size:15px; background:#fff; color:#111827; margin-bottom:8px;" />
   <input id="task-schedule-time-input" type="time" style="padding:11px 12px; border:1px solid #d1d5db; border-radius:10px; font-size:15px; background:#fff; color:#111827; margin-bottom:8px;" />
@@ -507,13 +518,13 @@
     <p class="task-create-meta" style="margin-top:10px;">Les tâches sont centrales et apparaissent dans l'agenda quand elles sont planifiées.</p>
     <div style="height:12px;"></div>
   </div>
-  <div style="display:flex; gap:8px; padding:12px 20px calc(var(--bottom-nav-height) + var(--safe-bottom-space) + 12px); border-top:1px solid #eef0f2; background:#fff;">
+  <div style="display:flex; gap:8px; padding:12px 20px calc(56px + env(safe-area-inset-bottom) + 12px); border-top:1px solid #eef0f2; background:#fff;">
     <button id="task-create-cancel-btn" onclick="cancelTaskCreateOrEdit()" style="flex:1; padding:12px; border-radius:10px; border:1.5px solid #e5e7eb; background:#fff; color:#6b7280; font-size:15px; cursor:pointer;">Annuler</button>
     <button id="task-create-save-btn" onclick="saveTaskFromTasksScreen()" style="flex:1; padding:12px; border-radius:10px; border:none; background:#111827; color:#fff; font-size:15px; font-weight:600; cursor:pointer;">Enregistrer la tâche</button>
   </div>
 </div>
 
-<div id="screen-financial" style="display:none; flex-direction:column; padding-bottom:var(--content-bottom-padding);">
+<div id="screen-financial" style="display:none; flex-direction:column; padding-bottom:calc(56px + env(safe-area-inset-bottom));">
 
   <!-- Header -->
   <div class="main-tab-header" style="position:sticky; top:0; background:var(--bg); z-index:10;">
@@ -576,7 +587,7 @@
   </div>
 
   <!-- 5. Obligations -->
-  <div style="padding:20px 20px; padding-bottom:var(--content-bottom-padding);">
+  <div style="padding:20px 20px; padding-bottom:calc(56px + env(safe-area-inset-bottom));">
     <p class="section-heading" id="fp-oblig-label">Obligations</p>
     <div id="fp-obligations" style="display:flex; flex-direction:column; gap:8px;"></div>
   </div>
