@@ -1757,6 +1757,7 @@ function buildTaskCreateFields(rawFields = {}) {
   if (source) fields['Source'] = source;
 
   if (rawFields['Due Date']) fields['Due Date'] = rawFields['Due Date'];
+  if (rawFields['Scheduled Time']) fields['Scheduled Time'] = rawFields['Scheduled Time'];
   if (rawFields['Notes']) fields['Notes'] = String(rawFields['Notes']);
   if (rawFields['Description']) fields['Description'] = String(rawFields['Description']);
   if (rawFields['Source Key']) fields['Source Key'] = String(rawFields['Source Key']);
