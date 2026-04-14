@@ -85,7 +85,7 @@
     --safe-right-space: env(safe-area-inset-right, 0px);
     --safe-bottom-space: env(safe-area-inset-bottom, 0px);
     --safe-left-space: env(safe-area-inset-left, 0px);
-    --content-bottom-padding: calc(var(--bottom-nav-height) + var(--space-md));
+    --content-bottom-padding: calc(var(--bottom-nav-height) + var(--safe-bottom-space) + var(--space-md));
     --fab-size: 52px;
     --fab-clearance: calc(var(--fab-size) + 24px);
   }
@@ -210,7 +210,7 @@
   @keyframes spin { to { transform: rotate(360deg); } }
   .toast { position: fixed; bottom: 24px; left: 50%; transform: translateX(-50%); background: #1e293b; color: white; padding: 12px 20px; border-radius: 10px; font-size: 14px; font-weight: 500; z-index: 999; opacity: 0; transition: opacity 0.3s; pointer-events: none; white-space: nowrap; }
   .toast.show { opacity: 1; }
-  .bottom-nav { position: fixed; left: 0; right: 0; bottom: env(safe-area-inset-bottom, 0px); height: var(--bottom-nav-height); background: #fff; border-top: 1px solid #e5e7eb; display: flex; align-items: center; padding: 8px calc(4px + var(--safe-right-space)) 8px calc(4px + var(--safe-left-space)); z-index: 3000; transform: translateZ(0); }
+  .bottom-nav { position: fixed; left: 0; right: 0; bottom: 0; height: calc(var(--bottom-nav-height) + var(--safe-bottom-space)); background: #fff; border-top: 1px solid #e5e7eb; display: flex; align-items: center; padding: 8px calc(4px + var(--safe-right-space)) calc(8px + var(--safe-bottom-space)) calc(4px + var(--safe-left-space)); z-index: 3000; transform: translateZ(0); }
   .bottom-nav-item { flex: 1; min-width: 0; background: none; border: none; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 5px; cursor: pointer; color: #6b7280; padding: 0 2px; }
   .bottom-nav-icon { width: 20px; height: 20px; display: flex; align-items: center; justify-content: center; color: currentColor; }
   .bottom-nav-label { width: 100%; max-width: 68px; text-align: center; font-size: 11px; line-height: 1.15; font-weight: 500; min-height: 24px; text-wrap: balance; overflow-wrap: anywhere; }
@@ -229,6 +229,14 @@
   .content-block { padding: var(--space-lg) var(--space-lg) 0; }
   .card { background: #fff; border-radius: var(--card-radius); border: var(--card-border); box-shadow: var(--card-shadow); padding: var(--card-padding); }
   .card-title { font-size: var(--font-card-title); font-weight: 600; color: var(--ink-900); margin: 0 0 var(--space-xs); }
+  .section-heading { font-size: var(--font-section-title); font-weight: 600; color: #9ca3af; letter-spacing: 0.06em; text-transform: uppercase; margin: 0 0 12px; }
+  .metric-label { font-size: var(--font-meta); color: #9ca3af; margin: 0 0 4px; }
+  .metric-value { font-size: 20px; font-weight: 700; color: #111827; margin: 0; }
+  .metric-value.compact { font-size: 18px; }
+  .metric-delta { font-size: 12px; margin: 0; }
+  .metric-delta.compact { font-size: 11px; }
+  .sheet-title { font-size: var(--font-card-title); font-weight: 600; color: #111827; margin: 0 0 12px; }
+  .sheet-help { font-size: var(--font-meta); color: #6b7280; margin: 8px 0 0; }
   #task-create-backdrop { z-index:4190 !important; display:none; opacity:0; pointer-events:none; transition: opacity 0.16s ease; }
   #task-create-sheet { z-index:4200 !important; display:none; opacity:0; pointer-events:none; transform: translateY(8px); transition: opacity 0.16s ease, transform 0.16s ease; }
   #task-create-backdrop.open { display:block; opacity:1; pointer-events:auto; }
@@ -394,7 +402,7 @@
   <!-- Header -->
   <div class="main-tab-header">
     <p class="main-tab-title" id="agenda-title-label">Agenda</p>
-    <button id="quick-add-fab" class="fab-btn" onclick="handleMainTabFab('agenda')" aria-label="Add in agenda" title="Add">+</button>
+    <button id="quick-add-fab" class="fab-btn" onclick="handleMainTabFab('agenda')" aria-label="Ajouter dans agenda" title="Ajouter">+</button>
   </div>
 
   <!-- Day / Week / Month toggle -->
@@ -443,8 +451,8 @@
       <div style="height:12px;"></div>
     </div>
     <div style="display:flex; gap:8px; padding:12px 20px calc(var(--bottom-nav-height) + var(--safe-bottom-space) + 12px); border-top:1px solid #eef0f2; background:#fff;">
-      <button onclick="closeQuickAdd()" id="quick-add-cancel" style="flex:1; padding:12px; border-radius:10px; border:1.5px solid #e5e7eb; background:#fff; color:#6b7280; font-size:15px; cursor:pointer;">Cancel</button>
-      <button onclick="saveQuickAdd()" id="quick-add-save" style="flex:1; padding:12px; border-radius:10px; border:none; background:#111827; color:#fff; font-size:15px; font-weight:600; cursor:pointer;">Save</button>
+      <button onclick="closeQuickAdd()" id="quick-add-cancel" style="flex:1; padding:12px; border-radius:10px; border:1.5px solid #e5e7eb; background:#fff; color:#6b7280; font-size:15px; cursor:pointer;">Annuler</button>
+      <button onclick="saveQuickAdd()" id="quick-add-save" style="flex:1; padding:12px; border-radius:10px; border:none; background:#111827; color:#fff; font-size:15px; font-weight:600; cursor:pointer;">Enregistrer</button>
     </div>
   </div>
 
@@ -456,13 +464,13 @@
     <div id="agenda-set-date-inline" style="display:none; margin:2px 0 6px; padding:10px 12px 12px; border:1px solid #e5e7eb; border-radius:12px; background:#f9fafb;">
       <input id="agenda-set-date-input" type="date" style="width:100%; box-sizing:border-box; padding:11px 12px; border:1px solid #d1d5db; border-radius:10px; font-size:15px; background:#fff; color:#111827;" />
       <input id="agenda-set-time-input" type="time" style="width:100%; box-sizing:border-box; padding:11px 12px; border:1px solid #d1d5db; border-radius:10px; font-size:15px; background:#fff; color:#111827; margin-top:8px;" />
-      <p style="margin:8px 0 0; font-size:11px; color:#6b7280;">Laissez l'heure vide pour aucun horaire. Effacez la date pour aucune date.</p>
+      <p class="sheet-help">Laissez l'heure vide pour aucun horaire. Effacez la date pour aucune date.</p>
       <div style="display:flex; gap:8px; margin-top:10px;">
-        <button type="button" onclick="confirmAgendaSetDateTime()" style="flex:1; padding:10px 12px; border:none; border-radius:10px; background:#111827; color:#fff; font-size:14px; font-weight:600;">Save</button>
-        <button type="button" onclick="cancelAgendaSetDateInline()" style="flex:1; padding:10px 12px; border:1px solid #d1d5db; border-radius:10px; background:#fff; color:#6b7280; font-size:14px;">Cancel</button>
+        <button id="agenda-inline-save-btn" type="button" onclick="confirmAgendaSetDateTime()" style="flex:1; padding:10px 12px; border:none; border-radius:10px; background:#111827; color:#fff; font-size:14px; font-weight:600;">Enregistrer</button>
+        <button id="agenda-inline-cancel-btn" type="button" onclick="cancelAgendaSetDateInline()" style="flex:1; padding:10px 12px; border:1px solid #d1d5db; border-radius:10px; background:#fff; color:#6b7280; font-size:14px;">Annuler</button>
       </div>
     </div>
-    <button onclick="closeAgendaItemActions()" style="width:100%; text-align:left; background:#fff; border:none; padding:12px; border-radius:10px; font-size:14px; color:#6b7280;">Cancel</button>
+    <button id="agenda-actions-close-btn" onclick="closeAgendaItemActions()" style="width:100%; text-align:left; background:#fff; border:none; padding:12px; border-radius:10px; font-size:14px; color:#6b7280;">Annuler</button>
   </div>
 
 </div>
@@ -470,13 +478,13 @@
 <!-- Task schedule bottom sheet -->
 <div id="task-schedule-backdrop" aria-hidden="true" onclick="handleTaskScheduleBackdropClick(event)" style="position:fixed;inset:0;background:rgba(0,0,0,0.2);z-index:580;"></div>
 <div id="task-schedule-sheet" aria-hidden="true" onclick="event.stopPropagation()" style="position:fixed; left:12px; right:12px; bottom:calc(var(--bottom-nav-height) + var(--safe-bottom-space) + 8px); background:#fff; border-radius:16px; border:1px solid #e5e7eb; padding:16px; z-index:581;">
-  <p style="font-size:15px; font-weight:600; color:#111827; margin:0 0 12px;">Définir date / heure</p>
+  <p class="sheet-title" id="task-schedule-title">Définir date / heure</p>
   <input id="task-schedule-date-input" type="date" style="padding:11px 12px; border:1px solid #d1d5db; border-radius:10px; font-size:15px; background:#fff; color:#111827; margin-bottom:8px;" />
   <input id="task-schedule-time-input" type="time" style="padding:11px 12px; border:1px solid #d1d5db; border-radius:10px; font-size:15px; background:#fff; color:#111827; margin-bottom:8px;" />
-  <p style="font-size:11px; color:#6b7280; margin:0 0 12px;">Laissez l'heure vide pour aucun horaire. Effacez la date pour désplanifier.</p>
+  <p class="sheet-help" style="margin:0 0 12px;" id="task-schedule-help">Laissez l'heure vide pour aucun horaire. Effacez la date pour désplanifier.</p>
   <div style="display:flex; gap:8px;">
-    <button type="button" onclick="confirmTaskScheduleSheet()" style="flex:1; padding:12px; border:none; border-radius:10px; background:#111827; color:#fff; font-size:15px; font-weight:600;">Save</button>
-    <button type="button" onclick="closeTaskScheduleSheet()" style="flex:1; padding:12px; border:1px solid #d1d5db; border-radius:10px; background:#fff; color:#6b7280; font-size:15px;">Cancel</button>
+    <button id="task-schedule-save-btn" type="button" onclick="confirmTaskScheduleSheet()" style="flex:1; padding:12px; border:none; border-radius:10px; background:#111827; color:#fff; font-size:15px; font-weight:600;">Enregistrer</button>
+    <button id="task-schedule-cancel-btn" type="button" onclick="closeTaskScheduleSheet()" style="flex:1; padding:12px; border:1px solid #d1d5db; border-radius:10px; background:#fff; color:#6b7280; font-size:15px;">Annuler</button>
   </div>
 </div>
 
@@ -495,7 +503,7 @@
     <div style="height:12px;"></div>
   </div>
   <div style="display:flex; gap:8px; padding:12px 20px calc(var(--bottom-nav-height) + var(--safe-bottom-space) + 12px); border-top:1px solid #eef0f2; background:#fff;">
-    <button onclick="cancelTaskCreateOrEdit()" style="flex:1; padding:12px; border-radius:10px; border:1.5px solid #e5e7eb; background:#fff; color:#6b7280; font-size:15px; cursor:pointer;">Cancel</button>
+    <button id="task-create-cancel-btn" onclick="cancelTaskCreateOrEdit()" style="flex:1; padding:12px; border-radius:10px; border:1.5px solid #e5e7eb; background:#fff; color:#6b7280; font-size:15px; cursor:pointer;">Annuler</button>
     <button id="task-create-save-btn" onclick="saveTaskFromTasksScreen()" style="flex:1; padding:12px; border-radius:10px; border:none; background:#111827; color:#fff; font-size:15px; font-weight:600; cursor:pointer;">Enregistrer la tâche</button>
   </div>
 </div>
@@ -505,7 +513,7 @@
   <!-- Header -->
   <div class="main-tab-header" style="position:sticky; top:0; background:#fff; z-index:10;">
     <p class="main-tab-title" id="fin-page-title">Finances</p>
-    <button class="fab-btn" onclick="handleMainTabFab('financial')" aria-label="Add in finances" title="Add">+</button>
+    <button class="fab-btn" onclick="handleMainTabFab('financial')" aria-label="Ajouter dans finances" title="Ajouter">+</button>
   </div>
 
   <!-- Period filter -->
@@ -520,29 +528,29 @@
 
   <!-- 1. Today -->
   <div style="padding:20px 20px 0;">
-    <p style="font-size:13px; font-weight:600; color:#9ca3af; letter-spacing:0.06em; text-transform:uppercase; margin:0 0 12px;" id="fp-period-label">Today</p>
+    <p class="section-heading" id="fp-period-label">Today</p>
     <div style="background:#f9fafb; border-radius:16px; padding:18px; display:flex; justify-content:space-around;">
       <div style="text-align:center;">
-        <p style="font-size:11px; color:#9ca3af; margin:0 0 4px;" id="fp-rev-label">Revenue</p>
-        <p style="font-size:20px; font-weight:700; color:#111827; margin:0;" id="fp-rev-val">—</p>
-        <p style="font-size:12px; margin:0;" id="fp-rev-arrow"></p>
+        <p class="metric-label" id="fp-rev-label">Revenue</p>
+        <p class="metric-value" id="fp-rev-val">—</p>
+        <p class="metric-delta" id="fp-rev-arrow"></p>
       </div>
       <div style="text-align:center;">
-        <p style="font-size:11px; color:#9ca3af; margin:0 0 4px;" id="fp-costs-label">Costs</p>
-        <p style="font-size:20px; font-weight:700; color:#111827; margin:0;" id="fp-costs-val">—</p>
-        <p style="font-size:12px; margin:0;" id="fp-costs-arrow"></p>
+        <p class="metric-label" id="fp-costs-label">Costs</p>
+        <p class="metric-value" id="fp-costs-val">—</p>
+        <p class="metric-delta" id="fp-costs-arrow"></p>
       </div>
       <div style="text-align:center;">
-        <p style="font-size:11px; color:#9ca3af; margin:0 0 4px;" id="fp-margin-label">Margin</p>
-        <p style="font-size:20px; font-weight:700; color:#111827; margin:0;" id="fp-margin-val">—</p>
-        <p style="font-size:12px; margin:0;" id="fp-margin-arrow"></p>
+        <p class="metric-label" id="fp-margin-label">Margin</p>
+        <p class="metric-value" id="fp-margin-val">—</p>
+        <p class="metric-delta" id="fp-margin-arrow"></p>
       </div>
     </div>
   </div>
 
   <!-- 2. What this means -->
   <div style="padding:20px 20px 0;">
-    <p style="font-size:13px; font-weight:600; color:#9ca3af; letter-spacing:0.06em; text-transform:uppercase; margin:0 0 12px;" id="fp-what-this-means-label">What this means</p>
+    <p class="section-heading" id="fp-what-this-means-label">What this means</p>
     <div style="background:#f0fdf4; border-radius:16px; padding:18px;">
       <p style="font-size:22px; font-weight:700; color:#111827; margin:0 0 4px;" id="fp-safe-val">—</p>
       <p style="font-size:13px; font-weight:600; color:#065f46; margin:0 0 6px;" id="fp-safe-label">Safe to spend</p>
@@ -552,19 +560,19 @@
 
   <!-- 3. Money flow -->
   <div style="padding:20px 20px 0;">
-    <p style="font-size:13px; font-weight:600; color:#9ca3af; letter-spacing:0.06em; text-transform:uppercase; margin:0 0 12px;" id="fp-flow-label">Money flow</p>
+    <p class="section-heading" id="fp-flow-label">Money flow</p>
     <div id="fp-money-flow" style="display:flex; flex-direction:column; gap:8px;"></div>
   </div>
 
   <!-- 4. Cost pressure -->
   <div style="padding:20px 20px 0;">
-    <p style="font-size:13px; font-weight:600; color:#9ca3af; letter-spacing:0.06em; text-transform:uppercase; margin:0 0 12px;" id="fp-cost-label">Cost pressure</p>
+    <p class="section-heading" id="fp-cost-label">Cost pressure</p>
     <div id="fp-cost-breakdown" style="background:#f9fafb; border-radius:16px; padding:16px; display:flex; flex-direction:column; gap:10px;"></div>
   </div>
 
   <!-- 5. Obligations -->
   <div style="padding:20px 20px; padding-bottom:var(--content-bottom-padding);">
-    <p style="font-size:13px; font-weight:600; color:#9ca3af; letter-spacing:0.06em; text-transform:uppercase; margin:0 0 12px;" id="fp-oblig-label">Obligations</p>
+    <p class="section-heading" id="fp-oblig-label">Obligations</p>
     <div id="fp-obligations" style="display:flex; flex-direction:column; gap:8px;"></div>
   </div>
 
@@ -611,7 +619,7 @@
     <p class="home-title" id="home-title">Today's operations</p>
     <div class="main-tab-header-actions">
       <button onclick="showScreen('screen-settings')" style="background:#f3f4f6; border:none; border-radius:50%; width:36px; height:36px; font-size:14px; color:#6b7280; cursor:pointer; font-weight:600; flex-shrink:0;">···</button>
-      <button class="fab-btn" onclick="handleMainTabFab('operations')" aria-label="Add in operations" title="Add">+</button>
+      <button class="fab-btn" onclick="handleMainTabFab('operations')" aria-label="Ajouter dans opérations" title="Ajouter">+</button>
     </div>
   </div>
 
@@ -656,19 +664,19 @@
     <p class="section-label" id="home-financial-label">Financial</p>
     <div onclick="showScreen('screen-financial')" class="financial-preview-card">
       <div class="financial-metric">
-        <p style="font-size:11px; color:#9ca3af; margin:0 0 4px;" id="fin-rev-label">Revenue</p>
-        <p style="font-size:18px; font-weight:700; color:#111827; margin:0;" id="fin-rev-value">—</p>
-        <p style="font-size:11px; margin:0;" id="fin-rev-arrow"></p>
+        <p class="metric-label" id="fin-rev-label">Revenue</p>
+        <p class="metric-value compact" id="fin-rev-value">—</p>
+        <p class="metric-delta compact" id="fin-rev-arrow"></p>
       </div>
       <div class="financial-metric">
-        <p style="font-size:11px; color:#9ca3af; margin:0 0 4px;" id="fin-costs-label">Costs</p>
-        <p style="font-size:18px; font-weight:700; color:#111827; margin:0;" id="fin-costs-value">—</p>
-        <p style="font-size:11px; margin:0;" id="fin-costs-arrow"></p>
+        <p class="metric-label" id="fin-costs-label">Costs</p>
+        <p class="metric-value compact" id="fin-costs-value">—</p>
+        <p class="metric-delta compact" id="fin-costs-arrow"></p>
       </div>
       <div class="financial-metric">
-        <p style="font-size:11px; color:#9ca3af; margin:0 0 4px;" id="fin-margin-label">Margin</p>
-        <p style="font-size:18px; font-weight:700; color:#111827; margin:0;" id="fin-margin-value">—</p>
-        <p style="font-size:11px; margin:0;" id="fin-margin-arrow"></p>
+        <p class="metric-label" id="fin-margin-label">Margin</p>
+        <p class="metric-value compact" id="fin-margin-value">—</p>
+        <p class="metric-delta compact" id="fin-margin-arrow"></p>
       </div>
     </div>
   </div>
@@ -679,7 +687,7 @@
 <div id="screen-batches" class="screen">
   <div class="main-tab-header" style="padding:0;">
     <p class="main-tab-title" id="batch-screen-title">Brassins</p>
-    <button class="fab-btn" onclick="handleMainTabFab('batches')" aria-label="Add in batches" title="Add">+</button>
+    <button class="fab-btn" onclick="handleMainTabFab('batches')" aria-label="Ajouter dans brassins" title="Ajouter">+</button>
   </div>
   <div id="batch-list"><div class="loading"><div class="spinner"></div></div></div>
 </div>
@@ -709,7 +717,7 @@
 <div id="screen-tasks" class="screen">
   <div class="main-tab-header" style="padding:0;">
     <p class="main-tab-title" id="task-screen-title">Tâches</p>
-    <button id="task-add-fab" class="fab-btn" onclick="handleMainTabFab('tasks')" aria-label="Add task" title="Add task">+</button>
+    <button id="task-add-fab" class="fab-btn" onclick="handleMainTabFab('tasks')" aria-label="Ajouter une tâche" title="Ajouter une tâche">+</button>
   </div>
   <div class="segmented-control">
     <button id="task-filter-all" class="segmented-btn active" onclick="setTaskDueFilter('all')">Toutes</button>
@@ -858,6 +866,7 @@ const TRANSLATIONS = {
     'agenda.today': "Aujourd'hui",
     'agenda.month': 'Mois',
     'agenda.set_date_time': 'Définir date / heure',
+    'agenda.none_scheduled': 'Rien de planifié pour cette journée.',
     'guidance.helper': 'Appuyez sur une carte pour accéder directement à cette étape.',
     'status.planned': 'Planifié',
     'status.brewing': 'En brassage',
@@ -1134,6 +1143,7 @@ const TRANSLATIONS = {
     'agenda.today': 'Today',
     'agenda.month': 'Month',
     'agenda.set_date_time': 'Set date / time',
+    'agenda.none_scheduled': 'Nothing scheduled for this day.',
     'guidance.helper': 'Tap any card to go directly to that step.',
     'status.planned': 'Planned',
     'status.brewing': 'Brewing',
@@ -2711,8 +2721,8 @@ async function loadBatchDetail(recordId) {
       <p style="font-size:14px;line-height:1.6">${log['Brewer Notes']}</p>
     </div>` : ''}
     ${isEditing
-      ? `<button class="btn btn-primary" onclick="saveBatchDetailEdit('${recordId}')">Save</button>
-         <button class="btn btn-secondary" onclick="cancelBatchDetailEdit('${recordId}')">Cancel</button>`
+      ? `<button class="btn btn-primary" onclick="saveBatchDetailEdit('${recordId}')">${t('agenda.save')}</button>
+         <button class="btn btn-secondary" onclick="cancelBatchDetailEdit('${recordId}')">${t('agenda.cancel')}</button>`
       : `<button class="btn btn-primary" onclick="startBatchDetailEdit('${recordId}')">Edit</button>`
     }
     <button class="btn btn-secondary" onclick="goBackToBatches()">← Back</button>`;
@@ -3385,6 +3395,12 @@ function applyTranslations() {
     'quick-add-save':     'agenda.save',
     'agenda-today-pill':  'agenda.today',
     'agenda-action-set-date': 'agenda.set_date_time',
+    'agenda-inline-save-btn': 'agenda.save',
+    'agenda-inline-cancel-btn': 'agenda.cancel',
+    'agenda-actions-close-btn': 'agenda.cancel',
+    'task-schedule-title': 'agenda.set_date_time',
+    'task-schedule-save-btn': 'agenda.save',
+    'task-schedule-cancel-btn': 'agenda.cancel',
   };
   Object.entries(agendaMap).forEach(([id, key]) => {
     const el = document.getElementById(id);
@@ -3423,6 +3439,7 @@ function applyTranslations() {
     'task-filter-overdue': 'task.filter_overdue',
     'task-create-sheet-title': 'task.add',
     'task-create-save-btn': 'task.save',
+    'task-create-cancel-btn': 'agenda.cancel',
   };
   Object.entries(taskMap).forEach(([id, key]) => {
     const el = document.getElementById(id);
@@ -3787,7 +3804,7 @@ function renderAgendaForSelectedDay() {
   }
   if (untimedDayItems.length > 0) {
     html += `<div style="padding-top:${timedDayItems.length > 0 ? '14px' : '4px'};">
-      <p style="font-size:12px;font-weight:600;color:#6b7280;margin:0 0 6px;">No time</p>
+      <p style="font-size:12px;font-weight:600;color:#6b7280;margin:0 0 6px;">${t('agenda.untimed')}</p>
     </div>`;
     html += renderAgendaItemsListHtml(untimedDayItems);
   }
@@ -3799,7 +3816,7 @@ function renderAgendaForSelectedDay() {
     ? renderAgendaItemsListHtml(undated)
     : `<div style="color:#9e9e9e;font-size:13px;padding:2px 0 6px;">Aucun élément sans date.</div>`;
   if (timedDayItems.length === 0 && untimedDayItems.length === 0 && undated.length === 0) {
-    html += `<div style="color:#9e9e9e;font-size:13px;padding:8px 0;">Nothing scheduled for this day.</div>`;
+    html += `<div style="color:#9e9e9e;font-size:13px;padding:8px 0;">${t('agenda.none_scheduled')}</div>`;
   }
 
   listEl.innerHTML = html;
@@ -4191,7 +4208,7 @@ function renderAgendaPreview() {
   container.innerHTML = items.map(item => `
     <div style="background:#fff; border:1.5px solid #f3f4f6; border-radius:12px; padding:12px 14px; display:flex; align-items:center; gap:12px;">
       <span style="font-size:12px; color:#9ca3af; min-width:36px;">${item.time || '—'}</span>
-      ${item.system ? '<span style="font-size:12px;" title="System generated">✦</span>' : '<span style="min-width:14px;"></span>'}
+      ${item.system ? '<span style="font-size:12px;" title="Généré automatiquement">✦</span>' : '<span style="min-width:14px;"></span>'}
       <p style="font-size:14px; color:#111827; margin:0;">${item.title}</p>
     </div>`).join('');
 }
@@ -4380,7 +4397,7 @@ function renderAgendaDay() {
   }
 
   if (untimed.length) {
-    html += `<p style="font-size:12px; color:#9ca3af; margin:16px 0 8px; text-transform:uppercase; letter-spacing:0.06em;">No time set</p>`;
+    html += `<p style="font-size:12px; color:#9ca3af; margin:16px 0 8px; text-transform:uppercase; letter-spacing:0.06em;">${t('agenda.untimed')}</p>`;
     untimed.forEach(item => { html += renderAgendaItem(item); });
   }
 
@@ -4391,7 +4408,7 @@ function renderAgendaDay() {
 function renderAgendaItem(item) {
   const fade = item.done ? 'opacity:0.45;' : '';
   const done = item.done ? 'text-decoration:line-through; color:#9ca3af;' : 'color:#111827;';
-  const systemIcon = item.system ? '<span style="font-size:11px; color:#9ca3af;" title="System">✦</span>' : '<span style="min-width:14px; display:inline-block;"></span>';
+  const systemIcon = item.system ? '<span style="font-size:11px; color:#9ca3af;" title="Système">✦</span>' : '<span style="min-width:14px; display:inline-block;"></span>';
   return `<div onclick="toggleAgendaDone(${item.id})"
     style="background:#fff; border:1.5px solid #f3f4f6; border-radius:12px; padding:12px 14px; display:flex; align-items:center; gap:12px; margin-bottom:8px; cursor:pointer; ${fade}">
     <span style="font-size:12px; color:#9ca3af; min-width:36px;">${item.time || ''}</span>
