@@ -61,30 +61,49 @@
     --blocked-bg: #fee2e2; --blocked-text: #b91c1c;
 
     --radius: 16px; --shadow: 0 1px 2px rgba(0,0,0,0.05);
+    --card-radius: 16px;
+    --card-padding: 16px;
+    --card-shadow: 0 1px 2px rgba(0,0,0,0.05);
+    --card-border: 1px solid var(--line-200);
+
+    /* Typography scale */
+    --font-screen-title: 24px;
+    --font-section-title: 13px;
+    --font-card-title: 16px;
+    --font-body: 14px;
+    --font-secondary: 13px;
+    --font-meta: 11px;
+
+    /* Spacing scale */
+    --space-xs: 6px;
+    --space-sm: 10px;
+    --space-md: 16px;
+    --space-lg: 20px;
+    --space-xl: 24px;
     --bottom-nav-height: 56px;
     --safe-top-space: env(safe-area-inset-top, 0px);
     --safe-right-space: env(safe-area-inset-right, 0px);
     --safe-bottom-space: env(safe-area-inset-bottom, 0px);
     --safe-left-space: env(safe-area-inset-left, 0px);
-    --content-bottom-padding: calc(var(--bottom-nav-height) + var(--safe-bottom-space) + 16px);
+    --content-bottom-padding: calc(var(--bottom-nav-height) + var(--space-md));
     --fab-size: 52px;
     --fab-clearance: calc(var(--fab-size) + 24px);
   }
   html, body { height: 100%; overflow-x: hidden; }
-  body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; background: var(--bg); color: var(--text); min-height: 100%; padding: 0 var(--safe-right-space) var(--content-bottom-padding) var(--safe-left-space); }
+  body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; background: var(--bg); color: var(--text); min-height: 100%; padding: 0 var(--safe-right-space) 0 var(--safe-left-space); }
   .nav { background: var(--card); border-bottom: 1px solid var(--border); padding: calc(10px + var(--safe-top-space)) 20px 14px; display: flex; align-items: center; justify-content: space-between; position: sticky; top: 0; z-index: 100; }
   .nav-title { font-size: 17px; font-weight: 600; color: var(--ink-900); letter-spacing: -0.01em; }
   .nav-back { font-size: 15px; color: var(--gray-500); cursor: pointer; display: flex; align-items: center; gap: 4px; }
-  .screen { display: none; flex-direction: column; width: 100%; max-width: 100%; min-height: 100%; overflow-y: auto; padding: 18px 20px 20px; padding-top: calc(18px + var(--safe-top-space)); padding-bottom: var(--content-bottom-padding); gap: 24px; }
+  .screen { display: none; flex-direction: column; width: 100%; max-width: 100%; min-height: 100%; overflow-y: auto; padding: var(--space-md) var(--space-lg) var(--content-bottom-padding); gap: var(--space-xl); }
   .screen.active { display: flex; }
   /* ── Home layout ── */
   .home-header { display: flex; justify-content: space-between; align-items: center; width: 100%; }
-  .home-title { font-size: 28px; line-height: 1.15; font-weight: 600; letter-spacing: -0.02em; color: #111827; margin: 0; }
+  .home-title { font-size: var(--font-screen-title); line-height: 1.15; font-weight: 600; letter-spacing: -0.02em; color: #111827; margin: 0; }
   .home-section { display: flex; flex-direction: column; gap: 10px; width: 100%; }
   .home-section-header { display: flex; justify-content: space-between; align-items: baseline; width: 100%; }
-  .section-label { font-size: 15px; font-weight: 600; letter-spacing: 0.08em; text-transform: uppercase; color: #9ca3af; margin: 0; }
+  .section-label { font-size: var(--font-section-title); font-weight: 600; letter-spacing: 0.06em; text-transform: uppercase; color: #9ca3af; margin: 0; }
   .home-helper-card { display: flex; align-items: center; justify-content: space-between; gap: 12px; width: 100%; background: #f3f4f6; border-radius: 16px; padding: 14px 16px; }
-  .financial-preview-card { background: #f9fafb; border-radius: 16px; padding: 18px; cursor: pointer; display: flex; gap: 8px; }
+  .financial-preview-card { background: #f9fafb; border-radius: var(--card-radius); padding: var(--card-padding); cursor: pointer; display: flex; gap: 8px; }
   .financial-metric { flex: 1; min-width: 0; text-align: center; }
   .greeting { margin: 8px 0 20px; }
   .greeting h1 { font-size: 24px; font-weight: 700; }
@@ -95,12 +114,12 @@
   .action-card .icon { font-size: 28px; margin-bottom: 10px; }
   .action-card .label { font-size: 15px; font-weight: 600; }
   .action-card .desc { font-size: 12px; color: var(--muted); margin-top: 3px; }
-  .section-title { font-size: 13px; font-weight: 600; color: var(--muted); text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 12px; }
-  .batch-card { background: var(--card); border-radius: var(--radius); padding: 16px; box-shadow: var(--shadow); border: 1px solid var(--border); margin-bottom: 10px; cursor: pointer; transition: transform 0.1s; }
+  .section-title { font-size: var(--font-section-title); font-weight: 600; color: var(--muted); text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 12px; }
+  .batch-card { background: var(--card); border-radius: var(--card-radius); padding: var(--card-padding); box-shadow: var(--card-shadow); border: var(--card-border); margin-bottom: var(--space-sm); cursor: pointer; transition: transform 0.1s; }
   .batch-card:active { transform: scale(0.98); }
   .batch-card-header { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 8px; }
-  .batch-name { font-size: 16px; font-weight: 600; }
-  .batch-date { font-size: 12px; color: var(--muted); }
+  .batch-name { font-size: var(--font-card-title); font-weight: 600; }
+  .batch-date { font-size: var(--font-meta); color: var(--muted); }
   .batch-meta { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; }
   .object-type-tag { font-size: 10px; color: var(--muted); font-family: monospace; background: var(--bg); border: 1px solid var(--border); padding: 2px 6px; border-radius: 4px; }
   .badge { display: inline-flex; align-items: center; justify-content: center; gap: 4px; font-size: 11px; font-weight: 600; line-height: 1; padding: 5px 10px; min-height: 22px; border-radius: 20px; }
@@ -166,11 +185,11 @@
   .loading { text-align: center; padding: 40px; color: var(--muted); }
   .empty { text-align: center; padding: 40px; color: var(--muted); font-size: 14px; }
   .task-create-meta { font-size: 12px; color: var(--muted); margin-top: -4px; }
-  .task-card { position: relative; padding: 14px; border-radius: 14px; border: 1px solid var(--line-150); background: #fff; }
+  .task-card { position: relative; padding: var(--card-padding); border-radius: var(--card-radius); border: var(--card-border); background: #fff; }
   .task-card.is-done { background: #fafafa; border-color: #eef0f2; }
   .task-card-body { display: flex; align-items: flex-start; justify-content: space-between; gap: 12px; }
   .task-card-main { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 6px; padding-right: 2px; }
-  .task-card-title { font-size: 15px; font-weight: 600; color: #111827; line-height: 1.35; }
+  .task-card-title { font-size: var(--font-card-title); font-weight: 600; color: #111827; line-height: 1.35; }
   .task-card.is-done .task-card-title { color: #6b7280; text-decoration: line-through; }
   .task-card-meta-row { display:flex; justify-content:space-between; align-items:center; gap:8px; }
   .task-card-actions { position: relative; display:flex; align-items:center; gap:8px; flex-shrink:0; }
@@ -180,8 +199,8 @@
   .task-card-menu button { width: 100%; background: #fff; border: 0; border-bottom: 1px solid var(--line-150); padding: 10px 12px; text-align: left; font-size: 14px; color: var(--ink-800); cursor: pointer; }
   .task-card-menu button:last-child { border-bottom: 0; color: var(--red); }
   .task-card-menu button:active { background: var(--bg-soft); }
-  .segmented-control { display:flex; gap:0; }
-  .segmented-btn { flex:1; padding:8px; border:1.5px solid #e5e7eb; border-left:none; border-radius:0; background:#fff; color:#6b7280; font-size:14px; font-weight:500; cursor:pointer; }
+  .segmented-control { display:flex; gap:0; padding: 0 var(--space-lg); }
+  .segmented-btn { flex:1; height: 38px; border:1.5px solid #e5e7eb; border-left:none; border-radius:0; background:#fff; color:#6b7280; font-size:14px; font-weight:500; cursor:pointer; padding: 0 10px; }
   .segmented-btn:first-child { border-left:1.5px solid #e5e7eb; border-radius:10px 0 0 10px; }
   .segmented-btn:last-child { border-radius:0 10px 10px 0; }
   .segmented-btn.active { background:#111827; border-color:#111827; color:#fff; }
@@ -191,7 +210,7 @@
   @keyframes spin { to { transform: rotate(360deg); } }
   .toast { position: fixed; bottom: 24px; left: 50%; transform: translateX(-50%); background: #1e293b; color: white; padding: 12px 20px; border-radius: 10px; font-size: 14px; font-weight: 500; z-index: 999; opacity: 0; transition: opacity 0.3s; pointer-events: none; white-space: nowrap; }
   .toast.show { opacity: 1; }
-  .bottom-nav { position: fixed; inset: auto 0 0 0; height: calc(var(--bottom-nav-height) + var(--safe-bottom-space)); background: #fff; border-top: 1px solid #e5e7eb; display: flex; align-items: center; padding: 8px calc(4px + var(--safe-right-space)) var(--safe-bottom-space) calc(4px + var(--safe-left-space)); z-index: 3000; transform: translateZ(0); }
+  .bottom-nav { position: fixed; left: 0; right: 0; bottom: env(safe-area-inset-bottom, 0px); height: var(--bottom-nav-height); background: #fff; border-top: 1px solid #e5e7eb; display: flex; align-items: center; padding: 8px calc(4px + var(--safe-right-space)) 8px calc(4px + var(--safe-left-space)); z-index: 3000; transform: translateZ(0); }
   .bottom-nav-item { flex: 1; min-width: 0; background: none; border: none; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 5px; cursor: pointer; color: #6b7280; padding: 0 2px; }
   .bottom-nav-icon { width: 20px; height: 20px; display: flex; align-items: center; justify-content: center; color: currentColor; }
   .bottom-nav-label { width: 100%; max-width: 68px; text-align: center; font-size: 11px; line-height: 1.15; font-weight: 500; min-height: 24px; text-wrap: balance; overflow-wrap: anywhere; }
@@ -200,10 +219,16 @@
   .color-tip-title { font-size: 12px; font-weight: 700; color: #111827; margin: 0; }
   .color-tip-line { font-size: 12px; color: #6b7280; line-height: 1.35; margin: 0; }
 
-  .main-tab-header { padding: calc(10px + var(--safe-top-space)) 20px 0; display:flex; justify-content:space-between; align-items:center; gap:12px; }
-  .main-tab-title { font-size:17px; font-weight:600; color:#111827; margin:0; }
+  .main-tab-header { min-height: 52px; padding: var(--space-md) var(--space-lg) 0; display:flex; justify-content:space-between; align-items:center; gap:12px; }
+  .main-tab-title { font-size: var(--font-screen-title); font-weight:600; color:#111827; margin:0; }
   .main-tab-header-actions { display:flex; align-items:center; gap:8px; }
-  .fab-btn { width:var(--fab-size); height:var(--fab-size); border-radius:50%; background:#111827; color:#fff; font-size:24px; border:none; cursor:pointer; box-shadow:0 4px 12px rgba(0,0,0,0.15); display:inline-flex; align-items:center; justify-content:center; line-height:1; transition:opacity 0.18s ease, transform 0.18s ease; }
+  .fab-btn { width:var(--fab-size); height:var(--fab-size); border-radius:50%; background:#111827; color:#fff; font-size:24px; border:none; cursor:pointer; box-shadow:0 6px 14px rgba(0,0,0,0.16); display:inline-flex; align-items:center; justify-content:center; line-height:1; transition:opacity 0.18s ease, transform 0.18s ease; z-index: 1200; }
+  .meta-text { font-size: var(--font-meta); color: var(--gray-400); }
+  .secondary-text { font-size: var(--font-secondary); color: var(--muted); }
+  .screen-title { font-size: var(--font-screen-title); font-weight: 600; color: var(--ink-900); margin: 0; }
+  .content-block { padding: var(--space-lg) var(--space-lg) 0; }
+  .card { background: #fff; border-radius: var(--card-radius); border: var(--card-border); box-shadow: var(--card-shadow); padding: var(--card-padding); }
+  .card-title { font-size: var(--font-card-title); font-weight: 600; color: var(--ink-900); margin: 0 0 var(--space-xs); }
   #task-create-backdrop { z-index:4190 !important; display:none; opacity:0; pointer-events:none; transition: opacity 0.16s ease; }
   #task-create-sheet { z-index:4200 !important; display:none; opacity:0; pointer-events:none; transform: translateY(8px); transition: opacity 0.16s ease, transform 0.16s ease; }
   #task-create-backdrop.open { display:block; opacity:1; pointer-events:auto; }
@@ -364,7 +389,7 @@
   <button onclick="enterDemo()" style="width:100%; padding:16px; border-radius:14px; background:#111827; color:#fff; font-size:16px; font-weight:600; border:none; cursor:pointer;" id="value-cta-btn">See BrewOS in action</button>
 </div>
 
-<div id="screen-agenda" style="display:none; flex-direction:column; height:100dvh; overflow:hidden; background:#fff;">
+<div id="screen-agenda" style="display:none; flex-direction:column; height:100dvh; overflow:hidden; background:#fff; padding-bottom:var(--content-bottom-padding);">
 
   <!-- Header -->
   <div class="main-tab-header">
@@ -373,20 +398,20 @@
   </div>
 
   <!-- Day / Week / Month toggle -->
-  <div style="padding:12px 20px 0; display:flex; gap:0;">
+  <div class="segmented-control" style="padding-top:12px;">
     <button id="agenda-tab-day" onclick="switchAgendaView('day')"
-      style="flex:1; padding:8px; border:1.5px solid #e5e7eb; border-radius:10px 0 0 10px; background:#111827; color:#fff; font-size:14px; font-weight:500; cursor:pointer;">Day</button>
+      class="segmented-btn active">Jour</button>
     <button id="agenda-tab-week" onclick="switchAgendaView('week')"
-      style="flex:1; padding:8px; border:1.5px solid #e5e7eb; border-left:none; border-radius:0; background:#fff; color:#6b7280; font-size:14px; font-weight:500; cursor:pointer;">Week</button>
+      class="segmented-btn">Semaine</button>
     <button id="agenda-tab-month" onclick="switchAgendaView('month')"
-      style="flex:1; padding:8px; border:1.5px solid #e5e7eb; border-left:none; border-radius:0 10px 10px 0; background:#fff; color:#6b7280; font-size:14px; font-weight:500; cursor:pointer;">Month</button>
+      class="segmented-btn">Mois</button>
   </div>
 
   <!-- Day header -->
   <div id="agenda-day-header" style="padding:12px 20px 0; display:flex; justify-content:space-between; align-items:center;">
-    <p style="font-size:15px; font-weight:600; color:#111827; margin:0;" id="agenda-date-label">Mon 5 Apr</p>
+    <p class="card-title" id="agenda-date-label">Lun 5 avr</p>
     <button id="agenda-today-pill" onclick="goAgendaToday()"
-      style="display:none; background:#111827; color:#fff; border:none; border-radius:20px; padding:5px 14px; font-size:12px; cursor:pointer;">Today</button>
+      style="display:none; background:#111827; color:#fff; border:none; border-radius:20px; padding:5px 14px; font-size:12px; cursor:pointer;">Aujourd'hui</button>
   </div>
 
   <!-- Current time line + item list -->
@@ -426,12 +451,12 @@
   <!-- Agenda item actions -->
   <div id="agenda-actions-backdrop" onclick="closeAgendaItemActions()" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,0.2);z-index:580;"></div>
   <div id="agenda-item-actions" style="display:none; position:fixed; left:12px; right:12px; bottom:calc(var(--bottom-nav-height) + var(--safe-bottom-space) + 8px); background:#fff; border-radius:16px; border:1px solid #e5e7eb; padding:8px; z-index:581;">
-    <button id="agenda-action-toggle-done" onclick="agendaActionToggleDone()" style="width:100%; text-align:left; background:#fff; border:none; padding:12px; border-radius:10px; font-size:14px; color:#111827;">Mark done</button>
-    <button id="agenda-action-set-date" type="button" onclick="agendaActionSetDate()" style="width:100%; text-align:left; background:#fff; border:none; padding:12px; border-radius:10px; font-size:14px; color:#111827;">Set date / time</button>
+    <button id="agenda-action-toggle-done" onclick="agendaActionToggleDone()" style="width:100%; text-align:left; background:#fff; border:none; padding:12px; border-radius:10px; font-size:14px; color:#111827;">Marquer terminé</button>
+    <button id="agenda-action-set-date" type="button" onclick="agendaActionSetDate()" style="width:100%; text-align:left; background:#fff; border:none; padding:12px; border-radius:10px; font-size:14px; color:#111827;">Définir date / heure</button>
     <div id="agenda-set-date-inline" style="display:none; margin:2px 0 6px; padding:10px 12px 12px; border:1px solid #e5e7eb; border-radius:12px; background:#f9fafb;">
       <input id="agenda-set-date-input" type="date" style="width:100%; box-sizing:border-box; padding:11px 12px; border:1px solid #d1d5db; border-radius:10px; font-size:15px; background:#fff; color:#111827;" />
       <input id="agenda-set-time-input" type="time" style="width:100%; box-sizing:border-box; padding:11px 12px; border:1px solid #d1d5db; border-radius:10px; font-size:15px; background:#fff; color:#111827; margin-top:8px;" />
-      <p style="margin:8px 0 0; font-size:11px; color:#6b7280;">Leave time empty for no time. Clear date for no date.</p>
+      <p style="margin:8px 0 0; font-size:11px; color:#6b7280;">Laissez l'heure vide pour aucun horaire. Effacez la date pour aucune date.</p>
       <div style="display:flex; gap:8px; margin-top:10px;">
         <button type="button" onclick="confirmAgendaSetDateTime()" style="flex:1; padding:10px 12px; border:none; border-radius:10px; background:#111827; color:#fff; font-size:14px; font-weight:600;">Save</button>
         <button type="button" onclick="cancelAgendaSetDateInline()" style="flex:1; padding:10px 12px; border:1px solid #d1d5db; border-radius:10px; background:#fff; color:#6b7280; font-size:14px;">Cancel</button>
@@ -445,10 +470,10 @@
 <!-- Task schedule bottom sheet -->
 <div id="task-schedule-backdrop" aria-hidden="true" onclick="handleTaskScheduleBackdropClick(event)" style="position:fixed;inset:0;background:rgba(0,0,0,0.2);z-index:580;"></div>
 <div id="task-schedule-sheet" aria-hidden="true" onclick="event.stopPropagation()" style="position:fixed; left:12px; right:12px; bottom:calc(var(--bottom-nav-height) + var(--safe-bottom-space) + 8px); background:#fff; border-radius:16px; border:1px solid #e5e7eb; padding:16px; z-index:581;">
-  <p style="font-size:15px; font-weight:600; color:#111827; margin:0 0 12px;">Set date / time</p>
+  <p style="font-size:15px; font-weight:600; color:#111827; margin:0 0 12px;">Définir date / heure</p>
   <input id="task-schedule-date-input" type="date" style="padding:11px 12px; border:1px solid #d1d5db; border-radius:10px; font-size:15px; background:#fff; color:#111827; margin-bottom:8px;" />
   <input id="task-schedule-time-input" type="time" style="padding:11px 12px; border:1px solid #d1d5db; border-radius:10px; font-size:15px; background:#fff; color:#111827; margin-bottom:8px;" />
-  <p style="font-size:11px; color:#6b7280; margin:0 0 12px;">Leave time empty for no time. Clear date to unschedule.</p>
+  <p style="font-size:11px; color:#6b7280; margin:0 0 12px;">Laissez l'heure vide pour aucun horaire. Effacez la date pour désplanifier.</p>
   <div style="display:flex; gap:8px;">
     <button type="button" onclick="confirmTaskScheduleSheet()" style="flex:1; padding:12px; border:none; border-radius:10px; background:#111827; color:#fff; font-size:15px; font-weight:600;">Save</button>
     <button type="button" onclick="closeTaskScheduleSheet()" style="flex:1; padding:12px; border:1px solid #d1d5db; border-radius:10px; background:#fff; color:#6b7280; font-size:15px;">Cancel</button>
@@ -459,38 +484,38 @@
 <div id="task-create-backdrop" aria-hidden="true" onclick="toggleTaskCreateForm(false)" style="position:fixed;inset:0;background:rgba(0,0,0,0.2);z-index:4190;"></div>
 <div id="task-create-sheet" aria-hidden="true" onclick="event.stopPropagation()" style="position:fixed; bottom:0; left:0; right:0; background:#fff; border-radius:20px 20px 0 0; box-shadow:0 -4px 24px rgba(0,0,0,0.1); z-index:4200; max-height:calc(100dvh - 10px); min-height:min(340px, calc(100dvh - 10px)); overflow:hidden; flex-direction:column;">
   <div class="quick-add-scroll" style="padding:20px 20px 0; overflow-y:auto; flex:1; -webkit-overflow-scrolling:touch;">
-    <p style="font-size:16px; font-weight:600; color:#111827; margin:0 0 16px;" id="task-create-sheet-title">Add task</p>
+    <p style="font-size:16px; font-weight:600; color:#111827; margin:0 0 16px;" id="task-create-sheet-title">Ajouter une tâche</p>
     <div class="quick-add-input-stack">
-      <input id="task-create-title" type="text" placeholder="Task title" style="padding:12px; border:1.5px solid #e5e7eb; border-radius:10px; font-size:15px;" />
+      <input id="task-create-title" type="text" placeholder="Titre de la tâche" style="padding:12px; border:1.5px solid #e5e7eb; border-radius:10px; font-size:15px;" />
       <select id="task-create-batch" style="padding:12px; border:1.5px solid #e5e7eb; border-radius:10px; font-size:15px; background:#fff;">
-        <option value="">No linked batch</option>
+        <option value="">Aucun brassin lié</option>
       </select>
     </div>
-    <p class="task-create-meta" style="margin-top:10px;">Tasks are canonical and appear in Agenda when scheduled.</p>
+    <p class="task-create-meta" style="margin-top:10px;">Les tâches sont centrales et apparaissent dans l'agenda quand elles sont planifiées.</p>
     <div style="height:12px;"></div>
   </div>
   <div style="display:flex; gap:8px; padding:12px 20px calc(var(--bottom-nav-height) + var(--safe-bottom-space) + 12px); border-top:1px solid #eef0f2; background:#fff;">
     <button onclick="cancelTaskCreateOrEdit()" style="flex:1; padding:12px; border-radius:10px; border:1.5px solid #e5e7eb; background:#fff; color:#6b7280; font-size:15px; cursor:pointer;">Cancel</button>
-    <button id="task-create-save-btn" onclick="saveTaskFromTasksScreen()" style="flex:1; padding:12px; border-radius:10px; border:none; background:#111827; color:#fff; font-size:15px; font-weight:600; cursor:pointer;">Save Task</button>
+    <button id="task-create-save-btn" onclick="saveTaskFromTasksScreen()" style="flex:1; padding:12px; border-radius:10px; border:none; background:#111827; color:#fff; font-size:15px; font-weight:600; cursor:pointer;">Enregistrer la tâche</button>
   </div>
 </div>
 
-<div id="screen-financial" style="display:none; flex-direction:column; background:#fff;">
+<div id="screen-financial" style="display:none; flex-direction:column; background:#fff; padding-bottom:var(--content-bottom-padding);">
 
   <!-- Header -->
   <div class="main-tab-header" style="position:sticky; top:0; background:#fff; z-index:10;">
-    <p class="main-tab-title" id="fin-page-title">Financial</p>
+    <p class="main-tab-title" id="fin-page-title">Finances</p>
     <button class="fab-btn" onclick="handleMainTabFab('financial')" aria-label="Add in finances" title="Add">+</button>
   </div>
 
   <!-- Period filter -->
-  <div style="padding:12px 20px 0; display:flex; gap:0;">
+  <div class="segmented-control" style="padding-top:12px;">
     <button onclick="setFinPeriod('today')" id="fin-tab-today"
-      style="flex:1; padding:8px; border:1.5px solid #e5e7eb; border-radius:10px 0 0 10px; background:#111827; color:#fff; font-size:14px; font-weight:500; cursor:pointer;">Today</button>
+      class="segmented-btn active">Aujourd'hui</button>
     <button onclick="setFinPeriod('week')" id="fin-tab-week"
-      style="flex:1; padding:8px; border:1.5px solid #e5e7eb; border-left:none; border-radius:0; background:#fff; color:#6b7280; font-size:14px; font-weight:500; cursor:pointer;">Week</button>
+      class="segmented-btn">Semaine</button>
     <button onclick="setFinPeriod('month')" id="fin-tab-month"
-      style="flex:1; padding:8px; border:1.5px solid #e5e7eb; border-left:none; border-radius:0 10px 10px 0; background:#fff; color:#6b7280; font-size:14px; font-weight:500; cursor:pointer;">Month</button>
+      class="segmented-btn">Mois</button>
   </div>
 
   <!-- 1. Today -->
@@ -652,8 +677,8 @@
 
 <!-- BATCH LIST -->
 <div id="screen-batches" class="screen">
-  <div style="display:flex; justify-content:space-between; align-items:center; gap:12px;">
-    <div class="section-title" id="batch-screen-title" style="margin-bottom:0;">All Batches</div>
+  <div class="main-tab-header" style="padding:0;">
+    <p class="main-tab-title" id="batch-screen-title">Brassins</p>
     <button class="fab-btn" onclick="handleMainTabFab('batches')" aria-label="Add in batches" title="Add">+</button>
   </div>
   <div id="batch-list"><div class="loading"><div class="spinner"></div></div></div>
@@ -666,7 +691,9 @@
 
 <!-- BREW DAY -->
 <div id="screen-brew" class="screen">
-  <div class="section-title" id="brew-screen-title">Brew Day Log</div>
+  <div class="main-tab-header" style="padding:0;">
+    <p class="main-tab-title" id="brew-screen-title">Journal de brassage</p>
+  </div>
   <div class="detail-section">
     <h3 id="brew-select-label">Select Batch</h3>
     <div class="field-group">
@@ -680,15 +707,15 @@
 
 <!-- TASKS -->
 <div id="screen-tasks" class="screen">
-  <div style="display:flex;justify-content:space-between;align-items:center;gap:12px;">
-    <div class="section-title" id="task-screen-title" style="margin-bottom:0;">Open Tasks</div>
+  <div class="main-tab-header" style="padding:0;">
+    <p class="main-tab-title" id="task-screen-title">Tâches</p>
     <button id="task-add-fab" class="fab-btn" onclick="handleMainTabFab('tasks')" aria-label="Add task" title="Add task">+</button>
   </div>
   <div class="segmented-control">
-    <button id="task-filter-all" class="segmented-btn active" onclick="setTaskDueFilter('all')">All</button>
-    <button id="task-filter-today" class="segmented-btn" onclick="setTaskDueFilter('today')">Today</button>
-    <button id="task-filter-upcoming" class="segmented-btn" onclick="setTaskDueFilter('upcoming')">Upcoming</button>
-    <button id="task-filter-overdue" class="segmented-btn" onclick="setTaskDueFilter('overdue')">Overdue</button>
+    <button id="task-filter-all" class="segmented-btn active" onclick="setTaskDueFilter('all')">Toutes</button>
+    <button id="task-filter-today" class="segmented-btn" onclick="setTaskDueFilter('today')">Aujourd'hui</button>
+    <button id="task-filter-upcoming" class="segmented-btn" onclick="setTaskDueFilter('upcoming')">À venir</button>
+    <button id="task-filter-overdue" class="segmented-btn" onclick="setTaskDueFilter('overdue')">En retard</button>
   </div>
   <div id="task-list"><div class="loading"><div class="spinner"></div></div></div>
 </div>
@@ -802,6 +829,24 @@ const TRANSLATIONS = {
     'task.no_due_date': 'Sans date limite',
     'task.unnamed': 'Sans titre',
     'task.normal_priority': 'Normal',
+    'task.filter_all': 'Toutes',
+    'task.filter_today': "Aujourd'hui",
+    'task.filter_upcoming': 'À venir',
+    'task.filter_overdue': 'En retard',
+    'task.add': 'Ajouter une tâche',
+    'task.title_placeholder': 'Titre de la tâche',
+    'task.no_linked_batch': 'Aucun brassin lié',
+    'task.save': 'Enregistrer la tâche',
+    'task.save_changes': 'Enregistrer les modifications',
+    'task.schedule_updated': 'Planification de la tâche mise à jour',
+    'task.schedule_update_error': 'Impossible de mettre à jour la planification',
+    'task.archived': 'Tâche archivée',
+    'task.archive_error': "Impossible d'archiver la tâche",
+    'task.delete_confirm': 'Supprimer cette tâche ?',
+    'task.deleted': 'Tâche supprimée',
+    'task.delete_error': 'Impossible de supprimer la tâche',
+    'task.status_error': "Impossible de mettre à jour le statut de la tâche",
+    'task.no_linked_batch_toast': 'Aucun brassin lié à cette tâche',
     'issues.title': 'Signalements',
     'issues.coming_soon': 'Signalement en cours de développement.',
     'brew.log_title': 'Journal de brassage',
@@ -811,6 +856,8 @@ const TRANSLATIONS = {
     'agenda.save': 'Enregistrer',
     'agenda.title_placeholder': 'Titre',
     'agenda.today': "Aujourd'hui",
+    'agenda.month': 'Mois',
+    'agenda.set_date_time': 'Définir date / heure',
     'guidance.helper': 'Appuyez sur une carte pour accéder directement à cette étape.',
     'status.planned': 'Planifié',
     'status.brewing': 'En brassage',
@@ -1058,6 +1105,24 @@ const TRANSLATIONS = {
     'task.no_due_date': 'No due date',
     'task.unnamed': 'Unnamed',
     'task.normal_priority': 'Normal',
+    'task.filter_all': 'All',
+    'task.filter_today': 'Today',
+    'task.filter_upcoming': 'Upcoming',
+    'task.filter_overdue': 'Overdue',
+    'task.add': 'Add task',
+    'task.title_placeholder': 'Task title',
+    'task.no_linked_batch': 'No linked batch',
+    'task.save': 'Save task',
+    'task.save_changes': 'Save changes',
+    'task.schedule_updated': 'Task schedule updated',
+    'task.schedule_update_error': 'Could not update task schedule',
+    'task.archived': 'Task archived',
+    'task.archive_error': 'Could not archive task',
+    'task.delete_confirm': 'Delete this task?',
+    'task.deleted': 'Task deleted',
+    'task.delete_error': 'Could not delete task',
+    'task.status_error': 'Could not update task status',
+    'task.no_linked_batch_toast': 'No linked batch for this task',
     'issues.title': 'Issues',
     'issues.coming_soon': 'Issue logging coming soon.',
     'brew.log_title': 'Brew Day Log',
@@ -1067,6 +1132,8 @@ const TRANSLATIONS = {
     'agenda.save': 'Save',
     'agenda.title_placeholder': 'Title',
     'agenda.today': 'Today',
+    'agenda.month': 'Month',
+    'agenda.set_date_time': 'Set date / time',
     'guidance.helper': 'Tap any card to go directly to that step.',
     'status.planned': 'Planned',
     'status.brewing': 'Brewing',
@@ -1220,7 +1287,7 @@ const TRANSLATIONS = {
 // ─── LANGUAGE PERSISTENCE ────────────────────────────────────────────────────
 const LANGUAGE_STORAGE_KEY = 'brewos_language';
 const LANGUAGE_OPTIONS = ['fr', 'nl', 'en', 'de'];
-const DEFAULT_LANGUAGE = 'en';
+const DEFAULT_LANGUAGE = 'fr';
 
 function getAccountLanguagePreference() {
   return null; // Future hook only
@@ -1938,7 +2005,7 @@ function hydrateTaskCreateBatchOptions() {
   const select = document.getElementById('task-create-batch');
   if (!select) return;
   const currentValue = select.value;
-  const options = ['<option value="">No linked batch</option>']
+  const options = [`<option value="">${escapeHtml(t('task.no_linked_batch'))}</option>`]
     .concat(cachedTaskBatchRecords.map((record) => `<option value="${record.id}">${escapeHtml(resolveBatchLabel(record))}</option>`));
   select.innerHTML = options.join('');
   if (currentValue) select.value = currentValue;
@@ -1960,10 +2027,10 @@ function toggleTaskCreateForm(forceOpen) {
     if (input) input.value = '';
     const batchSelect = document.getElementById('task-create-batch');
     if (batchSelect) batchSelect.value = '';
-    if (saveBtn) saveBtn.textContent = 'Save Task';
+    if (saveBtn) saveBtn.textContent = t('task.save');
     return;
   }
-  if (saveBtn) saveBtn.textContent = taskEditState.taskId ? 'Save Changes' : 'Save Task';
+  if (saveBtn) saveBtn.textContent = taskEditState.taskId ? t('task.save_changes') : t('task.save');
   hydrateTaskCreateBatchOptions();
   setTimeout(() => { if (input) input.focus(); }, 0);
 }
@@ -2883,13 +2950,13 @@ async function loadTasks() {
           </div>
           <div class="task-card-actions">
             <span class="badge indicator-pill ${pillClassFromPriority(p || 'Normal')}" aria-label="${displayStatus(p || 'Normal')}"></span>
-            <button type="button" class="task-menu-trigger" aria-label="Task actions" onclick="toggleTaskActionMenu(event,'${r.id}')">⋮</button>
+            <button type="button" class="task-menu-trigger" aria-label="Actions tâche" onclick="toggleTaskActionMenu(event,'${r.id}')">⋮</button>
             <div id="task-menu-${r.id}" class="task-card-menu" onclick="event.stopPropagation()" style="display:none;">
-              <button type="button" onclick="startTaskEdit(event,'${r.id}')">Edit</button>
-              <button type="button" data-toggle-task-id="${r.id}" onclick="toggleTaskCompletionFromMenu(event,'${r.id}',${isDone})">${isDone ? 'Reopen' : 'Done'}</button>
-              <button type="button" onclick="openTaskSetDateInline(event,'${r.id}')">Set date / time</button>
-              <button type="button" onclick="archiveTask(event,'${r.id}')">Archive</button>
-              <button type="button" onclick="deleteTask(event,'${r.id}')">Delete</button>
+              <button type="button" onclick="startTaskEdit(event,'${r.id}')">Modifier</button>
+              <button type="button" data-toggle-task-id="${r.id}" onclick="toggleTaskCompletionFromMenu(event,'${r.id}',${isDone})">${isDone ? 'Rouvrir' : 'Terminer'}</button>
+              <button type="button" onclick="openTaskSetDateInline(event,'${r.id}')">Définir date / heure</button>
+              <button type="button" onclick="archiveTask(event,'${r.id}')">Archiver</button>
+              <button type="button" onclick="deleteTask(event,'${r.id}')">Supprimer</button>
             </div>
           </div>
         </div>
@@ -3003,10 +3070,10 @@ async function confirmTaskScheduleSheet() {
     await loadAgendaFromAirtable();
     renderAgendaWeek();
     renderAgendaMonth();
-    toast('Task schedule updated');
+    toast(t('task.schedule_updated'));
   } catch (error) {
     console.warn('Task schedule update failed:', error);
-    toast('Could not update task schedule');
+    toast(t('task.schedule_update_error'));
   }
 }
 
@@ -3032,10 +3099,10 @@ async function archiveTask(event, taskId) {
     await loadTasks();
     renderWhatsNext();
     loadAgendaFromAirtable();
-    toast('Task archived');
+    toast(t('task.archived'));
   } catch (error) {
     console.warn('Task archive failed:', error);
-    toast('Could not archive task');
+    toast(t('task.archive_error'));
   }
 }
 
@@ -3045,7 +3112,7 @@ async function deleteTask(event, taskId) {
     event.stopPropagation();
   }
   closeTaskActionMenus();
-  const shouldDelete = window.confirm('Delete this task?');
+  const shouldDelete = window.confirm(t('task.delete_confirm'));
   if (!shouldDelete) return;
   const payload = { 'Is Deleted': true };
   console.log('TASK DELETE PATCH PAYLOAD', { taskId, payload });
@@ -3054,10 +3121,10 @@ async function deleteTask(event, taskId) {
     await loadTasks();
     renderWhatsNext();
     loadAgendaFromAirtable();
-    toast('Task deleted');
+    toast(t('task.deleted'));
   } catch (error) {
     console.warn('Task delete failed:', error);
-    toast('Could not delete task');
+    toast(t('task.delete_error'));
   }
 }
 
@@ -3067,7 +3134,7 @@ function toggleTaskCardUI(taskId, nextIsDone) {
   if (!card || !btn) return;
   card.dataset.done = nextIsDone ? '1' : '0';
   card.classList.toggle('is-done', nextIsDone);
-  btn.textContent = nextIsDone ? 'Reopen' : 'Done';
+  btn.textContent = nextIsDone ? 'Rouvrir' : 'Terminer';
 }
 
 async function patchTaskStatusWithFallback(taskId, markDone) {
@@ -3109,7 +3176,7 @@ async function toggleTaskCompletion(event, taskId, isDone) {
   } catch (error) {
     toggleTaskCardUI(taskId, isDone);
     console.warn('Task status toggle failed:', error);
-    toast('Could not update task status');
+    toast(t('task.status_error'));
   }
 }
 
@@ -3139,7 +3206,7 @@ async function openTaskContext(taskId, batchId, brewLogId) {
       return;
     }
   }
-  toast('No linked batch for this task');
+  toast(t('task.no_linked_batch_toast'));
 }
 
 function showScreen(id) {
@@ -3309,6 +3376,7 @@ function applyTranslations() {
     'agenda-title-label': 'agenda.title',
     'agenda-tab-day':     'agenda.day',
     'agenda-tab-week':    'agenda.week',
+    'agenda-tab-month':   'agenda.month',
     'quick-add-title':    'agenda.add',
     'qtype-task':         'agenda.task',
     'qtype-note':         'agenda.note',
@@ -3316,6 +3384,7 @@ function applyTranslations() {
     'quick-add-cancel':   'agenda.cancel',
     'quick-add-save':     'agenda.save',
     'agenda-today-pill':  'agenda.today',
+    'agenda-action-set-date': 'agenda.set_date_time',
   };
   Object.entries(agendaMap).forEach(([id, key]) => {
     const el = document.getElementById(id);
@@ -3345,6 +3414,22 @@ function applyTranslations() {
   // Home guidance helper
   const ghEl = document.getElementById('guidance-helper-text');
   if (ghEl) ghEl.textContent = t('guidance.helper');
+
+  const taskMap = {
+    'task-screen-title': 'task.open_tasks',
+    'task-filter-all': 'task.filter_all',
+    'task-filter-today': 'task.filter_today',
+    'task-filter-upcoming': 'task.filter_upcoming',
+    'task-filter-overdue': 'task.filter_overdue',
+    'task-create-sheet-title': 'task.add',
+    'task-create-save-btn': 'task.save',
+  };
+  Object.entries(taskMap).forEach(([id, key]) => {
+    const el = document.getElementById(id);
+    if (el) el.textContent = t(key);
+  });
+  const taskTitleInput = document.getElementById('task-create-title');
+  if (taskTitleInput) taskTitleInput.placeholder = t('task.title_placeholder');
 }
 
 function startDemo() {
@@ -3708,11 +3793,11 @@ function renderAgendaForSelectedDay() {
   }
   html += `
     <div style="padding-top:${(timedDayItems.length > 0 || untimedDayItems.length > 0) ? '14px' : '8px'};">
-      <p style="font-size:12px;font-weight:600;color:#6b7280;margin:0 0 6px;">No date</p>
+      <p style="font-size:12px;font-weight:600;color:#6b7280;margin:0 0 6px;">Sans date</p>
     </div>`;
   html += undated.length > 0
     ? renderAgendaItemsListHtml(undated)
-    : `<div style="color:#9e9e9e;font-size:13px;padding:2px 0 6px;">No undated items.</div>`;
+    : `<div style="color:#9e9e9e;font-size:13px;padding:2px 0 6px;">Aucun élément sans date.</div>`;
   if (timedDayItems.length === 0 && untimedDayItems.length === 0 && undated.length === 0) {
     html += `<div style="color:#9e9e9e;font-size:13px;padding:8px 0;">Nothing scheduled for this day.</div>`;
   }
@@ -4216,9 +4301,9 @@ function switchAgendaView(view) {
   const dayList = document.getElementById('agenda-list');
   const weekGrid = document.getElementById('agenda-week-view');
   const monthView = document.getElementById('agenda-month-view');
-  if (dayTab)  { dayTab.style.background = view === 'day' ? '#111827' : '#fff'; dayTab.style.color = view === 'day' ? '#fff' : '#6b7280'; }
-  if (weekTab) { weekTab.style.background = view === 'week' ? '#111827' : '#fff'; weekTab.style.color = view === 'week' ? '#fff' : '#6b7280'; }
-  if (monthTab) { monthTab.style.background = view === 'month' ? '#111827' : '#fff'; monthTab.style.color = view === 'month' ? '#fff' : '#6b7280'; }
+  if (dayTab) dayTab.classList.toggle('active', view === 'day');
+  if (weekTab) weekTab.classList.toggle('active', view === 'week');
+  if (monthTab) monthTab.classList.toggle('active', view === 'month');
 
   if (view === 'day') {
     if (dayList)  dayList.style.display = 'block';
@@ -4354,8 +4439,8 @@ function renderAgendaWeek() {
   section.id = 'agenda-week-undated';
   section.style.marginTop = '16px';
   section.innerHTML = `
-    <p style="font-size:12px;font-weight:600;color:#6b7280;margin:0 0 6px;">No date</p>
-    ${undated.length > 0 ? renderAgendaItemsListHtml(undated) : `<div style="color:#9e9e9e;font-size:13px;padding:4px 0;">No undated items.</div>`}
+    <p style="font-size:12px;font-weight:600;color:#6b7280;margin:0 0 6px;">Sans date</p>
+    ${undated.length > 0 ? renderAgendaItemsListHtml(undated) : `<div style="color:#9e9e9e;font-size:13px;padding:4px 0;">Aucun élément sans date.</div>`}
   `;
   weekView.appendChild(section);
 }
@@ -4413,7 +4498,7 @@ function renderAgendaMonth() {
   });
   html += `</div>`;
   const undated = getUndatedAgendaItems(Array.isArray(window._agendaCache) ? window._agendaCache : []).sort((a, b) => a.positionIndex - b.positionIndex);
-  html += `<div style="margin-top:14px;"><p style="font-size:12px;font-weight:600;color:#6b7280;margin:0 0 6px;">No date</p>${undated.length ? renderAgendaItemsListHtml(undated) : `<div style="color:#9e9e9e;font-size:13px;padding:4px 0;">No undated items.</div>`}</div>`;
+  html += `<div style="margin-top:14px;"><p style="font-size:12px;font-weight:600;color:#6b7280;margin:0 0 6px;">Sans date</p>${undated.length ? renderAgendaItemsListHtml(undated) : `<div style="color:#9e9e9e;font-size:13px;padding:4px 0;">Aucun élément sans date.</div>`}</div>`;
   monthRoot.innerHTML = html;
 }
 
@@ -4436,7 +4521,7 @@ function openAgendaItemActions(itemId = '') {
   if (!item) return;
   agendaActionItemId = itemId;
   const toggleBtn = document.getElementById('agenda-action-toggle-done');
-  if (toggleBtn) toggleBtn.textContent = item.isCompleted ? 'Reopen' : 'Mark done';
+  if (toggleBtn) toggleBtn.textContent = item.isCompleted ? 'Rouvrir' : 'Marquer terminé';
   const panel = document.getElementById('agenda-item-actions');
   const backdrop = document.getElementById('agenda-actions-backdrop');
   if (backdrop) backdrop.style.display = 'block';
@@ -4788,8 +4873,7 @@ function setFinPeriod(period) {
   ['today','week','month'].forEach(p => {
     const btn = document.getElementById('fin-tab-' + p);
     if (!btn) return;
-    btn.style.background = p === period ? '#111827' : '#fff';
-    btn.style.color = p === period ? '#fff' : '#6b7280';
+    btn.classList.toggle('active', p === period);
   });
   renderFinancialPage();
   loadFinancialFromAirtable();
