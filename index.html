@@ -85,7 +85,7 @@
     --safe-right-space: env(safe-area-inset-right, 0px);
     --safe-bottom-space: env(safe-area-inset-bottom, 0px);
     --safe-left-space: env(safe-area-inset-left, 0px);
-    --content-bottom-padding: calc(var(--bottom-nav-height) + var(--safe-bottom-space));
+    --content-bottom-padding: calc(56px + env(safe-area-inset-bottom));
     --fab-size: 52px;
     --fab-clearance: calc(var(--fab-size) + 24px);
   }
@@ -210,7 +210,7 @@
   @keyframes spin { to { transform: rotate(360deg); } }
   .toast { position: fixed; bottom: 24px; left: 50%; transform: translateX(-50%); background: #1e293b; color: white; padding: 12px 20px; border-radius: 10px; font-size: 14px; font-weight: 500; z-index: 999; opacity: 0; transition: opacity 0.3s; pointer-events: none; white-space: nowrap; }
   .toast.show { opacity: 1; }
-  .bottom-nav { position: fixed; left: 0; right: 0; bottom: 0; box-sizing: border-box; height: calc(var(--bottom-nav-height) + var(--safe-bottom-space)); padding: 8px calc(4px + var(--safe-right-space)) var(--safe-bottom-space) calc(4px + var(--safe-left-space)); background: #fff; border-top: 1px solid #e5e7eb; display: flex; align-items: center; z-index: 3000; transform: translateZ(0); }
+  .bottom-nav { position: fixed; left: 0; right: 0; bottom: 0; box-sizing: border-box; height: calc(56px + env(safe-area-inset-bottom)); padding: 6px calc(4px + env(safe-area-inset-right)) env(safe-area-inset-bottom) calc(4px + env(safe-area-inset-left)); background: #fff; border-top: 1px solid #e5e7eb; display: flex; align-items: center; z-index: 3000; transform: translateZ(0); }
   .bottom-nav-item { flex: 1; min-width: 0; background: none; border: none; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 5px; cursor: pointer; color: #6b7280; padding: 0 2px; }
   .bottom-nav-icon { width: 20px; height: 20px; display: flex; align-items: center; justify-content: center; color: currentColor; }
   .bottom-nav-label { width: 100%; max-width: 68px; text-align: center; font-size: 11px; line-height: 1.15; font-weight: 500; min-height: 24px; text-wrap: balance; overflow-wrap: anywhere; }
