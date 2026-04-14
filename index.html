@@ -58,17 +58,20 @@
 
     --radius: 16px; --shadow: 0 1px 2px rgba(0,0,0,0.05);
     --bottom-nav-height: 56px;
+    --safe-top-space: env(safe-area-inset-top, 0px);
+    --safe-right-space: env(safe-area-inset-right, 0px);
     --safe-bottom-space: env(safe-area-inset-bottom, 0px);
+    --safe-left-space: env(safe-area-inset-left, 0px);
     --content-bottom-padding: calc(var(--bottom-nav-height) + var(--safe-bottom-space) + 16px);
     --fab-size: 52px;
     --fab-clearance: calc(var(--fab-size) + 24px);
   }
   html, body { height: 100%; overflow-x: hidden; }
-  body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; background: var(--bg); color: var(--text); min-height: 100%; padding-bottom: var(--content-bottom-padding); }
+  body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; background: var(--bg); color: var(--text); min-height: 100%; padding: var(--safe-top-space) var(--safe-right-space) var(--content-bottom-padding) var(--safe-left-space); }
   .nav { background: var(--card); border-bottom: 1px solid var(--border); padding: 16px 20px; display: flex; align-items: center; justify-content: space-between; position: sticky; top: 0; z-index: 100; }
   .nav-title { font-size: 17px; font-weight: 600; color: var(--ink-900); letter-spacing: -0.01em; }
   .nav-back { font-size: 15px; color: var(--gray-500); cursor: pointer; display: flex; align-items: center; gap: 4px; }
-  .screen { display: none; flex-direction: column; width: 100%; max-width: 100%; padding: 24px 24px 20px; padding-bottom: var(--content-bottom-padding); gap: 28px; }
+  .screen { display: none; flex-direction: column; width: 100%; max-width: 100%; padding: 18px 20px 20px; padding-bottom: var(--content-bottom-padding); gap: 24px; }
   .screen.active { display: flex; }
   /* ── Home layout ── */
   .home-header { display: flex; justify-content: space-between; align-items: center; width: 100%; }
@@ -183,7 +186,7 @@
   @keyframes spin { to { transform: rotate(360deg); } }
   .toast { position: fixed; bottom: 24px; left: 50%; transform: translateX(-50%); background: #1e293b; color: white; padding: 12px 20px; border-radius: 10px; font-size: 14px; font-weight: 500; z-index: 999; opacity: 0; transition: opacity 0.3s; pointer-events: none; white-space: nowrap; }
   .toast.show { opacity: 1; }
-  .bottom-nav { position: fixed; inset: auto 0 0 0; height: calc(var(--bottom-nav-height) + var(--safe-bottom-space)); background: #fff; border-top: 1px solid #e5e7eb; display: flex; align-items: flex-start; padding: 6px 4px var(--safe-bottom-space); z-index: 3000; transform: translateZ(0); }
+  .bottom-nav { position: fixed; inset: auto 0 0 0; height: calc(var(--bottom-nav-height) + var(--safe-bottom-space)); background: #fff; border-top: 1px solid #e5e7eb; display: flex; align-items: flex-start; padding: 6px calc(4px + var(--safe-right-space)) var(--safe-bottom-space) calc(4px + var(--safe-left-space)); z-index: 3000; transform: translateZ(0); }
   .bottom-nav-item { flex: 1; min-width: 0; background: none; border: none; display: flex; flex-direction: column; align-items: center; justify-content: flex-start; gap: 5px; cursor: pointer; color: #6b7280; padding: 0 2px; }
   .bottom-nav-icon { width: 20px; height: 20px; display: flex; align-items: center; justify-content: center; color: currentColor; }
   .bottom-nav-label { width: 100%; max-width: 68px; text-align: center; font-size: 11px; line-height: 1.15; font-weight: 500; min-height: 24px; text-wrap: balance; overflow-wrap: anywhere; }
@@ -191,6 +194,13 @@
   .color-tip-head { display: flex; justify-content: space-between; align-items: center; gap: 10px; }
   .color-tip-title { font-size: 12px; font-weight: 700; color: #111827; margin: 0; }
   .color-tip-line { font-size: 12px; color: #6b7280; line-height: 1.35; margin: 0; }
+
+  .fab-btn { position:fixed; bottom:calc(var(--bottom-nav-height) + var(--safe-bottom-space) + 16px); right:calc(20px + var(--safe-right-space)); width:var(--fab-size); height:var(--fab-size); border-radius:50%; background:#111827; color:#fff; font-size:24px; border:none; cursor:pointer; box-shadow:0 4px 12px rgba(0,0,0,0.15); z-index:550; transition:opacity 0.18s ease, transform 0.18s ease; }
+  #task-add-fab { display:none; }
+  #task-schedule-backdrop { z-index:4090 !important; }
+  #task-schedule-sheet { z-index:4100 !important; left: calc(12px + var(--safe-left-space)) !important; right: calc(12px + var(--safe-right-space)) !important; }
+  #agenda-item-actions { left: calc(12px + var(--safe-left-space)); right: calc(12px + var(--safe-right-space)); }
+
   .quick-add-open #quick-add-fab { opacity: 0; pointer-events: none; transform: scale(0.92); }
   .quick-add-open #quick-add-sheet { display: flex !important; }
   #quick-add-sheet,
@@ -380,7 +390,7 @@
   </div>
 
   <!-- FAB add button -->
-  <button id="quick-add-fab" onclick="openQuickAdd()" style="position:fixed; bottom:calc(var(--bottom-nav-height) + var(--safe-bottom-space) + 16px); right:20px; width:var(--fab-size); height:var(--fab-size); border-radius:50%; background:#111827; color:#fff; font-size:24px; border:none; cursor:pointer; box-shadow:0 4px 12px rgba(0,0,0,0.15); z-index:550; transition:opacity 0.18s ease, transform 0.18s ease;">+</button>
+  <button id="quick-add-fab" class="fab-btn" onclick="openQuickAdd()">+</button>
 
   <!-- Quick add sheet -->
   <div id="quick-add-sheet" style="display:none; position:fixed; bottom:0; left:0; right:0; background:#fff; border-radius:20px 20px 0 0; box-shadow:0 -4px 24px rgba(0,0,0,0.1); z-index:4200; max-height:calc(100dvh - 10px); min-height:min(340px, calc(100dvh - 10px)); overflow:hidden; flex-direction:column;">
@@ -637,7 +647,7 @@
 <div id="screen-tasks" class="screen">
   <div style="display:flex;justify-content:space-between;align-items:center;gap:12px;">
     <div class="section-title" id="task-screen-title" style="margin-bottom:0;">Open Tasks</div>
-    <button class="btn" aria-label="Add task" title="Add task" style="width:36px;min-width:36px;height:36px;min-height:36px;padding:0;margin:0;border-radius:999px;display:inline-flex;align-items:center;justify-content:center;font-size:22px;line-height:1;background:#111827;color:#fff;border:none;box-shadow:0 2px 8px rgba(0,0,0,0.12);" onclick="toggleTaskCreateForm(true)">+</button>
+
   </div>
   <div class="task-filter-tabs">
     <button id="task-filter-all" class="task-filter-tab active" onclick="setTaskDueFilter('all')">All</button>
@@ -658,6 +668,7 @@
   </div>
   <div id="task-list"><div class="loading"><div class="spinner"></div></div></div>
 </div>
+<button id="task-add-fab" class="fab-btn" onclick="toggleTaskCreateForm(true)" aria-label="Add task" title="Add task">+</button>
 
 <!-- ISSUES -->
 <div id="screen-issues" class="screen">
@@ -2801,7 +2812,7 @@ async function loadTasks() {
           <div class="task-card-actions">
             <span class="badge indicator-pill ${pillClassFromPriority(p || 'Normal')}" aria-label="${displayStatus(p || 'Normal')}"></span>
             <button class="task-menu-trigger" aria-label="Task actions" onclick="toggleTaskActionMenu(event,'${r.id}')">⋮</button>
-            <div id="task-menu-${r.id}" class="task-card-menu" style="display:none;">
+            <div id="task-menu-${r.id}" class="task-card-menu" onclick="event.stopPropagation()" style="display:none;">
               <button onclick="startTaskEdit(event,'${r.id}')">Edit</button>
               <button data-toggle-task-id="${r.id}" onclick="toggleTaskCompletionFromMenu(event,'${r.id}',${isDone})">${isDone ? 'Reopen' : 'Done'}</button>
               <button onclick="openTaskSetDateInline(event,'${r.id}')">Set date / time</button>
@@ -2842,13 +2853,19 @@ function toggleTaskActionMenu(event, taskId) {
 }
 
 function openTaskSetDateInline(event, taskId) {
-  if (event) {
-    event.preventDefault();
-    event.stopPropagation();
+  const evt = event || window.event;
+  if (evt) {
+    evt.preventDefault();
+    evt.stopPropagation();
   }
+  const sheet = document.getElementById('task-schedule-sheet');
+  const backdrop = document.getElementById('task-schedule-backdrop');
   const dateInput = document.getElementById('task-schedule-date-input');
   const timeInput = document.getElementById('task-schedule-time-input');
-  if (!dateInput || !timeInput) return;
+  if (!sheet || !backdrop || !dateInput || !timeInput) {
+    console.warn('Task schedule sheet is missing required DOM nodes');
+    return;
+  }
   const scheduledTime = (window._taskScheduleCache && window._taskScheduleCache[taskId]) || '';
   const scheduledDate = scheduledTime ? scheduledItemToDate(scheduledTime) : null;
   const scheduledKey = scheduledDate ? localDateKey(scheduledDate) : '';
@@ -2866,17 +2883,16 @@ function openTaskSetDateInline(event, taskId) {
   }
   taskScheduleTaskId = taskId;
   closeTaskActionMenus();
-  const sheet = document.getElementById('task-schedule-sheet');
-  const backdrop = document.getElementById('task-schedule-backdrop');
-  if (backdrop) backdrop.style.display = 'block';
-  if (sheet) sheet.style.display = 'block';
+  backdrop.style.display = 'block';
+  sheet.style.display = 'block';
+  sheet.setAttribute('data-open', '1');
 }
 
 function closeTaskScheduleSheet() {
   const sheet = document.getElementById('task-schedule-sheet');
   const backdrop = document.getElementById('task-schedule-backdrop');
   if (backdrop) backdrop.style.display = 'none';
-  if (sheet) sheet.style.display = 'none';
+  if (sheet) { sheet.style.display = 'none'; sheet.removeAttribute('data-open'); }
   taskScheduleTaskId = '';
 }
 
@@ -3090,6 +3106,8 @@ function showScreen(id) {
     switchAgendaView(agendaView);
     loadAgendaFromAirtable();
   }
+  const taskFab = document.getElementById('task-add-fab');
+  if (taskFab) taskFab.style.display = id === 'screen-tasks' ? 'block' : 'none';
   if (id === 'screen-tasks') { loadTasks(); }
   if (id === 'screen-financial') { renderFinancialPage(); loadFinancialFromAirtable(); }
   if (id === 'screen-settings') { initSettings(); populateSettingsLanguageValue(); }
@@ -3514,12 +3532,8 @@ function renderFinancialFromCache() {
 }
 
 async function fetchAgendaItems() {
-  const fields = [
-    'Task', 'Scheduled Time', 'Due Date', 'Status', 'Source',
-    'Linked Batch', 'Linked Brew Log', 'Is Archived', 'Is Deleted'
-  ].map((f) => `fields[]=${encodeURIComponent(f)}`).join('&');
   const formula = encodeURIComponent(activeTaskFilterFormula());
-  const query = `?${fields}&filterByFormula=${formula}&maxRecords=200&sort[0][field]=Scheduled Time&sort[0][direction]=asc`;
+  const query = `?filterByFormula=${formula}&maxRecords=200&sort[0][field]=Scheduled Time&sort[0][direction]=asc`;
   const data = await airtable(TABLES.tasks, query);
   if (data.error) throw new Error(`Airtable tasks ${data.error.type || 'error'}`);
 
@@ -3780,19 +3794,11 @@ async function renderWhatsNext() {
   container.innerHTML = `<div style="color:#9ca3af;font-size:13px;padding:12px 0;">Loading…</div>`;
 
   try {
-    const table = 'tblxyLhvY6wyWogqq';
-
-    const fields = [
-      'Task', 'Due Date', 'Priority', 'Status',
-      'Suggestion Type', 'Suggestion Reason', 'Relevance Score',
-      'Source', 'Linked Batch', 'Linked Brew Log', 'Type'
-    ].map(f => `fields[]=${encodeURIComponent(f)}`).join('&');
-
     const formula = encodeURIComponent(
       `AND(${activeTaskFilterFormula()}, NOT({Status}='Done'), NOT({Status}='Completed'))`
     );
 
-    const data = await airtable(table, `?${fields}&filterByFormula=${formula}&maxRecords=20`);
+    const data = await airtable(TABLES.tasks, `?filterByFormula=${formula}&maxRecords=20&sort[0][field]=Priority&sort[0][direction]=desc`);
     if (data.error) throw new Error(`Airtable ${data.error.type || 'error'}`);
     const rawRecords = data.records || [];
     const records = applyTaskDueFilter(rawRecords);
@@ -3891,8 +3897,7 @@ async function renderWhatsNext() {
     }
 
     container.innerHTML = picked.map(({ rec, pill }) => {
-      const taskFields = getRecordFields(rec);
-      if (!taskFields) throw new Error('Task record missing fields payload');
+      const taskFields = getRecordFields(rec) || {};
       const task   = getField(rec, 'Task') || '—';
       const reason = deriveTaskReasonText(taskFields);
       const source = taskSourceLabel(taskFields);
