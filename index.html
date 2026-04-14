@@ -2793,8 +2793,8 @@ async function loadTasks() {
                 <input id="task-set-date-input-${r.id}" type="date" style="width:100%; box-sizing:border-box; padding:11px 12px; border:1px solid #d1d5db; border-radius:10px; font-size:15px; background:#fff; color:#111827;" />
                 <input id="task-set-time-input-${r.id}" type="time" style="width:100%; box-sizing:border-box; padding:11px 12px; border:1px solid #d1d5db; border-radius:10px; font-size:15px; background:#fff; color:#111827; margin-top:8px;" />
                 <div style="display:flex; gap:8px; margin-top:10px;">
-                  <button style="flex:1;" onclick="confirmTaskSetDateTime(event,'${r.id}')">Save</button>
-                  <button style="flex:1;" onclick="cancelTaskSetDateInline(event,'${r.id}')">Cancel</button>
+                  <button style="flex:1; padding:10px 12px; border:none; border-radius:10px; background:#111827; color:#fff; font-size:14px; font-weight:600; text-align:center;" onclick="confirmTaskSetDateTime(event,'${r.id}')">Save</button>
+                  <button style="flex:1; padding:10px 12px; border:1px solid #d1d5db; border-radius:10px; background:#fff; color:#6b7280; font-size:14px; text-align:center;" onclick="cancelTaskSetDateInline(event,'${r.id}')">Cancel</button>
                 </div>
               </div>
               <button onclick="archiveTask(event,'${r.id}')">Archive</button>
@@ -2886,7 +2886,6 @@ async function confirmTaskSetDateTime(event, taskId) {
     closeTaskActionMenus();
     await loadTasks();
     await loadAgendaFromAirtable();
-    renderAgendaForSelectedDay();
     renderAgendaWeek();
     renderAgendaMonth();
     toast('Task schedule updated');
