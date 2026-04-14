@@ -1814,6 +1814,7 @@ async function fetchTasksForOps() {
 
 async function createTaskRecordWithFallback(fields) {
   const payload = buildTaskCreateFields(fields);
+  const PROTECTED_FIELDS = new Set(['Task', 'Scheduled Time', 'Due Date', 'Status', 'Source']);
   for (let i = 0; i < 8; i++) {
     console.log('TASK CREATE PAYLOAD', payload);
     const res = await airtableCreate(TABLES.tasks, payload);
@@ -1822,6 +1823,9 @@ async function createTaskRecordWithFallback(fields) {
     console.error('TASK CREATE FAILED', res);
     const match = msg.match(/Unknown field name:\s*\"([^\"]+)\"/i);
     if (!match) throw new Error(msg || 'Task create failed');
+    if (PROTECTED_FIELDS.has(match[1])) {
+      throw new Error(`Protected field rejected by Airtable: ${match[1]}`);
+    }
     delete payload[match[1]];
   }
   throw new Error('Task create fallback exhausted');
@@ -4504,7 +4508,7 @@ async function saveQuickAdd() {
       'Task': title,
       'Status': 'To Do',
       'Source': 'Manual',
-      'Scheduled Time': scheduledTime || undefined
+      ...(scheduledTime ? { 'Scheduled Time': scheduledTime } : {})
     };
     try {
       await createTaskRecordWithFallback(createPayload);
