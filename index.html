@@ -1968,7 +1968,7 @@ function parseLocalDateKey(key) {
   return startOfLocalDay(date);
 }
 
-function normalizeTaskDueDateForAgenda(value) {
+function normalizeAgendaScheduleValue(value, forceDateOnly = false) {
   const raw = String(value || '').trim();
   if (!raw) return null;
   const dateOnlyMatch = raw.match(/^(\d{4})-(\d{2})-(\d{2})$/);
@@ -1979,7 +1979,16 @@ function normalizeTaskDueDateForAgenda(value) {
   }
   const dt = new Date(raw);
   if (Number.isNaN(dt.getTime())) return null;
+  if (forceDateOnly) {
+    return new Date(dt.getFullYear(), dt.getMonth(), dt.getDate(), 0, 0, 0, 0).toISOString();
+  }
   return raw;
+}
+
+function normalizeTaskScheduledValue(scheduledValue, dueDateFallback) {
+  return normalizeAgendaScheduleValue(scheduledValue, false)
+    || normalizeAgendaScheduleValue(dueDateFallback, true)
+    || null;
 }
 
 function startOfLocalDay(date) {
@@ -3412,11 +3421,11 @@ function renderFinancialFromCache() {
 
 async function fetchAgendaItems() {
   const fields = [
-    'Task', 'Due Date', 'Status', 'Source',
+    'Task', 'Scheduled Time', 'Due Date', 'Status', 'Source',
     'Linked Batch', 'Linked Brew Log', 'Is Archived', 'Is Deleted'
   ].map((f) => `fields[]=${encodeURIComponent(f)}`).join('&');
   const formula = encodeURIComponent(activeTaskFilterFormula());
-  const query = `?${fields}&filterByFormula=${formula}&maxRecords=200&sort[0][field]=Due Date&sort[0][direction]=asc`;
+  const query = `?${fields}&filterByFormula=${formula}&maxRecords=200&sort[0][field]=Scheduled Time&sort[0][direction]=asc`;
   const data = await airtable(TABLES.tasks, query);
   if (data.error) throw new Error(`Airtable tasks ${data.error.type || 'error'}`);
 
@@ -3429,7 +3438,7 @@ async function fetchAgendaItems() {
       id: rec.id,
       title: getF('Task') || '—',
       type: 'task',
-      scheduledTime: normalizeTaskDueDateForAgenda(getF('Due Date')),
+      scheduledTime: normalizeTaskScheduledValue(getF('Scheduled Time'), getF('Due Date')),
       isCompleted: normalizeTaskStatus(getF('Status')) === 'done',
       isSystem: String(sel(getF('Source')) || '').toLowerCase() === 'system',
       entityType: linkedBatchId ? 'Batch' : (linkedBrewLogId ? 'Brew Log' : ''),
@@ -4311,7 +4320,7 @@ async function confirmAgendaSetDateTime() {
   if (!item) return;
   if (nextKey && !parseLocalDateKey(nextKey)) return;
   const nextScheduled = nextKey ? buildScheduledTimeFromInputs(nextKey, timeValue) : null;
-  await airtablePatch(TABLES.tasks, agendaActionItemId, { 'Due Date': nextScheduled });
+  await airtablePatch(TABLES.tasks, agendaActionItemId, { 'Scheduled Time': nextScheduled });
   item.scheduledTime = nextScheduled;
   if (nextKey && parseLocalDateKey(nextKey)) setAgendaSelectedDate(nextKey);
   renderAgendaForSelectedDay();
@@ -4400,7 +4409,7 @@ async function setAgendaItemDate(itemId, dateKey) {
   if (!item) return;
   const nextScheduled = combineDateWithExistingTime(dateKey, item.scheduledTime);
   if (!nextScheduled) return;
-  await airtablePatch(TABLES.tasks, itemId, { 'Due Date': nextScheduled });
+  await airtablePatch(TABLES.tasks, itemId, { 'Scheduled Time': nextScheduled });
   item.scheduledTime = nextScheduled;
   setAgendaSelectedDate(dateKey);
   renderAgendaForSelectedDay();
@@ -4411,7 +4420,7 @@ async function setAgendaItemDate(itemId, dateKey) {
 async function removeAgendaItemDate(itemId) {
   const item = Array.isArray(window._agendaCache) ? window._agendaCache.find(entry => entry.id === itemId) : null;
   if (!item) return;
-  await airtablePatch(TABLES.tasks, itemId, { 'Due Date': null });
+  await airtablePatch(TABLES.tasks, itemId, { 'Scheduled Time': null });
   item.scheduledTime = null;
   renderAgendaForSelectedDay();
   renderAgendaWeek();
@@ -4494,7 +4503,7 @@ async function saveQuickAdd() {
       'Task': title,
       'Status': 'To Do',
       'Source': 'Manual',
-      'Due Date': scheduledTime || undefined
+      'Scheduled Time': scheduledTime || undefined
     };
     try {
       await createTaskRecordWithFallback(createPayload);
