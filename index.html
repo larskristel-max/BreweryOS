@@ -3135,7 +3135,9 @@ async function fetchAgendaItems() {
     const dueRaw = getF('Due Date');
     const scheduledNormalized = normalizeAgendaScheduleValue(scheduledRaw, false);
     const dueFallbackNormalized = normalizeAgendaScheduleValue(dueRaw, true);
-    const hasLegacyMidnightSentinel = scheduledNormalized ? isMidnightScheduledValue(scheduledNormalized) : false;
+    const hasLegacyMidnightSentinel = scheduledNormalized
+      ? isLegacyMidnightSentinelScheduledValue(scheduledNormalized, dueRaw)
+      : false;
     return {
       id: rec.id,
       title: getF('Task') || '—',
@@ -4014,10 +4016,20 @@ function isMidnightScheduledValue(value) {
   return dt.getHours() === 0 && dt.getMinutes() === 0 && dt.getSeconds() === 0;
 }
 
+function isLegacyMidnightSentinelScheduledValue(scheduledValue, dueValue) {
+  if (!isMidnightScheduledValue(scheduledValue)) return false;
+  const dueNormalized = normalizeAgendaScheduleValue(dueValue, true);
+  if (!dueNormalized) return true;
+  const scheduledDate = scheduledItemToDate(scheduledValue);
+  const dueDate = scheduledItemToDate(dueNormalized);
+  if (!scheduledDate || !dueDate) return true;
+  return !isSameLocalDay(scheduledDate, dueDate);
+}
+
 function isUntimedDateItem(item) {
   if (!item || !item.scheduledTime) return false;
   const raw = String(item.scheduledTime || '').trim();
-  if (item.hasExplicitScheduledTime && !isMidnightScheduledValue(raw)) return false;
+  if (item.hasExplicitScheduledTime) return false;
   if (/^\d{4}-\d{2}-\d{2}$/.test(raw)) return true;
   const dt = scheduledItemToDate(raw);
   if (!dt) return false;
