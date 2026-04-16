@@ -2546,15 +2546,16 @@ async function deleteTask(event, taskId) {
   if (!shouldDelete) return;
   try {
     console.log('TASK DELETE REQUEST', { taskId });
-    await airtableDelete(TABLES.tasks, taskId);
-    await loadTasks();
-    await renderWhatsNext();
-    await loadAgendaFromAirtable();
+    const result = await airtableDelete(TABLES.tasks, taskId);
+    if (!result?.deleted || result?.id !== taskId) {
+      throw new Error('Delete did not return a successful deletion payload');
+    }
+    await syncTaskViews();
     renderAgendaWeek();
     renderAgendaMonth();
     toast(t('task.deleted'));
   } catch (error) {
-    console.warn('Task delete failed:', error);
+    console.warn('Task delete failed:', { taskId, error });
     toast(t('task.delete_error'));
   }
 }

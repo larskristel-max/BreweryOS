@@ -11,7 +11,17 @@ async function airtableCreate(table, fields) {
 }
 
 async function airtableDelete(table, id) {
-  return airtableProxyRequest({ method: 'DELETE', table, id });
+  const data = await airtableProxyRequest({ method: 'DELETE', table, id });
+  if (data?.error || !data?.deleted || data?.id !== id) {
+    const message = data?.error?.message
+      || data?.error
+      || `DELETE ${table} failed for record ${id}`;
+    const err = new Error(message);
+    err.payload = { method: 'DELETE', table, id };
+    err.response = data;
+    throw err;
+  }
+  return data;
 }
 
 async function airtableProxyRequest(payload) {
