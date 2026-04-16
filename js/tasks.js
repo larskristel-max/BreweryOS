@@ -181,6 +181,85 @@ async function ensureOperationalTask({
 let cachedTaskBatchRecords = [];
 let taskEditState = { taskId: '' };
 let taskDueFilter = 'all';
+let taskCreateViewportBound = false;
+let taskCreateViewportListener = null;
+
+function taskCreateDateAndTimeFromFields(fields = {}) {
+  const scheduledRaw = String(fields['Scheduled Time'] || '').trim();
+  const dueRaw = String(fields['Due Date'] || '').trim();
+  const fallbackDate = parseLocalDateKey(dueRaw);
+  if (!scheduledRaw) {
+    return {
+      date: fallbackDate ? localDateKey(fallbackDate) : '',
+      time: ''
+    };
+  }
+  const scheduledDate = scheduledItemToDate(scheduledRaw);
+  if (!scheduledDate) {
+    return {
+      date: fallbackDate ? localDateKey(fallbackDate) : '',
+      time: ''
+    };
+  }
+  const date = localDateKey(scheduledDate);
+  const isUntimed = scheduledDate.getHours() === 0
+    && scheduledDate.getMinutes() === 0
+    && scheduledDate.getSeconds() === 0;
+  const time = isUntimed ? '' : `${String(scheduledDate.getHours()).padStart(2, '0')}:${String(scheduledDate.getMinutes()).padStart(2, '0')}`;
+  return { date, time };
+}
+
+function clearTaskCreateViewportOffset() {
+  document.documentElement.style.setProperty('--keyboard-offset', '0px');
+}
+
+function refreshTaskCreateViewportOffset() {
+  const sheet = document.getElementById('task-create-sheet');
+  if (!sheet || !sheet.classList.contains('open')) {
+    clearTaskCreateViewportOffset();
+    return;
+  }
+  const vv = window.visualViewport;
+  if (!vv) {
+    clearTaskCreateViewportOffset();
+    return;
+  }
+  const overlap = Math.max(0, window.innerHeight - vv.height - vv.offsetTop);
+  document.documentElement.style.setProperty('--keyboard-offset', `${Math.round(overlap)}px`);
+}
+
+function bindTaskCreateViewportTracking() {
+  if (taskCreateViewportBound) return;
+  taskCreateViewportBound = true;
+  const vv = window.visualViewport;
+  if (!vv) return;
+  taskCreateViewportListener = () => refreshTaskCreateViewportOffset();
+  vv.addEventListener('resize', taskCreateViewportListener);
+  vv.addEventListener('scroll', taskCreateViewportListener);
+}
+
+function unbindTaskCreateViewportTracking() {
+  if (!taskCreateViewportBound) return;
+  taskCreateViewportBound = false;
+  const vv = window.visualViewport;
+  if (vv && taskCreateViewportListener) {
+    vv.removeEventListener('resize', taskCreateViewportListener);
+    vv.removeEventListener('scroll', taskCreateViewportListener);
+  }
+  taskCreateViewportListener = null;
+  clearTaskCreateViewportOffset();
+}
+
+document.addEventListener('focusin', (event) => {
+  const sheet = document.getElementById('task-create-sheet');
+  if (!sheet || !sheet.classList.contains('open')) return;
+  if (!event.target || !sheet.contains(event.target)) return;
+  if (!(event.target instanceof HTMLElement)) return;
+  setTimeout(() => {
+    event.target.scrollIntoView({ block: 'nearest', inline: 'nearest' });
+    refreshTaskCreateViewportOffset();
+  }, 40);
+});
 
 function hydrateTaskCreateBatchOptions() {
   const select = document.getElementById('task-create-batch');
@@ -196,6 +275,8 @@ function toggleTaskCreateForm(forceOpen) {
   const sheet = document.getElementById('task-create-sheet');
   const backdrop = document.getElementById('task-create-backdrop');
   const input = document.getElementById('task-create-title');
+  const dateInput = document.getElementById('task-create-date');
+  const timeInput = document.getElementById('task-create-time');
   const saveBtn = document.getElementById('task-create-save-btn');
   if (!sheet || !backdrop) return;
   const shouldOpen = typeof forceOpen === 'boolean' ? forceOpen : !sheet.classList.contains('open');
@@ -206,14 +287,22 @@ function toggleTaskCreateForm(forceOpen) {
   if (!shouldOpen) {
     taskEditState.taskId = '';
     if (input) input.value = '';
+    if (dateInput) dateInput.value = '';
+    if (timeInput) timeInput.value = '';
     const batchSelect = document.getElementById('task-create-batch');
     if (batchSelect) batchSelect.value = '';
     if (saveBtn) saveBtn.textContent = t('task.save');
+    unbindTaskCreateViewportTracking();
     return;
   }
   if (saveBtn) saveBtn.textContent = taskEditState.taskId ? t('task.save_changes') : t('task.save');
   hydrateTaskCreateBatchOptions();
-  setTimeout(() => { if (input) input.focus(); }, 0);
+  bindTaskCreateViewportTracking();
+  refreshTaskCreateViewportOffset();
+  setTimeout(() => {
+    if (input) input.focus();
+    refreshTaskCreateViewportOffset();
+  }, 0);
 }
 
 function cancelTaskCreateOrEdit() {
@@ -228,6 +317,8 @@ async function startTaskEdit(event, taskId) {
   closeTaskActionMenus();
   const input = document.getElementById('task-create-title');
   const batchSelect = document.getElementById('task-create-batch');
+  const dateInput = document.getElementById('task-create-date');
+  const timeInput = document.getElementById('task-create-time');
   try {
     const taskData = await airtable(TABLES.tasks, `/${taskId}`);
     const fields = taskData?.fields || {};
@@ -235,6 +326,9 @@ async function startTaskEdit(event, taskId) {
     toggleTaskCreateForm(true);
     if (input) input.value = String(fields['Task'] || '').trim();
     if (batchSelect) batchSelect.value = deriveTaskBatchId(fields) || '';
+    const dateAndTime = taskCreateDateAndTimeFromFields(fields);
+    if (dateInput) dateInput.value = dateAndTime.date;
+    if (timeInput) timeInput.value = dateAndTime.time;
   } catch (error) {
     console.warn('Unable to load task for edit:', error);
     toast('Could not open task editor');
@@ -427,16 +521,30 @@ function setTaskDueFilter(nextFilter = 'all') {
 async function saveTaskFromTasksScreen() {
   const input = document.getElementById('task-create-title');
   const batchSelect = document.getElementById('task-create-batch');
+  const dateInput = document.getElementById('task-create-date');
+  const timeInput = document.getElementById('task-create-time');
   const safeTitle = String(input?.value || '').trim();
   if (!safeTitle) {
     toast('Enter a task title');
     return;
   }
   const linkedBatch = String(batchSelect?.value || '').trim();
+  const dueDate = String(dateInput?.value || '').trim();
+  const timeValue = String(timeInput?.value || '').trim();
+  if (timeValue && !dueDate) {
+    toast('Select a date to use a time');
+    return;
+  }
+  const scheduledTime = dueDate ? buildScheduledTimeFromInputs(dueDate, timeValue) : null;
   const isEditing = Boolean(taskEditState.taskId);
   try {
     if (isEditing) {
-      const patchPayload = { 'Task': safeTitle, 'Linked Batch': linkedBatch ? [linkedBatch] : [] };
+      const patchPayload = {
+        'Task': safeTitle,
+        'Linked Batch': linkedBatch ? [linkedBatch] : [],
+        'Due Date': dueDate || null,
+        'Scheduled Time': scheduledTime
+      };
       console.log('TASK EDIT PATCH PAYLOAD', { taskId: taskEditState.taskId, payload: patchPayload });
       await airtablePatch(TABLES.tasks, taskEditState.taskId, patchPayload);
       toast('Task updated');
@@ -444,7 +552,9 @@ async function saveTaskFromTasksScreen() {
       const createPayload = {
         'Task': safeTitle,
         'Status': 'To Do',
-        'Source': 'Manual'
+        'Source': 'Manual',
+        ...(dueDate ? { 'Due Date': dueDate } : {}),
+        ...(scheduledTime ? { 'Scheduled Time': scheduledTime } : {})
       };
       if (linkedBatch) createPayload['Linked Batch'] = [linkedBatch];
       console.log('TASK CREATE PAYLOAD', createPayload);
@@ -543,4 +653,3 @@ async function overrideBatchReadiness(batchId, batchLabel) {
   toast('Readiness override logged with review task');
   loadTasks();
 }
-
