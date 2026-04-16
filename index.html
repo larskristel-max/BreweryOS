@@ -774,6 +774,7 @@
 </div>
 <script src="/js/airtable.js"></script>
 <script src="/js/tasks.js"></script>
+<script src="/js/agenda.js"></script>
 <script>
 
 // ─── TRANSLATIONS ─────────────────────────────────────────────────────────────
@@ -1845,16 +1846,6 @@ const RECIPE_TARGETS = {
 };
 
 function sel(v){ return (v && typeof v==='object' && v.name) ? v.name : (v||''); }
-function setAgendaSelectedDate(value = new Date()) {
-  let dateObj = null;
-  if (typeof value === 'string') dateObj = parseLocalDateKey(value);
-  else dateObj = value instanceof Date ? new Date(value.getTime()) : new Date(value);
-  if (!(dateObj instanceof Date) || Number.isNaN(dateObj.getTime())) return;
-  const normalized = startOfLocalDay(dateObj);
-  selectedAgendaDateKey = localDateKey(normalized);
-  window._agendaSelectedDate = selectedAgendaDateKey;
-  agendaDate = normalized;
-}
 
 function resolveBatchLabel(record) {
   if (!record) return 'Batch';
@@ -3298,10 +3289,6 @@ function renderAgendaForSelectedDay() {
   renderAgendaMonth();
 }
 
-function getUndatedAgendaItems(items = []) {
-  return (items || []).filter(item => !item.scheduledTime);
-}
-
 function renderAgendaItemsListHtml(items = []) {
   const typeIcon  = { task: '☑', note: '✎', event: '◆' };
   const typeColor = { task: '#1565c0', note: '#6a1b9a', event: '#2e7d32' };
@@ -3384,13 +3371,6 @@ function toggleAgendaItem(el, id) {
   }
   patchTaskStatusWithFallback(id, !isDone)
     .catch(err => console.warn('[Agenda] patch failed', err));
-}
-
-function agendaMinutesFromScheduled(item = {}) {
-  if (!item || !item.scheduledTime) return null;
-  const dt = scheduledItemToDate(item.scheduledTime);
-  if (!dt) return null;
-  return dt.getHours() * 60 + dt.getMinutes();
 }
 
 function buildNowLine(dateObj = getLocalTodayDate(), timedItems = []) {
@@ -3819,10 +3799,6 @@ function switchAgendaView(view) {
   }
 }
 
-function formatAgendaDate(d) {
-  return d.toLocaleDateString('en-GB', { weekday:'short', day:'numeric', month:'short' });
-}
-
 function goAgendaToday() {
   setAgendaSelectedDate(getLocalTodayDate());
   agendaMonthBaseDate = parseLocalDateKey(selectedAgendaDateKey) || getLocalTodayDate();
@@ -3934,25 +3910,6 @@ function renderAgendaWeek() {
     ${undated.length > 0 ? renderAgendaItemsListHtml(undated) : `<div style="color:#9e9e9e;font-size:13px;padding:4px 0;">Aucun élément sans date.</div>`}
   `;
   weekView.appendChild(section);
-}
-
-function getAgendaItemsForDate(dateKey) {
-  const cache = Array.isArray(window._agendaCache) ? window._agendaCache : [];
-  return cache.filter(item => {
-    if (!item.scheduledTime) return false;
-    const scheduled = scheduledItemToDate(item.scheduledTime);
-    if (!scheduled) return false;
-    return localDateKey(scheduled) === dateKey;
-  });
-}
-
-function getMonthGridDates(baseDate = getLocalTodayDate()) {
-  const monthStart = new Date(baseDate.getFullYear(), baseDate.getMonth(), 1);
-  const monthEnd = new Date(baseDate.getFullYear(), baseDate.getMonth() + 1, 0);
-  const leading = (monthStart.getDay() + 6) % 7;
-  const totalCells = Math.ceil((leading + monthEnd.getDate()) / 7) * 7;
-  const gridStart = addDaysLocal(monthStart, -leading);
-  return Array.from({ length: totalCells }, (_, idx) => addDaysLocal(gridStart, idx));
 }
 
 function renderAgendaMonth() {
