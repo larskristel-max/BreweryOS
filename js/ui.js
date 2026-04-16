@@ -21,6 +21,9 @@ function handleMainTabFab(tab) {
 
 function closeTaskActionMenus() {
   document.querySelectorAll('.task-card-menu').forEach((menu) => { menu.style.display = 'none'; });
+  document.querySelectorAll('.task-card.task-card-menu-open').forEach((card) => {
+    card.classList.remove('task-card-menu-open');
+  });
 }
 
 document.addEventListener('click', (event) => {
@@ -34,7 +37,9 @@ function toggleTaskActionMenu(event, taskId) {
   }
   const menu = document.getElementById(`task-menu-${taskId}`);
   if (!menu) return;
+  const card = menu.closest('.task-card');
   const willOpen = menu.style.display === 'none';
   closeTaskActionMenus();
   menu.style.display = willOpen ? 'block' : 'none';
+  if (card && willOpen) card.classList.add('task-card-menu-open');
 }
