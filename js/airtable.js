@@ -23,5 +23,16 @@ async function airtableProxyRequest(payload) {
       ...payload
     })
   });
-  return r.json();
+  const data = await r.json();
+  if (!r.ok || data?.error) {
+    const message = data?.error?.message
+      || data?.error
+      || `${payload?.method || 'GET'} ${payload?.table || 'unknown-table'} failed (${r.status})`;
+    const err = new Error(message);
+    err.status = r.status;
+    err.payload = payload;
+    err.response = data;
+    throw err;
+  }
+  return data;
 }
