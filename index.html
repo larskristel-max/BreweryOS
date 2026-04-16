@@ -215,8 +215,9 @@
     right: 0;
     bottom: 0;
 
-    height: calc(56px + env(safe-area-inset-bottom));
+    height: 56px;
     padding-bottom: env(safe-area-inset-bottom);
+    box-sizing: border-box;
 
     display: flex;
     justify-content: space-around;
@@ -294,7 +295,7 @@
   #agenda-set-date-inline,
   #task-schedule-sheet { overflow-x: hidden; }
   #quick-add-sheet { width: 100%; max-width: 100vw; }
-  #task-create-actions { padding-bottom: calc(12px + env(safe-area-inset-bottom)); }
+  #task-create-actions { padding-bottom: calc(20px + env(safe-area-inset-bottom)); }
   #agenda-list,
   #agenda-week-view,
   #agenda-month-view { padding-bottom: calc(var(--fab-clearance) + env(safe-area-inset-bottom)); }
@@ -2466,10 +2467,13 @@ async function confirmTaskScheduleSheet() {
   const nextDateKey = String(dateInput?.value || '').trim();
   const nextTimeValue = String(timeInput?.value || '').trim();
   if (nextDateKey && !parseLocalDateKey(nextDateKey)) return;
-  const nextScheduled = nextDateKey ? buildScheduledTimeFromInputs(nextDateKey, nextTimeValue) : null;
+  const nextScheduled = (nextDateKey && nextTimeValue) ? buildScheduledTimeFromInputs(nextDateKey, nextTimeValue) : null;
   closeTaskScheduleSheet();
   try {
-    await airtablePatch(TABLES.tasks, taskId, { 'Scheduled Time': nextScheduled });
+    await airtablePatch(TABLES.tasks, taskId, {
+      'Due Date': nextDateKey || null,
+      'Scheduled Time': nextScheduled || null
+    });
     if (nextDateKey && parseLocalDateKey(nextDateKey)) setAgendaSelectedDate(nextDateKey);
     await loadTasks();
     await loadAgendaFromAirtable();
@@ -3127,11 +3131,16 @@ async function fetchAgendaItems() {
     const getF = (name) => f[name] ?? undefined;
     const linkedBatchId = deriveTaskBatchId(f);
     const linkedBrewLogId = deriveTaskBrewLogId(f);
+    const scheduledRaw = getF('Scheduled Time');
+    const dueRaw = getF('Due Date');
+    const scheduledNormalized = normalizeAgendaScheduleValue(scheduledRaw, false);
+    const dueFallbackNormalized = normalizeAgendaScheduleValue(dueRaw, true);
     return {
       id: rec.id,
       title: getF('Task') || '—',
       type: 'task',
-      scheduledTime: normalizeTaskScheduledValue(getF('Scheduled Time'), getF('Due Date')),
+      scheduledTime: scheduledNormalized || dueFallbackNormalized || null,
+      hasExplicitScheduledTime: Boolean(scheduledNormalized),
       isCompleted: normalizeTaskStatus(getF('Status')) === 'done',
       isSystem: String(sel(getF('Source')) || '').toLowerCase() === 'system',
       entityType: linkedBatchId ? 'Batch' : (linkedBrewLogId ? 'Brew Log' : ''),
@@ -3152,7 +3161,7 @@ async function loadAgendaFromAirtable() {
 }
 
 function renderAgendaForSelectedDay() {
-  const cache = window._agendaCache;
+  const cache = dedupeAgendaItemsById(window._agendaCache);
   if (!cache) return;
 
   if (!selectedAgendaDateKey || !parseLocalDateKey(selectedAgendaDateKey)) {
@@ -3971,9 +3980,13 @@ async function confirmAgendaSetDateTime() {
   const item = Array.isArray(window._agendaCache) ? window._agendaCache.find(e => e.id === agendaActionItemId) : null;
   if (!item) return;
   if (nextKey && !parseLocalDateKey(nextKey)) return;
-  const nextScheduled = nextKey ? buildScheduledTimeFromInputs(nextKey, timeValue) : null;
-  await airtablePatch(TABLES.tasks, agendaActionItemId, { 'Scheduled Time': nextScheduled });
-  item.scheduledTime = nextScheduled;
+  const nextScheduled = (nextKey && timeValue) ? buildScheduledTimeFromInputs(nextKey, timeValue) : null;
+  await airtablePatch(TABLES.tasks, agendaActionItemId, {
+    'Due Date': nextKey || null,
+    'Scheduled Time': nextScheduled || null
+  });
+  item.scheduledTime = nextScheduled || (nextKey ? normalizeAgendaScheduleValue(nextKey, true) : null);
+  item.hasExplicitScheduledTime = Boolean(nextScheduled);
   if (nextKey && parseLocalDateKey(nextKey)) setAgendaSelectedDate(nextKey);
   renderAgendaForSelectedDay();
   renderAgendaWeek();
@@ -3986,20 +3999,17 @@ function buildScheduledTimeFromInputs(dateKey, timeValue) {
   const localDate = parseLocalDateKey(dateKey);
   if (!localDate) return null;
   const trimmed = String(timeValue || '').trim();
-  if (trimmed) {
-    const parts = trimmed.split(':');
-    const hours = parseInt(parts[0], 10);
-    const minutes = parseInt(parts[1] || '0', 10);
-    if (!Number.isNaN(hours) && !Number.isNaN(minutes)) {
-      return new Date(localDate.getFullYear(), localDate.getMonth(), localDate.getDate(), hours, minutes, 0, 0).toISOString();
-    }
-  }
-  // No time: local midnight is the sentinel for "dated but untimed"
-  return new Date(localDate.getFullYear(), localDate.getMonth(), localDate.getDate(), 0, 0, 0, 0).toISOString();
+  if (!trimmed) return null;
+  const parts = trimmed.split(':');
+  const hours = parseInt(parts[0], 10);
+  const minutes = parseInt(parts[1] || '0', 10);
+  if (Number.isNaN(hours) || Number.isNaN(minutes)) return null;
+  return new Date(localDate.getFullYear(), localDate.getMonth(), localDate.getDate(), hours, minutes, 0, 0).toISOString();
 }
 
 function isUntimedDateItem(item) {
   if (!item || !item.scheduledTime) return false;
+  if (item.hasExplicitScheduledTime) return false;
   const raw = String(item.scheduledTime || '').trim();
   if (/^\d{4}-\d{2}-\d{2}$/.test(raw)) return true;
   const dt = scheduledItemToDate(raw);
@@ -4061,8 +4071,9 @@ async function setAgendaItemDate(itemId, dateKey) {
   if (!item) return;
   const nextScheduled = combineDateWithExistingTime(dateKey, item.scheduledTime);
   if (!nextScheduled) return;
-  await airtablePatch(TABLES.tasks, itemId, { 'Scheduled Time': nextScheduled });
+  await airtablePatch(TABLES.tasks, itemId, { 'Due Date': dateKey, 'Scheduled Time': nextScheduled });
   item.scheduledTime = nextScheduled;
+  item.hasExplicitScheduledTime = true;
   setAgendaSelectedDate(dateKey);
   renderAgendaForSelectedDay();
   renderAgendaWeek();
@@ -4072,8 +4083,9 @@ async function setAgendaItemDate(itemId, dateKey) {
 async function removeAgendaItemDate(itemId) {
   const item = Array.isArray(window._agendaCache) ? window._agendaCache.find(entry => entry.id === itemId) : null;
   if (!item) return;
-  await airtablePatch(TABLES.tasks, itemId, { 'Scheduled Time': null });
+  await airtablePatch(TABLES.tasks, itemId, { 'Due Date': null, 'Scheduled Time': null });
   item.scheduledTime = null;
+  item.hasExplicitScheduledTime = false;
   renderAgendaForSelectedDay();
   renderAgendaWeek();
   renderAgendaMonth();
@@ -4150,11 +4162,12 @@ async function saveQuickAdd() {
     : localDateKey(getLocalTodayDate());
 
   if (quickAddType === 'task') {
-    const scheduledTime = selectedDateKey ? buildScheduledTimeFromInputs(selectedDateKey, timeValue) : null;
+    const scheduledTime = (selectedDateKey && timeValue) ? buildScheduledTimeFromInputs(selectedDateKey, timeValue) : null;
     const createPayload = {
       'Task': title,
       'Status': 'To Do',
       'Source': 'Manual',
+      ...(selectedDateKey ? { 'Due Date': selectedDateKey } : {}),
       ...(scheduledTime ? { 'Scheduled Time': scheduledTime } : {})
     };
     try {

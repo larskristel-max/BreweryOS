@@ -225,7 +225,8 @@ function refreshTaskCreateViewportOffset() {
     return;
   }
   const overlap = Math.max(0, window.innerHeight - vv.height - vv.offsetTop);
-  document.documentElement.style.setProperty('--keyboard-offset', `${Math.round(overlap)}px`);
+  const comfortBuffer = overlap > 0 ? 16 : 0;
+  document.documentElement.style.setProperty('--keyboard-offset', `${Math.round(overlap + comfortBuffer)}px`);
 }
 
 function bindTaskCreateViewportTracking() {
@@ -387,8 +388,9 @@ function normalizeAgendaScheduleValue(value, forceDateOnly = false) {
 }
 
 function normalizeTaskScheduledValue(scheduledValue, dueDateFallback) {
-  return normalizeAgendaScheduleValue(scheduledValue, false)
-    || normalizeAgendaScheduleValue(dueDateFallback, true)
+  const normalizedScheduled = normalizeAgendaScheduleValue(scheduledValue, false);
+  if (normalizedScheduled) return normalizedScheduled;
+  return normalizeAgendaScheduleValue(dueDateFallback, true)
     || null;
 }
 
@@ -535,7 +537,7 @@ async function saveTaskFromTasksScreen() {
     toast('Select a date to use a time');
     return;
   }
-  const scheduledTime = dueDate ? buildScheduledTimeFromInputs(dueDate, timeValue) : null;
+  const scheduledTime = (dueDate && timeValue) ? buildScheduledTimeFromInputs(dueDate, timeValue) : null;
   const isEditing = Boolean(taskEditState.taskId);
   try {
     if (isEditing) {
@@ -543,7 +545,7 @@ async function saveTaskFromTasksScreen() {
         'Task': safeTitle,
         'Linked Batch': linkedBatch ? [linkedBatch] : [],
         'Due Date': dueDate || null,
-        'Scheduled Time': scheduledTime
+        'Scheduled Time': scheduledTime || null
       };
       console.log('TASK EDIT PATCH PAYLOAD', { taskId: taskEditState.taskId, payload: patchPayload });
       await airtablePatch(TABLES.tasks, taskEditState.taskId, patchPayload);

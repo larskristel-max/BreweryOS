@@ -13,8 +13,18 @@ function formatAgendaDate(d) {
   return d.toLocaleDateString('en-GB', { weekday:'short', day:'numeric', month:'short' });
 }
 
+function dedupeAgendaItemsById(items = []) {
+  const seen = new Set();
+  return (items || []).filter((item) => {
+    const id = String(item?.id || '').trim();
+    if (!id || seen.has(id)) return false;
+    seen.add(id);
+    return true;
+  });
+}
+
 function getUndatedAgendaItems(items = []) {
-  return (items || []).filter(item => !item.scheduledTime);
+  return dedupeAgendaItemsById(items).filter(item => !item.scheduledTime);
 }
 
 function agendaMinutesFromScheduled(item = {}) {
@@ -25,7 +35,7 @@ function agendaMinutesFromScheduled(item = {}) {
 }
 
 function getAgendaItemsForDate(dateKey) {
-  const cache = Array.isArray(window._agendaCache) ? window._agendaCache : [];
+  const cache = dedupeAgendaItemsById(Array.isArray(window._agendaCache) ? window._agendaCache : []);
   return cache.filter(item => {
     if (!item.scheduledTime) return false;
     const scheduled = scheduledItemToDate(item.scheduledTime);
