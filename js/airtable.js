@@ -10,6 +10,10 @@ async function airtableCreate(table, fields) {
   return airtableProxyRequest({ method: 'POST', table, fields });
 }
 
+async function airtableDelete(table, id) {
+  return airtableProxyRequest({ method: 'DELETE', table, id });
+}
+
 async function airtableProxyRequest(payload) {
   const r = await fetch('/airtable', {
     method: 'POST',

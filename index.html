@@ -259,6 +259,12 @@
   .main-tab-title { font-size: var(--font-screen-title); font-weight:600; color:#111827; margin:0; }
   .main-tab-header-actions { display:flex; align-items:center; gap:8px; }
   .fab-btn { width:var(--fab-size); height:var(--fab-size); border-radius:50%; background:#111827; color:#fff; font-size:24px; border:none; cursor:pointer; box-shadow:0 6px 14px rgba(0,0,0,0.16); display:inline-flex; align-items:center; justify-content:center; line-height:1; transition:opacity 0.18s ease, transform 0.18s ease; z-index: 1200; }
+  .fab-btn.viewport-fixed {
+    position: fixed;
+    right: calc(var(--space-lg) + var(--safe-right-space));
+    bottom: calc(var(--bottom-nav-height) + env(safe-area-inset-bottom) + 12px);
+    z-index: 1205;
+  }
   .meta-text { font-size: var(--font-meta); color: var(--gray-400); }
   .secondary-text { font-size: var(--font-secondary); color: var(--muted); }
   .screen-title { font-size: var(--font-screen-title); font-weight: 600; color: var(--ink-900); margin: 0; }
@@ -448,7 +454,7 @@
   <!-- Header -->
   <div class="main-tab-header">
     <p class="main-tab-title" id="agenda-title-label">Agenda</p>
-    <button id="quick-add-fab" class="fab-btn" onclick="handleMainTabFab('agenda')" aria-label="Ajouter dans agenda" title="Ajouter">+</button>
+    <button id="quick-add-fab" class="fab-btn viewport-fixed" onclick="handleMainTabFab('agenda')" aria-label="Ajouter dans agenda" title="Ajouter">+</button>
   </div>
 
   <!-- Day / Week / Month toggle -->
@@ -765,7 +771,7 @@
 <div id="screen-tasks" class="screen">
   <div class="main-tab-header" style="padding:0;">
     <p class="main-tab-title" id="task-screen-title">Tâches</p>
-    <button id="task-add-fab" class="fab-btn" onclick="handleMainTabFab('tasks')" aria-label="Ajouter une tâche" title="Ajouter une tâche">+</button>
+    <button id="task-add-fab" class="fab-btn viewport-fixed" onclick="handleMainTabFab('tasks')" aria-label="Ajouter une tâche" title="Ajouter une tâche">+</button>
   </div>
   <div class="segmented-control">
     <button id="task-filter-all" class="segmented-btn active" onclick="setTaskDueFilter('all')">Toutes</button>
@@ -901,6 +907,8 @@ const TRANSLATIONS = {
     'task.save_changes': 'Enregistrer les modifications',
     'task.schedule_updated': 'Planification de la tâche mise à jour',
     'task.schedule_update_error': 'Impossible de mettre à jour la planification',
+    'task.set_date_time': 'Définir date / heure',
+    'task.edit_date_time': 'Modifier date / heure',
     'task.archived': 'Tâche archivée',
     'task.archive_error': "Impossible d'archiver la tâche",
     'task.delete_confirm': 'Supprimer cette tâche ?',
@@ -1178,6 +1186,8 @@ const TRANSLATIONS = {
     'task.save_changes': 'Save changes',
     'task.schedule_updated': 'Task schedule updated',
     'task.schedule_update_error': 'Could not update task schedule',
+    'task.set_date_time': 'Set date / time',
+    'task.edit_date_time': 'Edit date / time',
     'task.archived': 'Task archived',
     'task.archive_error': 'Could not archive task',
     'task.delete_confirm': 'Delete this task?',
@@ -2358,6 +2368,10 @@ async function loadTasks() {
       const primaryDateLabel = formatTaskPrimaryDateLabel(f);
       const scheduledTime = normalizeTaskScheduledValue(f['Scheduled Time'], f['Due Date']);
       taskScheduleCache[r.id] = scheduledTime || '';
+      const hasSchedule = Boolean(scheduledTime);
+      const scheduleActionLabel = hasSchedule
+        ? (t('task.edit_date_time') || 'Modifier date / heure')
+        : (t('task.set_date_time') || t('agenda.set_date_time') || 'Définir date / heure');
       const isDone = normalizeTaskStatus(rawStatus) === 'done';
       const batchId = deriveTaskBatchId(f);
       const brewLogId = deriveTaskBrewLogId(f);
@@ -2381,7 +2395,7 @@ async function loadTasks() {
             <div id="task-menu-${r.id}" class="task-card-menu" onclick="event.stopPropagation()" style="display:none;">
               <button type="button" onclick="startTaskEdit(event,'${r.id}')">Modifier</button>
               <button type="button" data-toggle-task-id="${r.id}" onclick="toggleTaskCompletionFromMenu(event,'${r.id}',${isDone})">${isDone ? 'Rouvrir' : 'Terminer'}</button>
-              <button type="button" onclick="openTaskSetDateInline(event,'${r.id}')">Définir date / heure</button>
+              <button type="button" onclick="openTaskSetDateInline(event,'${r.id}')">${scheduleActionLabel}</button>
               <button type="button" onclick="archiveTask(event,'${r.id}')">Archiver</button>
               <button type="button" onclick="deleteTask(event,'${r.id}')">Supprimer</button>
             </div>
@@ -2405,6 +2419,7 @@ function openTaskSetDateInline(event, taskId) {
   }
   const sheet = document.getElementById('task-schedule-sheet');
   const backdrop = document.getElementById('task-schedule-backdrop');
+  const title = document.getElementById('task-schedule-title');
   const dateInput = document.getElementById('task-schedule-date-input');
   const timeInput = document.getElementById('task-schedule-time-input');
   if (!sheet || !backdrop || !dateInput || !timeInput) {
@@ -2425,6 +2440,11 @@ function openTaskSetDateInline(event, taskId) {
       : '';
   } else {
     timeInput.value = '';
+  }
+  if (title) {
+    title.textContent = scheduledTime
+      ? (t('task.edit_date_time') || 'Modifier date / heure')
+      : (t('task.set_date_time') || t('agenda.set_date_time') || 'Définir date / heure');
   }
   taskScheduleTaskId = taskId;
   taskScheduleOpenedAt = Date.now();
@@ -2523,13 +2543,14 @@ async function deleteTask(event, taskId) {
   closeTaskActionMenus();
   const shouldDelete = window.confirm(t('task.delete_confirm'));
   if (!shouldDelete) return;
-  const payload = { 'Is Deleted': true };
-  console.log('TASK DELETE PATCH PAYLOAD', { taskId, payload });
   try {
-    await airtablePatch(TABLES.tasks, taskId, payload);
+    console.log('TASK DELETE REQUEST', { taskId });
+    await airtableDelete(TABLES.tasks, taskId);
     await loadTasks();
-    renderWhatsNext();
-    loadAgendaFromAirtable();
+    await renderWhatsNext();
+    await loadAgendaFromAirtable();
+    renderAgendaWeek();
+    renderAgendaMonth();
     toast(t('task.deleted'));
   } catch (error) {
     console.warn('Task delete failed:', error);
