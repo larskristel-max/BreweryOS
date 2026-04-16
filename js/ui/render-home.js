@@ -215,6 +215,12 @@ function openBatchDetail(recordId) {
   if (typeof loadBatchDetail === 'function') loadBatchDetail(recordId);
 }
 
+const AGENDA_DEMO = [
+  { time: '08:00', title: 'Check mash temperature — Batch 4', system: true },
+  { time: '11:00', title: 'Transfer to fermenter', system: false },
+  { time: null,    title: 'Call Brasserie Dupont re: hop order', system: false },
+];
+
 function renderAgendaPreview() {
   const container = document.getElementById('home-agenda-preview');
   if (!container) return;
@@ -225,40 +231,6 @@ function renderAgendaPreview() {
       ${item.system ? '<span style="font-size:12px;" title="Généré automatiquement">✦</span>' : '<span style="min-width:14px;"></span>'}
       <p style="font-size:14px; color:#111827; margin:0;">${item.title}</p>
     </div>`).join('');
-}
-
-// ── FINANCIAL PREVIEW ────────────────────────────────────────────────────────
-const FINANCIAL_DEMO = {
-  revenue: 6480, costs: 3240, margin: 3240,
-  prevRevenue: 5100, prevCosts: 2890, prevMargin: 2210,
-};
-
-function renderFinancialPreview() {
-  const role = localStorage.getItem('brewos_role') || 'owner';
-  const permitted = ['admin','owner','finance'].includes(role);
-  const section = document.getElementById('home-financial-section');
-  if (section) section.style.display = permitted ? '' : 'none';
-  if (!permitted) return;
-  const d = FINANCIAL_DEMO;
-  const arrow = (curr, prev) => curr >= prev ? '↑' : '↓';
-  const arrowColor = (curr, prev) => curr >= prev ? '#059669' : '#dc2626';
-  const fmt = v => `€${toNum(v).toLocaleString()}`;
-
-  const setEl = (id, val) => { const el = document.getElementById(id); if (el) el.textContent = val; };
-  const setStyle = (id, prop, val) => { const el = document.getElementById(id); if (el) el.style[prop] = val; };
-
-  setEl('fin-rev-value', fmt(d.revenue));
-  setEl('fin-costs-value', fmt(d.costs));
-  setEl('fin-margin-value', fmt(d.margin));
-  setEl('fin-rev-arrow', arrow(d.revenue, d.prevRevenue));
-  setEl('fin-costs-arrow', arrow(d.costs, d.prevCosts));
-  setEl('fin-margin-arrow', arrow(d.margin, d.prevMargin));
-  setStyle('fin-rev-arrow', 'color', arrowColor(d.revenue, d.prevRevenue));
-  setStyle('fin-costs-arrow', 'color', arrowColor(d.costs, d.prevCosts));
-  setStyle('fin-margin-arrow', 'color', arrowColor(d.margin, d.prevMargin));
-  setEl('fin-rev-label', t('financial.revenue'));
-  setEl('fin-costs-label', t('financial.costs'));
-  setEl('fin-margin-label', t('financial.margin'));
 }
 
 // ── HOME SECTION LABELS ──────────────────────────────────────────────────────
