@@ -772,6 +772,7 @@
   <div class="section-title" id="issues-screen-title">Issues</div>
   <div class="empty" id="issues-screen-empty">Issue logging coming soon.</div>
 </div>
+<script src="/js/airtable.js"></script>
 <script>
 
 // ─── TRANSLATIONS ─────────────────────────────────────────────────────────────
@@ -1843,31 +1844,6 @@ const RECIPE_TARGETS = {
 };
 
 function sel(v){ return (v && typeof v==='object' && v.name) ? v.name : (v||''); }
-
-async function airtable(table, params='') {
-  return airtableProxyRequest({ method: 'GET', table, params });
-}
-
-async function airtablePatch(table, id, fields) {
-  return airtableProxyRequest({ method: 'PATCH', table, id, fields });
-}
-
-async function airtableCreate(table, fields) {
-  return airtableProxyRequest({ method: 'POST', table, fields });
-}
-
-async function airtableProxyRequest(payload) {
-  const r = await fetch('/airtable', {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({
-      baseId: BASE,
-      ...payload
-    })
-  });
-  return r.json();
-}
-
 function deriveTaskSourceKeyFromDescription(text = '') {
   const m = String(text || '').match(/\[source_key:([a-z0-9_\-:.]+)\]/i);
   return m ? m[1] : '';
