@@ -2356,7 +2356,7 @@ async function loadTasks() {
       const rawStatus = sel(f.Status) || '';
       const rawType = sel(f.Type) || '';
       const primaryDateLabel = formatTaskPrimaryDateLabel(f);
-      const scheduledTime = normalizeTaskScheduledValue(f['Scheduled Time'], null);
+      const scheduledTime = normalizeTaskScheduledValue(f['Scheduled Time'], f['Due Date']);
       taskScheduleCache[r.id] = scheduledTime || '';
       const isDone = normalizeTaskStatus(rawStatus) === 'done';
       const batchId = deriveTaskBatchId(f);
@@ -3135,12 +3135,15 @@ async function fetchAgendaItems() {
     const dueRaw = getF('Due Date');
     const scheduledNormalized = normalizeAgendaScheduleValue(scheduledRaw, false);
     const dueFallbackNormalized = normalizeAgendaScheduleValue(dueRaw, true);
+    const hasLegacyMidnightSentinel = scheduledNormalized
+      ? isLegacyMidnightSentinelScheduledValue(scheduledNormalized, dueRaw)
+      : false;
     return {
       id: rec.id,
       title: getF('Task') || '—',
       type: 'task',
       scheduledTime: scheduledNormalized || dueFallbackNormalized || null,
-      hasExplicitScheduledTime: Boolean(scheduledNormalized),
+      hasExplicitScheduledTime: Boolean(scheduledNormalized) && !hasLegacyMidnightSentinel,
       isCompleted: normalizeTaskStatus(getF('Status')) === 'done',
       isSystem: String(sel(getF('Source')) || '').toLowerCase() === 'system',
       entityType: linkedBatchId ? 'Batch' : (linkedBrewLogId ? 'Brew Log' : ''),
@@ -4007,10 +4010,26 @@ function buildScheduledTimeFromInputs(dateKey, timeValue) {
   return new Date(localDate.getFullYear(), localDate.getMonth(), localDate.getDate(), hours, minutes, 0, 0).toISOString();
 }
 
+function isMidnightScheduledValue(value) {
+  const dt = scheduledItemToDate(value);
+  if (!dt) return false;
+  return dt.getHours() === 0 && dt.getMinutes() === 0 && dt.getSeconds() === 0;
+}
+
+function isLegacyMidnightSentinelScheduledValue(scheduledValue, dueValue) {
+  if (!isMidnightScheduledValue(scheduledValue)) return false;
+  const dueNormalized = normalizeAgendaScheduleValue(dueValue, true);
+  if (!dueNormalized) return true;
+  const scheduledDate = scheduledItemToDate(scheduledValue);
+  const dueDate = scheduledItemToDate(dueNormalized);
+  if (!scheduledDate || !dueDate) return true;
+  return !isSameLocalDay(scheduledDate, dueDate);
+}
+
 function isUntimedDateItem(item) {
   if (!item || !item.scheduledTime) return false;
-  if (item.hasExplicitScheduledTime) return false;
   const raw = String(item.scheduledTime || '').trim();
+  if (item.hasExplicitScheduledTime) return false;
   if (/^\d{4}-\d{2}-\d{2}$/.test(raw)) return true;
   const dt = scheduledItemToDate(raw);
   if (!dt) return false;
