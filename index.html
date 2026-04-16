@@ -775,6 +775,7 @@
 <script src="/js/airtable.js"></script>
 <script src="/js/tasks.js"></script>
 <script src="/js/agenda.js"></script>
+<script src="/js/ui.js"></script>
 <script>
 
 // ─── TRANSLATIONS ─────────────────────────────────────────────────────────────
@@ -1885,27 +1886,6 @@ function goBack() {
 function goBackToBatches() {
   navigateBack('screen-batches');
 }
-function toast(msg) {
-  const t = document.getElementById('toast');
-  t.textContent = msg; t.classList.add('show');
-  setTimeout(() => t.classList.remove('show'), 2800);
-}
-
-function handleMainTabFab(tab) {
-  if (tab === 'agenda') {
-    openQuickAdd();
-    return;
-  }
-  if (tab === 'tasks') {
-    toggleTaskCreateForm(true);
-    return;
-  }
-  if (tab === 'operations' || tab === 'batches' || tab === 'financial' || tab === 'finances') {
-    toast('Not available yet');
-    return;
-  }
-}
-
 // Maps raw Airtable status values to localized display strings
 function displayStatus(raw) {
   if (!raw) return t('status.unknown');
@@ -2443,27 +2423,6 @@ async function loadTasks() {
     window._taskScheduleCache = {};
     el.innerHTML = `<div class="empty">${t('whats_next_error') || 'Could not load tasks.'}</div>`;
   }
-}
-
-function closeTaskActionMenus() {
-  document.querySelectorAll('.task-card-menu').forEach((menu) => { menu.style.display = 'none'; });
-}
-
-document.addEventListener('click', (event) => {
-  if (!event.target.closest('.task-card-actions')) closeTaskActionMenus();
-});
-
-
-function toggleTaskActionMenu(event, taskId) {
-  if (event) {
-    event.preventDefault();
-    event.stopPropagation();
-  }
-  const menu = document.getElementById(`task-menu-${taskId}`);
-  if (!menu) return;
-  const willOpen = menu.style.display === 'none';
-  closeTaskActionMenus();
-  menu.style.display = willOpen ? 'block' : 'none';
 }
 
 function openTaskSetDateInline(event, taskId) {
