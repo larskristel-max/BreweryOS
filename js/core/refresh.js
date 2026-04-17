@@ -145,6 +145,9 @@ function resetPullGesture() {
 
 async function refreshOperationalData() {
   const batchData = await airtable(TABLES.batches, '?sort[0][field]=Date&sort[0][direction]=desc');
+  if (batchData?.error) {
+    throw new Error(batchData.error.message || batchData.error.type || 'Airtable API error');
+  }
   const batchRecords = batchData.records || [];
   lastRefreshBatchRecords = batchRecords;
 
