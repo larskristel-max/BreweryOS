@@ -100,18 +100,31 @@
     font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
     background: var(--bg-main);
     color: var(--text);
-    min-height: 100vh;
-    min-height: 100dvh;
+    height: 100vh;
+    height: 100dvh;
   }
   .app {
     position: fixed;
     inset: 0;
-    min-height: 100vh;
-    min-height: 100dvh;
+    height: 100vh;
+    height: 100dvh;
+    max-height: 100dvh;
+    min-height: 0;
     display: flex;
     flex-direction: column;
     overflow: hidden;
     background: var(--bg-main);
+  }
+  @media (display-mode: standalone) {
+    body {
+      min-height: 0;
+      height: 100dvh;
+    }
+    .app {
+      min-height: 0;
+      height: 100dvh;
+      max-height: 100dvh;
+    }
   }
   .nav { background: var(--card); border-bottom: 1px solid var(--border); padding: calc(10px + var(--safe-top-space)) 20px 14px; display: flex; align-items: center; justify-content: space-between; position: sticky; top: 0; z-index: 100; }
   .nav-title { font-size: 17px; font-weight: 600; color: var(--ink-900); letter-spacing: -0.01em; }
