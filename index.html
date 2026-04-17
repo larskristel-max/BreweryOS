@@ -85,7 +85,8 @@
     --safe-right-space: env(safe-area-inset-right, 0px);
     --safe-left-space: env(safe-area-inset-left, 0px);
     --fab-size: 52px;
-    --screen-bottom-clearance: calc(var(--bottom-nav-height) + env(safe-area-inset-bottom));
+    --content-trailing-clearance: calc(var(--bottom-nav-height) + env(safe-area-inset-bottom) + 16px);
+    --fab-content-trailing-clearance: calc(var(--content-trailing-clearance) + var(--fab-size) + 12px);
     --fab-clearance: calc(var(--fab-size) + 12px);
     --keyboard-offset: 0px;
   }
@@ -129,8 +130,11 @@
   .nav { background: var(--card); border-bottom: 1px solid var(--border); padding: calc(10px + var(--safe-top-space)) 20px 14px; display: flex; align-items: center; justify-content: space-between; position: sticky; top: 0; z-index: 100; }
   .nav-title { font-size: 17px; font-weight: 600; color: var(--ink-900); letter-spacing: -0.01em; }
   .nav-back { font-size: 15px; color: var(--gray-500); cursor: pointer; display: flex; align-items: center; gap: 4px; }
-  .screen { flex: 1; display: none; flex-direction: column; width: 100%; max-width: 100%; overflow-y: auto; padding: 16px 20px; padding-bottom: var(--screen-bottom-clearance); gap: var(--space-xl); background: var(--bg-main); }
+  .screen { flex: 1; display: none; flex-direction: column; width: 100%; max-width: 100%; overflow-y: auto; padding: 16px 20px; gap: var(--space-xl); background: var(--bg-main); }
   .screen.active { display: flex; }
+  .screen > :last-child { margin-bottom: var(--content-trailing-clearance); }
+  #screen-agenda > :last-child,
+  #screen-tasks > :last-child { margin-bottom: 0; }
   .onboarding-screen {
     position: absolute;
     inset: 0;
@@ -139,8 +143,8 @@
     justify-content: center;
     background: #fff;
     padding: 24px 20px;
-    padding-bottom: calc(24px + env(safe-area-inset-bottom));
   }
+  .onboarding-screen > :last-child { margin-bottom: 0; }
   .onboarding-value-screen {
     justify-content: flex-start;
     align-items: stretch;
@@ -361,8 +365,8 @@
   #task-create-actions { padding-bottom: calc(20px + env(safe-area-inset-bottom)); }
   #agenda-list,
   #agenda-week-view,
-  #agenda-month-view { padding-bottom: var(--fab-clearance); }
-  #task-list { padding-bottom: var(--fab-clearance); }
+  #agenda-month-view { padding-bottom: var(--fab-content-trailing-clearance); }
+  #task-list { padding-bottom: var(--fab-content-trailing-clearance); }
   #quick-add-sheet .quick-add-scroll { overflow-x: hidden; }
   #quick-add-sheet .quick-add-input-stack {
     display: flex;
