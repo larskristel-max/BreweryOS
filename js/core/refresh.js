@@ -145,37 +145,66 @@ function resetPullGesture() {
 }
 
 async function refreshOperationalData() {
-  const batchData = await airtable(TABLES.batches, '?sort[0][field]=Date&sort[0][direction]=desc');
-  const batchRecords = batchData.records || [];
-  lastRefreshBatchRecords = batchRecords;
+  try {
+    const batchData = await airtable(TABLES.batches, '?sort[0][field]=Date&sort[0][direction]=desc');
+    if (!batchData || !Array.isArray(batchData.records)) {
+      throw new Error('Invalid batch refresh response.');
+    }
 
-  cachedTaskBatchRecords = batchRecords;
-  if (typeof hydrateTaskCreateBatchOptions === 'function') {
-    hydrateTaskCreateBatchOptions();
+    const batchRecords = batchData.records;
+    lastRefreshBatchRecords = batchRecords;
+
+    cachedTaskBatchRecords = batchRecords;
+    if (typeof hydrateTaskCreateBatchOptions === 'function') {
+      hydrateTaskCreateBatchOptions();
+    }
+    if (typeof renderHomeBatches === 'function') {
+      renderHomeBatches(batchRecords);
+    }
+
+    if (typeof loadTasks === 'function') await loadTasks();
+    if (typeof loadAgendaFromAirtable === 'function') await loadAgendaFromAirtable();
+    if (typeof loadFinancialFromAirtable === 'function') await loadFinancialFromAirtable();
+
+    if (typeof renderWhatsNext === 'function') await renderWhatsNext();
+
+    return {
+      batches: batchRecords.length,
+      agenda: Array.isArray(window._agendaCache) ? window._agendaCache.length : 0,
+    };
+  } catch (err) {
+    console.error('[Refresh] operational data failed:', err);
+    throw err;
   }
-  if (typeof renderHomeBatches === 'function') {
-    renderHomeBatches(batchRecords);
-  }
-
-  if (typeof loadTasks === 'function') await loadTasks();
-  if (typeof loadAgendaFromAirtable === 'function') await loadAgendaFromAirtable();
-  if (typeof loadFinancialFromAirtable === 'function') await loadFinancialFromAirtable();
-
-  if (typeof renderWhatsNext === 'function') await renderWhatsNext();
-
-  return {
-    batches: batchRecords.length,
-    agenda: Array.isArray(window._agendaCache) ? window._agendaCache.length : 0,
-  };
 }
 
 async function refreshSemanticLayer() {
-  if (!Array.isArray(APP_READINESS_CONDITIONS) || !APP_READINESS_CONDITIONS.length) {
-    APP_READINESS_CONDITIONS = SEMANTIC.readinessConditionsFallback;
-    return { source: 'fallback-semantics', conditions: APP_READINESS_CONDITIONS.length };
-  }
+  try {
+    if (!Array.isArray(APP_READINESS_CONDITIONS) || !APP_READINESS_CONDITIONS.length) {
+      if (!Array.isArray(SEMANTIC?.readinessConditionsFallback)) {
+        throw new Error('Semantic fallback conditions missing.');
+      }
+      APP_READINESS_CONDITIONS = SEMANTIC.readinessConditionsFallback;
+      return { source: 'fallback-semantics', conditions: APP_READINESS_CONDITIONS.length };
+    }
 
-  return { source: 'existing-semantics', conditions: APP_READINESS_CONDITIONS.length };
+    return { source: 'existing-semantics', conditions: APP_READINESS_CONDITIONS.length };
+  } catch (err) {
+    console.error('[Refresh] semantic layer failed:', err);
+    throw err;
+  }
+}
+
+function notifyRefreshFailure() {
+  if (typeof showToast === 'function') {
+    showToast('Refresh failed. Check connection.');
+    return;
+  }
+  if (typeof toast === 'function') {
+    toast('Refresh failed. Check connection.');
+    return;
+  }
+  alert('Refresh failed. Check connection.');
 }
 
 async function rerenderVisibleUI() {
@@ -262,9 +291,16 @@ async function refreshApp(options = {}) {
     try {
       const result = await runRefreshPipeline(options);
       if (!options.silentSuccess) {
-        toast('Updated');
+        if (typeof showToast === 'function') {
+          showToast('Updated');
+        } else if (typeof toast === 'function') {
+          toast('Updated');
+        }
       }
       return result;
+    } catch (err) {
+      console.error('[Refresh] pipeline failed:', err);
+      throw err;
     } finally {
       refreshInFlightPromise = null;
       updatePullSurface(0);
@@ -333,9 +369,7 @@ async function handlePullTouchEnd(event) {
       await refreshApp({ pullDistance: pulledDistance });
     } catch (error) {
       console.error('[Refresh] failed:', error);
-      if (typeof toast === 'function') {
-        toast('Refresh failed. Check connection.');
-      }
+      notifyRefreshFailure();
     }
   }
 }
