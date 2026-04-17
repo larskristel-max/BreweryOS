@@ -134,6 +134,39 @@
   .nav-back { font-size: 15px; color: var(--gray-500); cursor: pointer; display: flex; align-items: center; gap: 4px; }
   .screen { flex: 1; display: none; flex-direction: column; width: 100%; max-width: 100%; overflow-y: auto; padding: 16px 20px; gap: var(--space-xl); background: var(--bg-main); }
   .screen.active { display: flex; }
+  .refresh-scroll-surface { overscroll-behavior-y: contain; }
+  .pull-refresh-indicator {
+    position: absolute;
+    top: calc(var(--safe-top-space) + 6px);
+    left: 50%;
+    transform: translate(-50%, -120%);
+    width: 34px;
+    height: 34px;
+    border-radius: 999px;
+    border: 1px solid var(--line-200);
+    background: rgba(255, 255, 255, 0.96);
+    box-shadow: 0 2px 8px rgba(17, 24, 39, 0.08);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    opacity: 0;
+    pointer-events: none;
+    transition: transform 0.2s ease, opacity 0.2s ease;
+    z-index: 1250;
+  }
+  .pull-refresh-indicator.is-visible {
+    opacity: 1;
+    transform: translate(-50%, 0);
+  }
+  .pull-refresh-indicator .spinner {
+    width: 18px;
+    height: 18px;
+    border-width: 2px;
+    animation-duration: 0.7s;
+  }
+  .pull-refresh-indicator:not(.is-refreshing) .spinner {
+    animation-play-state: paused;
+  }
   .screen.shell-content-clearance > :last-child { margin-bottom: var(--content-trailing-clearance); }
   #screen-agenda > :last-child,
   #screen-tasks > :last-child { margin-bottom: 0; }
@@ -493,6 +526,7 @@
   <div style="width:60px"></div>
 </div>
 <div id="toast" class="toast"></div>
+<div id="pull-refresh-indicator" class="pull-refresh-indicator" aria-hidden="true"><div class="spinner"></div></div>
 
 <div id="screen-language" class="screen onboarding-screen" style="display:none;">
   <div class="onboarding-inner">
@@ -535,7 +569,7 @@
   <button onclick="enterDemo()" style="width:100%; padding:16px; border-radius:14px; background:#111827; color:#fff; font-size:16px; font-weight:600; border:none; cursor:pointer;" id="value-cta-btn">See BrewOS in action</button>
 </div>
 
-<div id="screen-agenda" class="screen" style="display:none; overflow:hidden;">
+<div id="screen-agenda" class="screen refresh-scroll-surface" style="display:none; overflow:hidden;">
 
   <!-- Header -->
   <div class="main-tab-header">
@@ -561,15 +595,15 @@
   </div>
 
   <!-- Current time line + item list -->
-  <div id="agenda-list" style="flex:1; overflow-y:auto; padding:12px 20px; ">
+  <div id="agenda-list" class="refresh-scroll-surface" style="flex:1; overflow-y:auto; padding:12px 20px; ">
     <!-- populated by renderAgendaDay() -->
   </div>
 
   <!-- Week view (hidden by default) -->
-  <div id="agenda-week-view" style="display:none; flex:1; overflow-y:auto; padding:12px 20px; ">
+  <div id="agenda-week-view" class="refresh-scroll-surface" style="display:none; flex:1; overflow-y:auto; padding:12px 20px; ">
     <div id="agenda-week-grid" style="display:grid; grid-template-columns:repeat(7,1fr); gap:4px; text-align:center;"></div>
   </div>
-  <div id="agenda-month-view" style="display:none; flex:1; overflow-y:auto; padding:12px 20px; ">
+  <div id="agenda-month-view" class="refresh-scroll-surface" style="display:none; flex:1; overflow-y:auto; padding:12px 20px; ">
     <div id="agenda-month-grid"></div>
   </div>
 
@@ -648,7 +682,7 @@
   </div>
 </div>
 
-<div id="screen-financial" class="screen shell-content-clearance" style="display:none;">
+<div id="screen-financial" class="screen refresh-scroll-surface shell-content-clearance" style="display:none;">
 
   <!-- Header -->
   <div class="main-tab-header" style="position:sticky; top:0; background:var(--bg); z-index:10;">
@@ -752,7 +786,7 @@
 </div>
 
 <!-- HOME -->
-<div id="screen-home" class="screen shell-content-clearance active">
+<div id="screen-home" class="screen refresh-scroll-surface shell-content-clearance active">
 
   <!-- Header -->
   <div class="home-header">
@@ -824,7 +858,7 @@
 </div>
 
 <!-- BATCH LIST -->
-<div id="screen-batches" class="screen shell-content-clearance">
+<div id="screen-batches" class="screen refresh-scroll-surface shell-content-clearance">
   <div class="main-tab-header" style="padding:0;">
     <p class="main-tab-title" id="batch-screen-title">Brassins</p>
     <button class="fab-btn" onclick="handleMainTabFab('batches')" aria-label="Ajouter dans brassins" title="Ajouter">+</button>
@@ -854,7 +888,7 @@
 </div>
 
 <!-- TASKS -->
-<div id="screen-tasks" class="screen">
+<div id="screen-tasks" class="screen refresh-scroll-surface">
   <div class="main-tab-header" style="padding:0;">
     <p class="main-tab-title" id="task-screen-title">Tâches</p>
     <button id="task-add-fab" class="fab-btn viewport-fixed" onclick="handleMainTabFab('tasks')" aria-label="Ajouter une tâche" title="Ajouter une tâche">+</button>
@@ -888,6 +922,7 @@
 <script src="/js/ui/render-home.js"></script>
 <script src="/js/ui/render-agenda.js"></script>
 <script src="/js/ui/render-financial.js"></script>
+<script src="/js/core/refresh.js"></script>
 <script src="/js/core/navigation.js"></script>
 <script src="/js/core/boot.js"></script>
 <script>
