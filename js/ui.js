@@ -1,8 +1,16 @@
-function toast(msg) {
-  const t = document.getElementById('toast');
-  t.textContent = msg; t.classList.add('show');
-  setTimeout(() => t.classList.remove('show'), 2800);
+function toast(message) {
+  const el = document.getElementById('toast');
+  if (!el) return;
+  el.textContent = message;
+  el.classList.add('show');
+  clearTimeout(el._toastTimer);
+  el._toastTimer = setTimeout(() => {
+    el.classList.remove('show');
+  }, 2000);
 }
+
+window.toast = toast;
+window.showToast = toast;
 
 function handleMainTabFab(tab) {
   if (tab === 'agenda') {
