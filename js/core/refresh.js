@@ -198,8 +198,21 @@ async function rerenderVisibleUI() {
     }
   }
 
-  if (currentScreenId === 'screen-agenda' && typeof renderAgendaForSelectedDay === 'function') {
-    renderAgendaForSelectedDay();
+  if (currentScreenId === 'screen-agenda') {
+    const currentAgendaView = window.APP_STATE?.agendaView
+      || (typeof agendaView !== 'undefined' ? agendaView : 'day');
+    switch (currentAgendaView) {
+      case 'week':
+        if (typeof renderAgendaWeek === 'function') renderAgendaWeek();
+        break;
+      case 'month':
+        if (typeof renderAgendaMonth === 'function') renderAgendaMonth();
+        break;
+      case 'day':
+      default:
+        if (typeof renderAgendaForSelectedDay === 'function') renderAgendaForSelectedDay();
+        break;
+    }
   }
 
   if (currentScreenId === 'screen-financial' && typeof renderFinancialPage === 'function') {
@@ -301,7 +314,14 @@ async function handlePullTouchEnd() {
   resetPullGesture();
 
   if (shouldTrigger) {
-    await refreshApp({ pullDistance: pulledDistance });
+    try {
+      await refreshApp({ pullDistance: pulledDistance });
+    } catch (error) {
+      console.error('[Refresh] failed:', error);
+      if (typeof toast === 'function') {
+        toast('Refresh failed. Check connection.');
+      }
+    }
   }
 }
 
