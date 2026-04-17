@@ -14,6 +14,7 @@ const PULL_TO_REFRESH_CONFIG = {
 
 let lastRefreshBatchRecords = [];
 let refreshInFlightPromise = null;
+let pullIndicatorHideTimer = null;
 
 const pullRefreshState = {
   tracking: false,
@@ -249,6 +250,10 @@ async function runRefreshPipeline({
 
 async function refreshApp(options = {}) {
   if (refreshInFlightPromise) return refreshInFlightPromise;
+  if (pullIndicatorHideTimer) {
+    clearTimeout(pullIndicatorHideTimer);
+    pullIndicatorHideTimer = null;
+  }
 
   const indicatorStartDistance = options.pullDistance || 0;
   updatePullIndicator(indicatorStartDistance, true);
@@ -263,7 +268,11 @@ async function refreshApp(options = {}) {
     } finally {
       refreshInFlightPromise = null;
       updatePullSurface(0);
-      setTimeout(() => updatePullIndicator(0, false), 120);
+      if (pullIndicatorHideTimer) clearTimeout(pullIndicatorHideTimer);
+      pullIndicatorHideTimer = setTimeout(() => {
+        pullIndicatorHideTimer = null;
+        updatePullIndicator(0, false);
+      }, 120);
     }
   })();
 
@@ -310,7 +319,7 @@ function handlePullTouchMove(event) {
 }
 
 async function handlePullTouchEnd(event) {
-  if (event.currentTarget !== pullRefreshState.listenerSurface) return;
+  if (!pullRefreshState.listenerSurface || event.currentTarget !== pullRefreshState.listenerSurface) return;
   if (!pullRefreshState.tracking) return;
 
   const shouldTrigger = pullRefreshState.pulling
