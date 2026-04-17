@@ -200,6 +200,10 @@ function notifyRefreshFailure() {
     showToast('Refresh failed. Check connection.');
     return;
   }
+  if (typeof toast === 'function') {
+    toast('Refresh failed. Check connection.');
+    return;
+  }
   alert('Refresh failed. Check connection.');
 }
 
