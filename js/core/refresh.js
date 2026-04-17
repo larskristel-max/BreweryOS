@@ -20,6 +20,7 @@ const pullRefreshState = {
   pulling: false,
   startY: 0,
   distance: 0,
+  listenerSurface: null,
   activeScreen: null,
   activeScrollEl: null,
   activeSurfaceEl: null,
@@ -79,17 +80,19 @@ function isModalSurfaceOpen() {
   });
 }
 
-function isEligiblePullStart(event) {
+function isEligiblePullStart(event, listenerSurface) {
   if (!event || !event.touches || event.touches.length !== 1) return false;
   if (isModalSurfaceOpen()) return false;
   const context = getRefreshInteractionContext();
   if (!context) return false;
+  if (!listenerSurface || context.scrollEl !== listenerSurface) return false;
   if (context.scrollEl.scrollTop > 0) return false;
 
   pullRefreshState.tracking = true;
   pullRefreshState.pulling = false;
   pullRefreshState.startY = event.touches[0].clientY;
   pullRefreshState.distance = 0;
+  pullRefreshState.listenerSurface = listenerSurface;
   pullRefreshState.activeScreen = context.screenId;
   pullRefreshState.activeScrollEl = context.scrollEl;
   pullRefreshState.activeSurfaceEl = context.surfaceEl;
@@ -137,6 +140,7 @@ function resetPullGesture() {
   pullRefreshState.activeScreen = null;
   pullRefreshState.activeScrollEl = null;
   pullRefreshState.activeSurfaceEl = null;
+  pullRefreshState.listenerSurface = null;
 }
 
 async function refreshOperationalData() {
@@ -267,11 +271,12 @@ async function refreshApp(options = {}) {
 }
 
 function handlePullTouchStart(event) {
-  isEligiblePullStart(event);
+  isEligiblePullStart(event, event.currentTarget);
 }
 
 function handlePullTouchMove(event) {
   if (!pullRefreshState.tracking || refreshInFlightPromise) return;
+  if (!pullRefreshState.listenerSurface || event.currentTarget !== pullRefreshState.listenerSurface) return;
   const activeScroll = pullRefreshState.activeScrollEl;
   if (!activeScroll) return;
   if (activeScroll.scrollTop > 0) {
@@ -326,13 +331,15 @@ async function handlePullTouchEnd() {
 }
 
 function initPullToRefresh() {
-  const appShell = document.querySelector('.app');
-  if (!appShell) return;
+  const refreshSurfaces = Array.from(document.querySelectorAll('.refresh-scroll-surface'));
+  if (!refreshSurfaces.length) return;
 
-  appShell.addEventListener('touchstart', handlePullTouchStart, { passive: true });
-  appShell.addEventListener('touchmove', handlePullTouchMove, { passive: false });
-  appShell.addEventListener('touchend', handlePullTouchEnd, { passive: true });
-  appShell.addEventListener('touchcancel', handlePullTouchEnd, { passive: true });
+  refreshSurfaces.forEach((surface) => {
+    surface.addEventListener('touchstart', handlePullTouchStart, { passive: true });
+    surface.addEventListener('touchmove', handlePullTouchMove, { passive: false });
+    surface.addEventListener('touchend', handlePullTouchEnd, { passive: true });
+    surface.addEventListener('touchcancel', handlePullTouchEnd, { passive: true });
+  });
 }
 
 if (document.readyState === 'loading') {
