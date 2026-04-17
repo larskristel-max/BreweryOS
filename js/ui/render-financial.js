@@ -495,7 +495,7 @@ function renderFinancialPreview() {
   setEl('fin-margin-label', t('financial.margin'));
 }
 
-// ── HOME SECTION LABELS ──────────────────────────────────────────────────────
+// ── FINANCIAL PAGE ───────────────────────────────────────────────────────────
 let finPeriod = localStorage.getItem('brewos_fin_period') || 'today';
 
 const FINANCIAL_PAGE_DEMO = {
