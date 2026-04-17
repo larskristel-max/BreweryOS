@@ -115,6 +115,19 @@
     flex-direction: column;
     overflow: hidden;
     background: var(--bg-main);
+    isolation: isolate;
+    z-index: 0;
+  }
+  .app::after {
+    content: "";
+    position: fixed;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    height: max(env(safe-area-inset-bottom), 12px);
+    background: var(--bg-main);
+    pointer-events: none;
+    z-index: 999;
   }
   @media (display-mode: standalone) {
     body {
@@ -127,12 +140,12 @@
       max-height: 100dvh;
     }
   }
-  .nav { background: var(--card); border-bottom: 1px solid var(--border); padding: calc(10px + var(--safe-top-space)) 20px 14px; display: flex; align-items: center; justify-content: space-between; position: sticky; top: 0; z-index: 100; }
+  .nav { background: var(--card); border-bottom: 1px solid var(--border); padding: calc(10px + var(--safe-top-space)) 20px 14px; display: flex; align-items: center; justify-content: space-between; position: sticky; top: 0; z-index: 1100; }
   .nav-title { font-size: 17px; font-weight: 600; color: var(--ink-900); letter-spacing: -0.01em; }
   .nav-back { font-size: 15px; color: var(--gray-500); cursor: pointer; display: flex; align-items: center; gap: 4px; }
-  .screen { flex: 1; display: none; flex-direction: column; width: 100%; max-width: 100%; overflow-y: auto; padding: 16px 20px; gap: var(--space-xl); background: var(--bg-main); }
+  .screen { flex: 1; display: none; flex-direction: column; width: 100%; max-width: 100%; overflow-y: auto; padding: 16px 20px; gap: var(--space-xl); background: var(--bg-main); position: relative; z-index: 1; }
   .screen.active { display: flex; }
-  .screen > :last-child { margin-bottom: var(--content-trailing-clearance); }
+  .screen.shell-content-clearance > :last-child { margin-bottom: var(--content-trailing-clearance); }
   #screen-agenda > :last-child,
   #screen-tasks > :last-child { margin-bottom: 0; }
   .onboarding-screen {
@@ -624,7 +637,7 @@
   </div>
 </div>
 
-<div id="screen-financial" class="screen" style="display:none;">
+<div id="screen-financial" class="screen shell-content-clearance" style="display:none;">
 
   <!-- Header -->
   <div class="main-tab-header" style="position:sticky; top:0; background:var(--bg); z-index:10;">
@@ -694,7 +707,7 @@
 
 </div>
 
-<div id="screen-settings" class="screen" style="display:none; background:#fff;">
+<div id="screen-settings" class="screen shell-content-clearance" style="display:none; background:#fff;">
 
   <div style="padding:20px 20px 0; display:flex; justify-content:space-between; align-items:center;">
     <button onclick="showScreen('screen-home')" style="background:none; border:none; font-size:22px; color:#6b7280; cursor:pointer;">‹</button>
@@ -728,7 +741,7 @@
 </div>
 
 <!-- HOME -->
-<div id="screen-home" class="screen active">
+<div id="screen-home" class="screen shell-content-clearance active">
 
   <!-- Header -->
   <div class="home-header">
@@ -800,7 +813,7 @@
 </div>
 
 <!-- BATCH LIST -->
-<div id="screen-batches" class="screen">
+<div id="screen-batches" class="screen shell-content-clearance">
   <div class="main-tab-header" style="padding:0;">
     <p class="main-tab-title" id="batch-screen-title">Brassins</p>
     <button class="fab-btn" onclick="handleMainTabFab('batches')" aria-label="Ajouter dans brassins" title="Ajouter">+</button>
@@ -809,12 +822,12 @@
 </div>
 
 <!-- BATCH DETAIL -->
-<div id="screen-batch-detail" class="screen">
+<div id="screen-batch-detail" class="screen shell-content-clearance">
   <div id="batch-detail-content"><div class="loading"><div class="spinner"></div></div></div>
 </div>
 
 <!-- BREW DAY -->
-<div id="screen-brew" class="screen">
+<div id="screen-brew" class="screen shell-content-clearance">
   <div class="main-tab-header" style="padding:0;">
     <p class="main-tab-title" id="brew-screen-title">Journal de brassage</p>
   </div>
@@ -845,7 +858,7 @@
 </div>
 
 <!-- ISSUES -->
-<div id="screen-issues" class="screen">
+<div id="screen-issues" class="screen shell-content-clearance">
   <div class="section-title" id="issues-screen-title">Issues</div>
   <div class="empty" id="issues-screen-empty">Issue logging coming soon.</div>
 </div>
