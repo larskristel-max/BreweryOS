@@ -200,12 +200,6 @@ function notifyRefreshFailure() {
     showToast('Refresh failed. Check connection.');
     return;
   }
-
-  if (typeof toast === 'function') {
-    toast('Refresh failed. Check connection.');
-    return;
-  }
-
   alert('Refresh failed. Check connection.');
 }
 
@@ -293,7 +287,11 @@ async function refreshApp(options = {}) {
     try {
       const result = await runRefreshPipeline(options);
       if (!options.silentSuccess) {
-        toast('Updated');
+        if (typeof showToast === 'function') {
+          showToast('Updated');
+        } else if (typeof toast === 'function') {
+          toast('Updated');
+        }
       }
       return result;
     } catch (err) {
