@@ -9,6 +9,7 @@ function toast(message) {
   }, 2000);
 }
 
+window.toast = toast;
 window.showToast = toast;
 
 function handleMainTabFab(tab) {
