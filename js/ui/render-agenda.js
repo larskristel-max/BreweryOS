@@ -18,6 +18,14 @@ let agendaActionItemId = '';
 let taskScheduleTaskId = '';
 let taskScheduleOpenedAt = 0;
 
+function getAgendaPreviewFallbackItems() {
+  return AGENDA_ITEMS_DEMO.slice(0, 3).map((item) => ({
+    time: item.time || null,
+    title: item.title || '—',
+    system: Boolean(item.system),
+  }));
+}
+
 function switchAgendaView(view) {
   if (!selectedAgendaDateKey || !parseLocalDateKey(selectedAgendaDateKey)) {
     setAgendaSelectedDate(getLocalTodayDate());

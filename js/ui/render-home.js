@@ -232,12 +232,8 @@ function getAgendaPreviewItems() {
     });
   }
 
-  if (typeof AGENDA_ITEMS_DEMO !== 'undefined' && Array.isArray(AGENDA_ITEMS_DEMO)) {
-    return AGENDA_ITEMS_DEMO.slice(0, 3).map(item => ({
-      time: item.time || null,
-      title: item.title || '—',
-      system: Boolean(item.system)
-    }));
+  if (typeof getAgendaPreviewFallbackItems === 'function') {
+    return getAgendaPreviewFallbackItems();
   }
 
   return [];
