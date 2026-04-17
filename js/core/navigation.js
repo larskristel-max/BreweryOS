@@ -1,4 +1,5 @@
 function showScreen(id) {
+  const onboardingScreens = new Set(['screen-language', 'screen-entry', 'screen-value']);
   const previousScreen = screenStack[screenStack.length - 1];
   if (previousScreen === 'screen-home' && previousScreen !== id) {
     const homeScreen = document.getElementById('screen-home');
@@ -18,6 +19,10 @@ function showScreen(id) {
   }
 
   target.style.display = 'flex';
+  const appShell = document.querySelector('.app');
+  if (appShell) {
+    appShell.classList.toggle('onboarding-active', onboardingScreens.has(id));
+  }
 
   const navBack = document.getElementById('navBack');
   if (navBack) {
