@@ -1,5 +1,5 @@
 function showScreen(id) {
-  const onboardingScreens = new Set(['screen-language', 'screen-entry', 'screen-value']);
+  const onboardingScreens = new Set(['screen-splash', 'screen-language', 'screen-entry', 'screen-value']);
   const previousScreen = screenStack[screenStack.length - 1];
   if (previousScreen === 'screen-home' && previousScreen !== id) {
     const homeScreen = document.getElementById('screen-home');
@@ -26,8 +26,10 @@ function showScreen(id) {
 
   const navBack = document.getElementById('navBack');
   if (navBack) {
-    navBack.style.display = screenStack.length > 1 ? 'flex' : 'none';
+    const shouldShowBack = screenStack.length > 1 && !isMainTabScreen(id);
+    navBack.style.display = shouldShowBack ? 'flex' : 'none';
   }
+  updateBottomNavState(id);
   const shouldRestoreHomeScroll = id === 'screen-home' && previousScreen === 'screen-batch-detail' && homeScrollY > 0;
   if (shouldRestoreHomeScroll) {
     requestAnimationFrame(() => {

@@ -21,7 +21,7 @@ function handleMainTabFab(tab) {
     toggleTaskCreateForm(true);
     return;
   }
-  if (tab === 'operations' || tab === 'batches' || tab === 'financial' || tab === 'finances') {
+  if (tab === 'operations' || tab === 'batches') {
     toast('Not available yet');
     return;
   }
