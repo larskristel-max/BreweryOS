@@ -547,8 +547,8 @@
 <div id="screen-entry" class="screen onboarding-screen" style="display:none;">
   <div class="onboarding-inner">
     <div class="access-title" data-i18n="access.welcome" id="entry-welcome-title">Welcome to BrewOS</div>
-    <button class="btn btn-primary" onclick="enterAppFromEntry()" data-i18n="access.login" id="entry-login-btn">Log in</button>
-    <button class="btn btn-secondary" onclick="enterAppFromEntry()" data-i18n="access.create_account" id="entry-account-btn" style="margin-top:10px;">Create account</button>
+    <button class="btn btn-primary" onclick="handleLoginUnavailable()" data-i18n="access.login" id="entry-login-btn">Log in</button>
+    <button class="btn btn-secondary" onclick="handleSignupUnavailable()" data-i18n="access.create_account" id="entry-account-btn" style="margin-top:10px;">Create account</button>
     <div class="access-demo-link" onclick="enterDemo()" data-i18n="access.try_demo" id="entry-try-btn">Try BrewOS</div>
   </div>
 </div>

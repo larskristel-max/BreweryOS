@@ -10,6 +10,10 @@ function startEntryFlow() {
   }, SPLASH_DURATION_MS);
 }
 
-function enterAppFromEntry() {
-  showScreen('screen-home');
+function handleLoginUnavailable() {
+  toast('Not available yet');
+}
+
+function handleSignupUnavailable() {
+  toast('Not available yet');
 }
