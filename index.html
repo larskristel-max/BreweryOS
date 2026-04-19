@@ -5,13 +5,13 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, viewport-fit=cover">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-<title>Operon — vos opérations brassicoles</title>
+<title id="app-doc-title">Operon — vos opérations brassicoles</title>
 <link rel="icon" type="image/svg+xml" href="/assets/branding/operon-logo.svg">
 <link rel="apple-touch-icon" href="/assets/branding/operon-logo.svg">
 <link rel="manifest" href="/manifest.webmanifest">
-<meta name="application-name" content="Operon">
-<meta name="apple-mobile-web-app-title" content="Operon">
-<meta name="description" content="Operon — vos opérations brassicoles">
+<meta id="meta-application-name" name="application-name" content="Operon">
+<meta id="meta-apple-title" name="apple-mobile-web-app-title" content="Operon">
+<meta id="meta-description" name="description" content="Operon — vos opérations brassicoles">
 <style>
   /*
   Operon DESIGN BASELINE — LOCKED
@@ -540,8 +540,8 @@
 <div class="nav">
   <div id="navBack" class="nav-back" style="display:none" onclick="goBack()">← Back</div>
   <div class="nav-title" id="app-brand-header">
-    <img src="/assets/branding/operon-logo.svg" alt="Operon" class="brand-logo brand-logo--nav"/>
-    <span class="brand-wordmark"><span class="brand-wordmark-suffix">peron</span></span>
+    <img data-brand-logo src="/assets/branding/operon-logo.svg" alt="Operon" class="brand-logo brand-logo--nav"/>
+    <span class="brand-wordmark"><span class="brand-wordmark-suffix" id="brand-wordmark-suffix-header">peron</span></span>
   </div>
   <div style="width:60px"></div>
 </div>
@@ -550,9 +550,9 @@
 
 <div id="screen-splash" class="screen screen-splash" style="display:none;">
   <div class="splash-brand" id="app-brand-splash">
-    <img src="/assets/branding/operon-logo.svg" alt="Operon" class="brand-logo brand-logo--splash"/>
+    <img data-brand-logo src="/assets/branding/operon-logo.svg" alt="Operon" class="brand-logo brand-logo--splash"/>
     <div class="splash-brand-copy">
-      <div class="brand-wordmark"><span class="brand-wordmark-suffix">peron</span></div>
+      <div class="brand-wordmark"><span class="brand-wordmark-suffix" id="brand-wordmark-suffix-splash">peron</span></div>
       <div class="brand-tagline" id="product-tagline">vos opérations brassicoles</div>
     </div>
   </div>

@@ -16,6 +16,25 @@ function applyProductIdentity() {
 
   document.title = `${identity.name} — ${identity.tagline}`;
 
+
+  const wordmark = getBrandWordmarkSegments();
+  const headerSuffix = document.getElementById('brand-wordmark-suffix-header');
+  if (headerSuffix) headerSuffix.textContent = wordmark.suffix;
+  const splashSuffix = document.getElementById('brand-wordmark-suffix-splash');
+  if (splashSuffix) splashSuffix.textContent = wordmark.suffix;
+
+  document.querySelectorAll('[data-brand-logo]').forEach((logoEl) => {
+    logoEl.setAttribute('src', identity.logoPath);
+    logoEl.setAttribute('alt', identity.name);
+  });
+
+  const descriptionMeta = document.getElementById('meta-description');
+  if (descriptionMeta) descriptionMeta.setAttribute('content', `${identity.name} — ${identity.tagline}`);
+  const appNameMeta = document.getElementById('meta-application-name');
+  if (appNameMeta) appNameMeta.setAttribute('content', identity.name);
+  const appleTitleMeta = document.getElementById('meta-apple-title');
+  if (appleTitleMeta) appleTitleMeta.setAttribute('content', identity.name);
+
   const subtitle = document.getElementById('product-tagline');
   if (subtitle) subtitle.textContent = identity.tagline;
 

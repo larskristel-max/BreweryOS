@@ -1,7 +1,20 @@
 <svg width="512" height="512" viewBox="0 0 512 512" fill="none" xmlns="http://www.w3.org/2000/svg" role="img" aria-labelledby="operonLogoTitle operonLogoDesc">
   <title id="operonLogoTitle">Operon logo</title>
-  <desc id="operonLogoDesc">Minimal geometric mark used as the Operon standalone icon.</desc>
-  <rect x="64" y="64" width="384" height="384" rx="128" fill="#111827"/>
-  <circle cx="256" cy="256" r="118" stroke="#FFFFFF" stroke-width="44"/>
-  <path d="M256 196V256L301 301" stroke="#FFFFFF" stroke-width="32" stroke-linecap="round" stroke-linejoin="round"/>
+  <desc id="operonLogoDesc">Circular Operon mark with metallic ring and accent node.</desc>
+  <defs>
+    <linearGradient id="operonMetal" x1="120" y1="110" x2="405" y2="402" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#F1F3F6"/>
+      <stop offset="0.28" stop-color="#B8BEC8"/>
+      <stop offset="0.58" stop-color="#7D8490"/>
+      <stop offset="1" stop-color="#E6E8EC"/>
+    </linearGradient>
+    <radialGradient id="operonCore" cx="0" cy="0" r="1" gradientUnits="userSpaceOnUse" gradientTransform="translate(256 258) rotate(90) scale(170)">
+      <stop stop-color="#343842"/>
+      <stop offset="1" stop-color="#191D27"/>
+    </radialGradient>
+  </defs>
+  <circle cx="256" cy="256" r="170" fill="url(#operonCore)"/>
+  <circle cx="256" cy="256" r="170" stroke="url(#operonMetal)" stroke-width="42"/>
+  <circle cx="256" cy="256" r="106" stroke="url(#operonMetal)" stroke-opacity="0.94" stroke-width="24"/>
+  <circle cx="404" cy="171" r="20" fill="url(#operonMetal)"/>
 </svg>

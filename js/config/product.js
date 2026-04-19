@@ -7,6 +7,7 @@ const PRODUCT_CONFIG = {
     tagline: 'vos opérations brassicoles',
     locale: 'fr',
     logoPath: '/assets/branding/operon-logo.svg',
+    wordmarkSuffix: 'peron',
   },
   supportedLanguages: ['fr', 'nl', 'en', 'de'],
   featureFlags: {
@@ -28,7 +29,7 @@ function getProductIdentity() {
 
 function getBrandWordmarkSegments() {
   return {
-    mark: 'O',
-    suffix: 'peron',
+    mark: PRODUCT_CONFIG.identity.name.charAt(0).toUpperCase(),
+    suffix: PRODUCT_CONFIG.identity.wordmarkSuffix || PRODUCT_CONFIG.identity.name.slice(1),
   };
 }
