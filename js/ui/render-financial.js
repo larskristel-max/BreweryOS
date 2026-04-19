@@ -377,16 +377,20 @@ function renderFinancialPage() {
 
 function dismissColorTip() {
   localStorage.setItem('brewos_color_tip_seen', '1');
+  if (typeof syncGuidanceCardsVisibility === 'function') {
+    syncGuidanceCardsVisibility();
+    return;
+  }
   const guide = document.getElementById('home-color-guide');
   if (guide) guide.style.display = 'none';
 }
 
 function maybeShowColorTip() {
-  const guide = document.getElementById('home-color-guide');
-  if (!guide) return;
-  if (localStorage.getItem('brewos_color_tip_seen') === '1') {
-    guide.style.display = 'none';
+  if (typeof syncGuidanceCardsVisibility === 'function') {
+    syncGuidanceCardsVisibility();
     return;
   }
-  guide.style.display = 'flex';
+  const guide = document.getElementById('home-color-guide');
+  if (!guide) return;
+  guide.style.display = localStorage.getItem('brewos_color_tip_seen') === '1' ? 'none' : 'flex';
 }
