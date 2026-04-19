@@ -3,10 +3,10 @@ const TRANSLATIONS = {
   fr: {
     'language.choose': 'Choisissez votre langue',
     'language.select_title': 'Choisissez votre langue',
-    'access.welcome': 'Bienvenue sur BrewOS',
+    'access.welcome': 'Bienvenue sur Operon',
     'access.login': 'Se connecter',
     'access.create_account': 'Créer un compte',
-    'access.try_demo': 'Essayer BrewOS',
+    'access.try_demo': 'Essayer Operon',
     'language.french': 'Français',
     'language.dutch': 'Néerlandais',
     'language.english': 'Anglais',
@@ -52,8 +52,8 @@ const TRANSLATIONS = {
     'blocked.measurement_missing': 'Mesure manquante',
     'blocked.output_lot_missing': 'Lot de sortie manquant',
     'blocked.controls_missing': 'Contrôles non effectués',
-    'entry.welcome': 'Bienvenue sur BrewOS',
-    'entry.try': 'Essayer BrewOS',
+    'entry.welcome': 'Bienvenue sur Operon',
+    'entry.try': 'Essayer Operon',
     'entry.create_account': 'Créer un compte',
     'entry.login': 'Se connecter',
     'entry.benefit_1_title': 'Savoir quoi faire ensuite',
@@ -62,7 +62,7 @@ const TRANSLATIONS = {
     'entry.benefit_2_body': 'Chaque lot, chaque ingrédient, chaque vente — lié automatiquement.',
     'entry.benefit_3_title': "Moins d'administration",
     'entry.benefit_3_body': 'Conformité et rapports sans le travail manuel.',
-    'entry.cta': 'Voir BrewOS en action',
+    'entry.cta': 'Voir Operon en action',
     'entry.skip': 'Passer',
     'agenda.title': 'Agenda',
     'agenda.day': 'Jour',
@@ -155,10 +155,10 @@ const TRANSLATIONS = {
   nl: {
     'language.choose': 'Kies je taal',
     'language.select_title': 'Kies uw taal',
-    'access.welcome': 'Welkom bij BrewOS',
+    'access.welcome': 'Welkom bij Operon',
     'access.login': 'Inloggen',
     'access.create_account': 'Account aanmaken',
-    'access.try_demo': 'BrewOS proberen',
+    'access.try_demo': 'Operon proberen',
     'language.french': 'Frans',
     'language.dutch': 'Nederlands',
     'language.english': 'Engels',
@@ -204,8 +204,8 @@ const TRANSLATIONS = {
     'blocked.measurement_missing': 'Meting ontbreekt',
     'blocked.output_lot_missing': 'Uitvoerlot ontbreekt',
     'blocked.controls_missing': 'Controles niet uitgevoerd',
-    'entry.welcome': 'Welkom bij BrewOS',
-    'entry.try': 'BrewOS proberen',
+    'entry.welcome': 'Welkom bij Operon',
+    'entry.try': 'Operon proberen',
     'entry.create_account': 'Account aanmaken',
     'entry.login': 'Inloggen',
     'entry.benefit_1_title': 'Weet wat je moet doen',
@@ -214,7 +214,7 @@ const TRANSLATIONS = {
     'entry.benefit_2_body': 'Elke batch, elk ingrediënt, elke verkoop — automatisch gekoppeld.',
     'entry.benefit_3_title': 'Minder administratie',
     'entry.benefit_3_body': 'Conformiteit en rapporten zonder handmatig werk.',
-    'entry.cta': 'Zie BrewOS in actie',
+    'entry.cta': 'Zie Operon in actie',
     'entry.skip': 'Overslaan',
     'agenda.title': 'Agenda',
     'agenda.day': 'Dag',
@@ -283,10 +283,10 @@ const TRANSLATIONS = {
   en: {
     'language.choose': 'Choose your language',
     'language.select_title': 'Choose your language',
-    'access.welcome': 'Welcome to BrewOS',
+    'access.welcome': 'Welcome to Operon',
     'access.login': 'Log in',
     'access.create_account': 'Create account',
-    'access.try_demo': 'Try BrewOS',
+    'access.try_demo': 'Try Operon',
     'language.french': 'French',
     'language.dutch': 'Dutch',
     'language.english': 'English',
@@ -332,8 +332,8 @@ const TRANSLATIONS = {
     'blocked.measurement_missing': 'Measurement missing',
     'blocked.output_lot_missing': 'Output lot missing',
     'blocked.controls_missing': 'Controls not executed',
-    'entry.welcome': 'Welcome to BrewOS',
-    'entry.try': 'Try BrewOS',
+    'entry.welcome': 'Welcome to Operon',
+    'entry.try': 'Try Operon',
     'entry.create_account': 'Create account',
     'entry.login': 'Log in',
     'entry.benefit_1_title': 'Know what to do next',
@@ -342,7 +342,7 @@ const TRANSLATIONS = {
     'entry.benefit_2_body': 'Every batch, ingredient, and sale — linked automatically.',
     'entry.benefit_3_title': 'Less admin effort',
     'entry.benefit_3_body': 'Compliance and reporting without the manual work.',
-    'entry.cta': 'See BrewOS in action',
+    'entry.cta': 'See Operon in action',
     'entry.skip': 'Skip',
     'agenda.title': 'Agenda',
     'agenda.day': 'Day',
@@ -434,10 +434,10 @@ const TRANSLATIONS = {
   de: {
     'language.choose': 'Wähle deine Sprache',
     'language.select_title': 'Sprache wählen',
-    'access.welcome': 'Willkommen bei BrewOS',
+    'access.welcome': 'Willkommen bei Operon',
     'access.login': 'Einloggen',
     'access.create_account': 'Konto erstellen',
-    'access.try_demo': 'BrewOS ausprobieren',
+    'access.try_demo': 'Operon ausprobieren',
     'language.french': 'Französisch',
     'language.dutch': 'Niederländisch',
     'language.english': 'Englisch',
@@ -483,8 +483,8 @@ const TRANSLATIONS = {
     'blocked.measurement_missing': 'Messung fehlt',
     'blocked.output_lot_missing': 'Ausgabelos fehlt',
     'blocked.controls_missing': 'Kontrollen nicht durchgeführt',
-    'entry.welcome': 'Willkommen bei BrewOS',
-    'entry.try': 'BrewOS testen',
+    'entry.welcome': 'Willkommen bei Operon',
+    'entry.try': 'Operon testen',
     'entry.create_account': 'Konto erstellen',
     'entry.login': 'Anmelden',
     'entry.benefit_1_title': 'Wissen, was als nächstes zu tun ist',
@@ -493,7 +493,7 @@ const TRANSLATIONS = {
     'entry.benefit_2_body': 'Jede Charge, jede Zutat, jeder Verkauf — automatisch verknüpft.',
     'entry.benefit_3_title': 'Weniger Verwaltungsaufwand',
     'entry.benefit_3_body': 'Compliance und Berichte ohne manuelle Arbeit.',
-    'entry.cta': 'BrewOS in Aktion sehen',
+    'entry.cta': 'Operon in Aktion sehen',
     'entry.skip': 'Überspringen',
     'agenda.title': 'Agenda',
     'agenda.day': 'Tag',
@@ -561,10 +561,28 @@ const TRANSLATIONS = {
   },
 };
 
+
+const OPERATIONAL_TRANSLATION_DEFAULTS = {
+  'ops.title': 'Operations',
+  'ops.next_actions': 'Next actions',
+  'ops.pending_confirmations': 'Pending confirmations',
+  'ops.blocked_items': 'Blocked items',
+  'ops.recent_events': 'Recent operational events',
+  'ops.declaration_alerts': 'Declaration alerts',
+  'ops.stock_alerts': 'Stock alerts',
+  'ops.readiness.ready': 'Ready',
+  'ops.readiness.needs_input': 'Needs input',
+  'ops.readiness.blocked': 'Blocked',
+  'ops.override.required': 'Override required',
+  'ops.override.justification': 'Justification is required to proceed',
+  'ops.retry.error': 'Something went wrong while syncing operations data',
+  'ops.retry.action': 'Retry',
+};
+
 // ─── LANGUAGE PERSISTENCE ────────────────────────────────────────────────────
 const LANGUAGE_STORAGE_KEY = 'brewos_language';
-const LANGUAGE_OPTIONS = ['fr', 'nl', 'en', 'de'];
-const DEFAULT_LANGUAGE = 'fr';
+const LANGUAGE_OPTIONS = Array.isArray(PRODUCT_CONFIG?.supportedLanguages) ? PRODUCT_CONFIG.supportedLanguages : ['fr', 'nl', 'en', 'de'];
+const DEFAULT_LANGUAGE = PRODUCT_CONFIG?.identity?.locale || 'fr';
 
 function getAccountLanguagePreference() {
   return null; // Future hook only
@@ -606,6 +624,7 @@ let currentLang = resolveInitialLanguage();
 function t(key) {
   return (TRANSLATIONS[currentLang] && TRANSLATIONS[currentLang][key])
     || (TRANSLATIONS['en'] && TRANSLATIONS['en'][key])
+    || OPERATIONAL_TRANSLATION_DEFAULTS[key]
     || key;
 }
 

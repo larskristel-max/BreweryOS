@@ -1,8 +1,20 @@
+
+function buildOperationsHomeContract({ nextActions = [], pendingCompletions = [], blockedItems = [], recentOperationalEvents = [], declarationAlerts = [], stockAlerts = [] } = {}) {
+  return normalizeOperationsHomeContract({
+    nextActions,
+    pendingCompletions,
+    blockedItems,
+    recentOperationalEvents,
+    declarationAlerts,
+    stockAlerts,
+  });
+}
+
 async function renderWhatsNext() {
   const container = document.getElementById('whats-next-cards');
   if (!container) return;
 
-  container.innerHTML = `<div style="color:#9ca3af;font-size:13px;padding:12px 0;">Loading…</div>`;
+  container.innerHTML = `<div style="color:#9ca3af;font-size:13px;padding:12px 0;">${t('ops.retry.action')}…</div>`;
 
   try {
     const formula = encodeURIComponent(
@@ -13,6 +25,17 @@ async function renderWhatsNext() {
     if (data.error) throw new Error(`Airtable ${data.error.type || 'error'}`);
     const rawRecords = data.records || [];
     const records = applyTaskDueFilter(rawRecords);
+
+    window.operationsHomeContract = buildOperationsHomeContract({
+      nextActions: records.slice(0, 6).map(rec => ({
+        id: rec.id,
+        title: getField(rec, 'Task') || '—',
+        priority: String(sel(getField(rec, 'Priority')) || '').toLowerCase() || 'medium',
+        dueAt: getField(rec, 'Due Date') || undefined,
+        linkedEntityType: deriveTaskBatchId(getRecordFields(rec) || {}) ? 'Batch' : 'Task',
+        linkedEntityId: deriveTaskBatchId(getRecordFields(rec) || {}) || rec.id,
+      })),
+    });
 
     function sel(v) {
       return (v && typeof v === 'object' && v.name) ? v.name : (v || '');
@@ -178,7 +201,7 @@ async function toggleWhatsNextTaskCompletion(event, taskId, isDone) {
   } catch (error) {
     if (card) card.style.opacity = '1';
     console.warn('[WhatsNext] status toggle failed', error);
-    toast('Could not update task status');
+    toast(t('task.status_error'));
   }
 }
 

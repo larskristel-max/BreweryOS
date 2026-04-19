@@ -10,7 +10,38 @@ function enterDemo() {
   showScreen('screen-home');
 }
 
+function applyProductIdentity() {
+  const identity = getProductIdentity();
+  if (!identity) return;
+
+  document.title = `${identity.name} — ${identity.tagline}`;
+
+  const subtitle = document.getElementById('product-tagline');
+  if (subtitle) subtitle.textContent = identity.tagline;
+
+  const entryTitle = document.getElementById('entry-welcome-title');
+  if (entryTitle) entryTitle.textContent = PRODUCT_CONFIG.displayStrings.entryTitle;
+  const tryDemo = document.getElementById('entry-try-btn');
+  if (tryDemo) tryDemo.textContent = PRODUCT_CONFIG.displayStrings.tryDemo;
+  const cta = document.getElementById('value-cta-btn');
+  if (cta) cta.textContent = PRODUCT_CONFIG.displayStrings.cta;
+
+  const languageBrand = document.getElementById('language-brand-title');
+  if (languageBrand) languageBrand.textContent = identity.name;
+
+  const appBrandHeader = document.getElementById('app-brand-header');
+  if (appBrandHeader) {
+    appBrandHeader.setAttribute('aria-label', identity.name);
+  }
+
+  const appBrandSplash = document.getElementById('app-brand-splash');
+  if (appBrandSplash) {
+    appBrandSplash.setAttribute('aria-label', `${identity.name} ${identity.tagline}`);
+  }
+}
+
 function bootFlow() {
+  applyProductIdentity();
   refreshStaticTranslations();
   applyTranslations();
   startEntryFlow();

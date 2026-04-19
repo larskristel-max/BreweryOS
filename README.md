@@ -1,8 +1,5 @@
-# BreweryOS
+# Operon
 
-This project is a brewery management system.
+This project is an operational and compliance engine for brewery workflows.
 
-## Features
-- Inventory Management
-- Order Tracking
-- Reporting
+Tagline: **vos opérations brassicoles**.
