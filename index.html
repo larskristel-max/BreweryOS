@@ -169,19 +169,19 @@
   .pull-refresh-indicator:not(.is-refreshing) .spinner {
     animation-play-state: paused;
   }
-  .screen.shell-content-clearance > :last-child { margin-bottom: var(--content-trailing-clearance); }
-  #screen-agenda > :last-child,
-  #screen-tasks > :last-child { margin-bottom: 0; }
+  .screen.shell-content-clearance { padding-bottom: calc(16px + var(--content-trailing-clearance)); }
   .onboarding-screen {
     position: absolute;
     inset: 0;
     z-index: 2000;
     align-items: center;
     justify-content: center;
-    background: #fff;
-    padding: 24px 20px;
+    background: var(--bg-main);
+    overflow: hidden;
+    padding: calc(24px + var(--safe-top-space)) 20px calc(24px + env(safe-area-inset-bottom));
   }
   .onboarding-screen > :last-child { margin-bottom: 0; }
+  .app.onboarding-active { background: var(--bg-main); }
   .onboarding-value-screen {
     justify-content: flex-start;
     align-items: stretch;
@@ -397,6 +397,8 @@
   .screen-splash {
     justify-content: center;
     align-items: center;
+    overflow: hidden;
+    padding-bottom: env(safe-area-inset-bottom);
     background: radial-gradient(circle at top, #ffffff 0%, #f7f7f8 70%);
   }
   .splash-brand {
