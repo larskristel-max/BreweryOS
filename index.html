@@ -176,12 +176,14 @@
     z-index: 2000;
     align-items: center;
     justify-content: center;
-    background: var(--bg-main);
-    overflow: hidden;
+    background: #fff;
+    overflow-y: auto;
+    overflow-x: hidden;
+    overscroll-behavior-y: contain;
     padding: calc(24px + var(--safe-top-space)) 20px calc(24px + env(safe-area-inset-bottom));
   }
   .onboarding-screen > :last-child { margin-bottom: 0; }
-  .app.onboarding-active { background: var(--bg-main); }
+  .app.onboarding-active { background: #fff; }
   .onboarding-value-screen {
     justify-content: flex-start;
     align-items: stretch;
