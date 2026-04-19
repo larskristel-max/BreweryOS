@@ -80,12 +80,13 @@
     --space-md: 16px;
     --space-lg: 20px;
     --space-xl: 24px;
-    --bottom-nav-height: 56px;
+    --bottom-nav-height: 62px;
+    --bottom-nav-offset: 10px;
     --safe-top-space: env(safe-area-inset-top, 0px);
     --safe-right-space: env(safe-area-inset-right, 0px);
     --safe-left-space: env(safe-area-inset-left, 0px);
     --fab-size: 52px;
-    --content-trailing-clearance: calc(var(--bottom-nav-height) + env(safe-area-inset-bottom) + 16px);
+    --content-trailing-clearance: calc(var(--bottom-nav-height) + env(safe-area-inset-bottom) + var(--bottom-nav-offset) + 18px);
     --fab-content-trailing-clearance: calc(var(--content-trailing-clearance) + var(--fab-size) + 12px);
     --fab-clearance: calc(var(--fab-size) + 12px);
     --keyboard-offset: 0px;
@@ -307,60 +308,54 @@
   .toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
   .bottom-nav {
     position: fixed;
-    left: 0;
-    right: 0;
-    bottom: 0;
-
-    height: calc(56px + env(safe-area-inset-bottom));
-    padding-bottom: env(safe-area-inset-bottom);
-    box-sizing: border-box;
-
+    left: calc(12px + var(--safe-left-space));
+    right: calc(12px + var(--safe-right-space));
+    bottom: calc(env(safe-area-inset-bottom) + var(--bottom-nav-offset));
+    height: var(--bottom-nav-height);
+    border-radius: 22px;
+    border: 1px solid var(--line-200);
     display: flex;
     justify-content: space-around;
     align-items: center;
-
-    background: var(--bg-main);
-
+    padding: 6px;
+    box-sizing: border-box;
+    background: rgba(255,255,255,0.95);
+    box-shadow: 0 12px 28px rgba(17,24,39,0.12);
+    backdrop-filter: saturate(130%) blur(14px);
     z-index: 1000;
-  }
-  .bottom-nav::before {
-    content: "";
-    position: absolute;
-    left: 0;
-    right: 0;
-    top: 0;
-    height: 56px;
-    background: #fff;
-    border-top: 1px solid #e5e7eb;
-    pointer-events: none;
   }
   .bottom-nav .nav-item {
     position: relative;
-    z-index: 1;
+    z-index: 2;
     display: flex;
     flex-direction: column;
     align-items: center;
     justify-content: center;
-
+    min-height: 44px;
     font-size: 11px;
     line-height: 1.2;
-    flex: 1;
+    flex: 1 1 0;
     min-width: 0;
     background: none;
     border: none;
     cursor: pointer;
     color: #6b7280;
-    padding: 0 2px;
+    padding: 4px 2px;
+    border-radius: 14px;
   }
-  .shell-bottom-fill {
+  .bottom-nav .nav-item.active {
+    color: #111827;
+    background: #eef2f7;
+  }
+  .shell-safe-area-bg {
     position: fixed;
     left: 0;
     right: 0;
     bottom: 0;
-    height: max(env(safe-area-inset-bottom), 12px);
-    background: var(--bg-main);
+    height: calc(env(safe-area-inset-bottom) + var(--bottom-nav-offset));
+    background: #fff;
     pointer-events: none;
-    z-index: 10;
+    z-index: 900;
   }
   .bottom-nav .nav-item svg,
   .bottom-nav .nav-item i {
@@ -376,13 +371,8 @@
   .main-tab-header { min-height: 52px; padding: var(--space-md) var(--space-lg) 0; display:flex; justify-content:space-between; align-items:center; gap:12px; }
   .main-tab-title { font-size: var(--font-screen-title); font-weight:600; color:#111827; margin:0; }
   .main-tab-header-actions { display:flex; align-items:center; gap:8px; }
-  .fab-btn { width:var(--fab-size); height:var(--fab-size); border-radius:50%; background:#111827; color:#fff; font-size:24px; border:none; cursor:pointer; box-shadow:0 6px 14px rgba(0,0,0,0.16); display:inline-flex; align-items:center; justify-content:center; line-height:1; transition:opacity 0.18s ease, transform 0.18s ease; z-index: 1200; }
-  .fab-btn.viewport-fixed {
-    position: fixed;
-    right: calc(var(--space-lg) + var(--safe-right-space));
-    bottom: calc(var(--bottom-nav-height) + env(safe-area-inset-bottom) + 12px);
-    z-index: 1205;
-  }
+  .action-btn { width:44px; height:44px; border-radius:50%; background:#fff; color:#111827; font-size:24px; border:1px solid var(--line-200); cursor:pointer; box-shadow:0 1px 2px rgba(0,0,0,0.04); display:inline-flex; align-items:center; justify-content:center; line-height:1; transition:opacity 0.18s ease, transform 0.18s ease; }
+  .action-btn:active { transform: scale(0.96); }
   .meta-text { font-size: var(--font-meta); color: var(--gray-400); }
   .secondary-text { font-size: var(--font-secondary); color: var(--muted); }
   .screen-title { font-size: var(--font-screen-title); font-weight: 600; color: var(--ink-900); margin: 0; }
@@ -412,7 +402,18 @@
   #task-schedule-sheet.open { display:block; opacity:1; pointer-events:auto; transform: translateY(0); }
   #agenda-item-actions { left: calc(12px + var(--safe-left-space)); right: calc(12px + var(--safe-right-space)); }
 
-  .quick-add-open #quick-add-fab { opacity: 0; pointer-events: none; transform: scale(0.92); }
+  .quick-add-open #quick-add-action { opacity: 0; pointer-events: none; transform: scale(0.92); }
+  .screen-splash {
+    justify-content: center;
+    align-items: center;
+    background: radial-gradient(circle at top, #ffffff 0%, #f7f7f8 70%);
+  }
+  .splash-brand {
+    font-size: 30px;
+    letter-spacing: -0.02em;
+    font-weight: 650;
+    color: #111827;
+  }
   .quick-add-open #quick-add-sheet { display: flex !important; }
   #quick-add-sheet,
   #task-create-sheet,
@@ -422,8 +423,8 @@
   #task-create-actions { padding-bottom: calc(20px + env(safe-area-inset-bottom)); }
   #agenda-list,
   #agenda-week-view,
-  #agenda-month-view { padding-bottom: var(--fab-content-trailing-clearance); }
-  #task-list { padding-bottom: var(--fab-content-trailing-clearance); }
+  #agenda-month-view { padding-bottom: var(--content-trailing-clearance); }
+  #task-list { padding-bottom: var(--content-trailing-clearance); }
   #quick-add-sheet .quick-add-scroll { overflow-x: hidden; }
   #quick-add-sheet .quick-add-input-stack {
     display: flex;
@@ -528,6 +529,10 @@
 <div id="toast" class="toast" role="status" aria-live="polite" aria-atomic="true"></div>
 <div id="pull-refresh-indicator" class="pull-refresh-indicator" aria-hidden="true"><div class="spinner"></div></div>
 
+<div id="screen-splash" class="screen screen-splash" style="display:none;">
+  <div class="splash-brand">BrewOS</div>
+</div>
+
 <div id="screen-language" class="screen onboarding-screen" style="display:none;">
   <div class="onboarding-inner">
     <div class="language-brand">BrewOS</div>
@@ -542,8 +547,8 @@
 <div id="screen-entry" class="screen onboarding-screen" style="display:none;">
   <div class="onboarding-inner">
     <div class="access-title" data-i18n="access.welcome" id="entry-welcome-title">Welcome to BrewOS</div>
-    <button class="btn btn-primary" onclick="showScreen('screen-home')" data-i18n="access.login" id="entry-login-btn">Log in</button>
-    <button class="btn btn-secondary" onclick="showScreen('screen-home')" data-i18n="access.create_account" id="entry-account-btn" style="margin-top:10px;">Create account</button>
+    <button class="btn btn-primary" onclick="enterAppFromEntry()" data-i18n="access.login" id="entry-login-btn">Log in</button>
+    <button class="btn btn-secondary" onclick="enterAppFromEntry()" data-i18n="access.create_account" id="entry-account-btn" style="margin-top:10px;">Create account</button>
     <div class="access-demo-link" onclick="enterDemo()" data-i18n="access.try_demo" id="entry-try-btn">Try BrewOS</div>
   </div>
 </div>
@@ -574,7 +579,9 @@
   <!-- Header -->
   <div class="main-tab-header">
     <p class="main-tab-title" id="agenda-title-label">Agenda</p>
-    <button id="quick-add-fab" class="fab-btn viewport-fixed" onclick="handleMainTabFab('agenda')" aria-label="Ajouter dans agenda" title="Ajouter">+</button>
+    <div class="main-tab-header-actions">
+      <button id="quick-add-action" class="action-btn" onclick="handleMainTabFab('agenda')" aria-label="Ajouter dans agenda" title="Ajouter">+</button>
+    </div>
   </div>
 
   <!-- Day / Week / Month toggle -->
@@ -687,7 +694,7 @@
   <!-- Header -->
   <div class="main-tab-header" style="position:sticky; top:0; background:var(--bg); z-index:10;">
     <p class="main-tab-title" id="fin-page-title">Finances</p>
-    <button class="fab-btn" onclick="handleMainTabFab('financial')" aria-label="Ajouter dans finances" title="Ajouter">+</button>
+    <div class="main-tab-header-actions"></div>
   </div>
 
   <!-- Period filter -->
@@ -793,7 +800,7 @@
     <p class="home-title" id="home-title">Today's operations</p>
     <div class="main-tab-header-actions">
       <button onclick="showScreen('screen-settings')" style="background:#f3f4f6; border:none; border-radius:50%; width:36px; height:36px; font-size:14px; color:#6b7280; cursor:pointer; font-weight:600; flex-shrink:0;">···</button>
-      <button class="fab-btn" onclick="handleMainTabFab('operations')" aria-label="Ajouter dans opérations" title="Ajouter">+</button>
+      <button class="action-btn" onclick="handleMainTabFab('operations')" aria-label="Ajouter dans opérations" title="Ajouter">+</button>
     </div>
   </div>
 
@@ -861,7 +868,9 @@
 <div id="screen-batches" class="screen refresh-scroll-surface shell-content-clearance">
   <div class="main-tab-header" style="padding:0;">
     <p class="main-tab-title" id="batch-screen-title">Brassins</p>
-    <button class="fab-btn" onclick="handleMainTabFab('batches')" aria-label="Ajouter dans brassins" title="Ajouter">+</button>
+    <div class="main-tab-header-actions">
+      <button class="action-btn" onclick="handleMainTabFab('batches')" aria-label="Ajouter dans brassins" title="Ajouter">+</button>
+    </div>
   </div>
   <div id="batch-list"><div class="loading"><div class="spinner"></div></div></div>
 </div>
@@ -891,7 +900,9 @@
 <div id="screen-tasks" class="screen refresh-scroll-surface">
   <div class="main-tab-header" style="padding:0;">
     <p class="main-tab-title" id="task-screen-title">Tâches</p>
-    <button id="task-add-fab" class="fab-btn viewport-fixed" onclick="handleMainTabFab('tasks')" aria-label="Ajouter une tâche" title="Ajouter une tâche">+</button>
+    <div class="main-tab-header-actions">
+      <button id="task-add-action" class="action-btn" onclick="handleMainTabFab('tasks')" aria-label="Ajouter une tâche" title="Ajouter une tâche">+</button>
+    </div>
   </div>
   <div class="segmented-control">
     <button id="task-filter-all" class="segmented-btn active" onclick="setTaskDueFilter('all')">Toutes</button>
@@ -925,6 +936,8 @@
 <script src="/js/ui/render-financial.js"></script>
 <script src="/js/core/refresh.js"></script>
 <script src="/js/core/navigation.js"></script>
+<script src="/js/core/shell.js"></script>
+<script src="/js/core/entry.js"></script>
 <script src="/js/core/boot.js"></script>
 <script>
 
@@ -1429,25 +1442,25 @@ init();
 // ── FINANCIAL PAGE ───────────────────────────────────────────────────────────
 
 </script>
-<div class="shell-bottom-fill" aria-hidden="true"></div>
+<div class="shell-safe-area-bg" aria-hidden="true"></div>
 <div class="bottom-nav">
-  <button onclick="showScreen('screen-home')" class="nav-item">
+  <button onclick="openMainTab('screen-home')" class="nav-item" data-screen="screen-home">
     <i class="nav-icon" style="display:block; border:1.5px solid currentColor; border-radius:4px; position:relative; font-style:normal;"><span style="position:absolute; bottom:0; left:3px; right:3px; height:8px; border:1.5px solid currentColor; border-bottom:none; border-radius:2px 2px 0 0;"></span></i>
     <span id="nav-home" class="nav-label">Home</span>
   </button>
-  <button onclick="loadBatches()" class="nav-item">
+  <button onclick="openMainTab('screen-batches')" class="nav-item" data-screen="screen-batches">
     <i class="nav-icon" style="font-size:15px; font-weight:300; font-style:normal;">⬡</i>
     <span id="nav-batches" class="nav-label">Batches</span>
   </button>
-  <button onclick="showScreen('screen-agenda')" class="nav-item">
+  <button onclick="openMainTab('screen-agenda')" class="nav-item" data-screen="screen-agenda">
     <i class="nav-icon" style="display:block; border:1.5px solid currentColor; border-radius:3px; position:relative; font-style:normal;"><span style="position:absolute; top:3px; left:2px; right:2px; height:1.5px; background:currentColor;"></span><span style="position:absolute; top:-3px; left:4px; width:1.5px; height:5px; background:currentColor;"></span><span style="position:absolute; top:-3px; right:4px; width:1.5px; height:5px; background:currentColor;"></span></i>
     <span id="nav-agenda" class="nav-label">Agenda</span>
   </button>
-  <button onclick="showScreen('screen-tasks')" class="nav-item">
+  <button onclick="openMainTab('screen-tasks')" class="nav-item" data-screen="screen-tasks">
     <i class="nav-icon" style="display:flex; align-items:center; justify-content:center; font-style:normal;"><span style="width:14px; height:14px; border:1.5px solid currentColor; border-radius:3px;"></span></i>
     <span id="nav-tasks" class="nav-label">Tasks</span>
   </button>
-  <button onclick="showScreen('screen-financial')" class="nav-item">
+  <button onclick="openMainTab('screen-financial')" class="nav-item" data-screen="screen-financial">
     <i class="nav-icon" style="font-size:13px; font-weight:600; letter-spacing:-0.5px; font-style:normal;">€</i>
     <span id="nav-financial" class="nav-label">Financial</span>
   </button>

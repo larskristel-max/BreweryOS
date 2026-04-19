@@ -11,10 +11,14 @@ function shouldForceLanguageSelection() {
 }
 
 function getInitialScreen() {
+  return 'screen-splash';
+}
+
+function getPostSplashScreen() {
   if (!hasSavedLanguagePreference() || shouldForceLanguageSelection()) {
     return 'screen-language';
   }
-  return 'screen-home';
+  return 'screen-entry';
 }
 
 function navigateBack(fallbackScreen = 'screen-home') {

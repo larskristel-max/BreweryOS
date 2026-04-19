@@ -13,7 +13,7 @@ function enterDemo() {
 function bootFlow() {
   refreshStaticTranslations();
   applyTranslations();
-  showScreen(getInitialScreen());
+  startEntryFlow();
 }
 
 // ── GUIDANCE HELPER ──────────────────────────────────────────────────────────
@@ -56,4 +56,3 @@ async function init() {
   renderFinancialPreview();
   maybeShowColorTip();
 }
-
