@@ -82,6 +82,7 @@
     --space-xl: 24px;
     --bottom-nav-height: 62px;
     --bottom-nav-offset: 10px;
+    --bottom-sheet-offset: calc(var(--bottom-nav-height) + var(--bottom-nav-offset) + env(safe-area-inset-bottom) + 12px);
     --safe-top-space: env(safe-area-inset-top, 0px);
     --safe-right-space: env(safe-area-inset-right, 0px);
     --safe-left-space: env(safe-area-inset-left, 0px);
@@ -637,7 +638,7 @@
 
   <!-- Agenda item actions -->
   <div id="agenda-actions-backdrop" onclick="closeAgendaItemActions()" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,0.2);z-index:580;"></div>
-  <div id="agenda-item-actions" style="display:none; position:fixed; left:12px; right:12px; bottom:calc(56px + env(safe-area-inset-bottom) + 8px); background:#fff; border-radius:16px; border:1px solid #e5e7eb; padding:8px; z-index:581;">
+  <div id="agenda-item-actions" style="display:none; position:fixed; left:12px; right:12px; bottom:var(--bottom-sheet-offset); background:#fff; border-radius:16px; border:1px solid #e5e7eb; padding:8px; z-index:581;">
     <button id="agenda-action-toggle-done" onclick="agendaActionToggleDone()" style="width:100%; text-align:left; background:#fff; border:none; padding:12px; border-radius:10px; font-size:14px; color:#111827;">Marquer terminé</button>
     <button id="agenda-action-set-date" type="button" onclick="agendaActionSetDate()" style="width:100%; text-align:left; background:#fff; border:none; padding:12px; border-radius:10px; font-size:14px; color:#111827;">Définir date / heure</button>
     <div id="agenda-set-date-inline" style="display:none; margin:2px 0 6px; padding:10px 12px 12px; border:1px solid #e5e7eb; border-radius:12px; background:#f9fafb;">
@@ -656,7 +657,7 @@
 
 <!-- Task schedule bottom sheet -->
 <div id="task-schedule-backdrop" aria-hidden="true" onclick="handleTaskScheduleBackdropClick(event)" style="position:fixed;inset:0;background:rgba(0,0,0,0.2);z-index:580;"></div>
-<div id="task-schedule-sheet" aria-hidden="true" onclick="event.stopPropagation()" style="position:fixed; left:12px; right:12px; bottom:calc(56px + env(safe-area-inset-bottom) + 8px); background:#fff; border-radius:16px; border:1px solid #e5e7eb; padding:16px; z-index:581;">
+<div id="task-schedule-sheet" aria-hidden="true" onclick="event.stopPropagation()" style="position:fixed; left:12px; right:12px; bottom:var(--bottom-sheet-offset); background:#fff; border-radius:16px; border:1px solid #e5e7eb; padding:16px; z-index:581;">
   <p class="sheet-title" id="task-schedule-title">Définir date / heure</p>
   <input id="task-schedule-date-input" type="date" style="padding:11px 12px; border:1px solid #d1d5db; border-radius:10px; font-size:15px; background:#fff; color:#111827; margin-bottom:8px;" />
   <input id="task-schedule-time-input" type="time" style="padding:11px 12px; border:1px solid #d1d5db; border-radius:10px; font-size:15px; background:#fff; color:#111827; margin-bottom:8px;" />
