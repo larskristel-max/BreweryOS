@@ -20,16 +20,24 @@ function bootFlow() {
 function dismissGuidance() {
   const count = parseInt(localStorage.getItem('brewos_guidance_dismissed') || '0') + 1;
   localStorage.setItem('brewos_guidance_dismissed', count);
-  const el = document.getElementById('guidance-helper');
-  if (el) el.style.display = 'none';
   if (count >= 3) localStorage.setItem('brewos_guidance_hide', '1');
+  syncGuidanceCardsVisibility();
+}
+
+function syncGuidanceCardsVisibility() {
+  const guidanceEnabled = localStorage.getItem('brewos_show_guidance') !== '0';
+  const helperDismissed = localStorage.getItem('brewos_guidance_hide') === '1';
+  const colorTipSeen = localStorage.getItem('brewos_color_tip_seen') === '1';
+
+  const helper = document.getElementById('guidance-helper');
+  if (helper) helper.style.display = guidanceEnabled && !helperDismissed ? 'flex' : 'none';
+
+  const colorGuide = document.getElementById('home-color-guide');
+  if (colorGuide) colorGuide.style.display = guidanceEnabled && !colorTipSeen ? 'flex' : 'none';
 }
 
 function initGuidanceHelper() {
-  const hide = localStorage.getItem('brewos_guidance_hide') === '1'
-    || !( localStorage.getItem('brewos_show_guidance') !== '0' );
-  const el = document.getElementById('guidance-helper');
-  if (el && hide) el.style.display = 'none';
+  syncGuidanceCardsVisibility();
 }
 async function init() {
   bootFlow();
