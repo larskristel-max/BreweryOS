@@ -137,18 +137,18 @@
       height: var(--app-viewport-height);
     }
   }
-  .nav { background: var(--card); border-bottom: 1px solid var(--border); padding: calc(8px + var(--safe-top-space)) 20px 10px; display: flex; align-items: center; justify-content: space-between; position: sticky; top: 0; z-index: 1100; }
+  .nav { background: var(--card); border-bottom: 1px solid var(--border); padding: calc(10px + var(--safe-top-space)) 20px 12px; display: flex; align-items: center; justify-content: space-between; position: sticky; top: 0; z-index: 1100; }
   .nav-title {
     display: flex;
     align-items: center;
     justify-content: center;
-    min-height: 74px;
+    min-height: 110px;
   }
   .brand-logo {
     display: block;
     width: auto;
-    max-width: min(320px, 62vw);
-    height: 70px;
+    max-width: min(520px, 84vw);
+    height: 132px;
     object-fit: contain;
   }
   .nav-back { font-size: 15px; color: var(--gray-500); cursor: pointer; display: flex; align-items: center; gap: 4px; }
@@ -426,6 +426,7 @@
     display: flex;
     align-items: center;
     justify-content: center;
+    transform: translateY(-5vh);
   }
   .splash-brand-logo {
     display: block;
@@ -482,28 +483,21 @@
     max-width: 440px;
     display: flex;
     flex-direction: column;
-    padding: 30px 24px 48px;
+    padding: 22px 24px 36px;
   }
   .language-brand-logo {
     display: block;
     width: min(320px, 82vw);
     height: auto;
     object-fit: contain;
-    margin: 0 auto 6px;
+    margin: 0 auto 2px;
   }
   .language-subtitle {
     text-align: center;
     font-size: 16px;
     line-height: 1.4;
     color: #6b7280;
-    margin-bottom: 14px;
-  }
-  .access-brand-logo {
-    display: block;
-    width: min(310px, 80vw);
-    height: auto;
-    object-fit: contain;
-    margin: 0 auto 16px;
+    margin-bottom: 8px;
   }
   .language-option {
     width: 100%;
@@ -514,7 +508,7 @@
     font-size: 20px;
     font-weight: 600;
     color: #111827;
-    margin-bottom: 14px;
+    margin-bottom: 10px;
     padding: 0 20px;
     -webkit-appearance: none;
     appearance: none;
@@ -574,7 +568,6 @@
 
 <div id="screen-entry" class="screen onboarding-screen" style="display:none;">
   <div class="onboarding-inner">
-    <img class="access-brand-logo" src="assets/operon_logo_refined_3x.png" alt="Operon logo">
     <div class="access-title" data-i18n="access.welcome" id="entry-welcome-title">Welcome to Operon</div>
     <button class="btn btn-primary" onclick="handleLoginUnavailable()" data-i18n="access.login" id="entry-login-btn">Log in</button>
     <button class="btn btn-secondary" onclick="handleSignupUnavailable()" data-i18n="access.create_account" id="entry-account-btn" style="margin-top:10px;">Create account</button>
