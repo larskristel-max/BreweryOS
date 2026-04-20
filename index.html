@@ -349,9 +349,63 @@
     padding: 4px 1px;
     border-radius: 14px;
   }
+  .bottom-nav .nav-item.primary-action {
+    flex: 0 0 auto;
+    min-width: 116px;
+    padding: 0 12px;
+    height: 52px;
+    border-radius: 999px;
+    margin-top: -18px;
+    background: #111827;
+    color: #fff;
+    box-shadow: 0 10px 22px rgba(17,24,39,0.18), 0 2px 6px rgba(17,24,39,0.09);
+    font-weight: 600;
+  }
+  .bottom-nav .nav-item.primary-action.active {
+    background: #1f2937;
+    color: #fff;
+  }
   .bottom-nav .nav-item.active {
     color: #111827;
     background: #eef2f7;
+  }
+  .lets-brew-hub-backdrop {
+    position: fixed;
+    inset: 0;
+    background: rgba(17,24,39,0.24);
+    z-index: 1800;
+  }
+  .lets-brew-hub-sheet {
+    position: fixed;
+    left: calc(12px + var(--safe-left-space));
+    right: calc(12px + var(--safe-right-space));
+    bottom: calc(var(--bottom-sheet-offset) + 8px);
+    max-height: calc(var(--app-viewport-height) - 130px);
+    overflow-y: auto;
+    background: #fff;
+    border: 1px solid rgba(17,24,39,0.08);
+    border-radius: 18px;
+    padding: 14px;
+    z-index: 1801;
+    box-shadow: 0 16px 34px rgba(17,24,39,0.2);
+  }
+  .lets-brew-action-btn {
+    width: 100%;
+    border: 1px solid var(--line-200);
+    border-radius: 12px;
+    background: #fff;
+    color: #111827;
+    text-align: left;
+    padding: 11px 12px;
+    font-size: 14px;
+    margin-bottom: 8px;
+    cursor: pointer;
+  }
+  .lets-brew-action-btn.primary {
+    background: #111827;
+    border-color: #111827;
+    color: #fff;
+    font-weight: 600;
   }
   .bottom-nav .nav-item svg,
   .bottom-nav .nav-item i {
@@ -1292,7 +1346,6 @@ function applyTranslations() {
   const navLabels = {
     'nav-home':      'home.today',
     'nav-batches':   'batch.all_batches',
-    'nav-agenda':    'agenda.title',
     'nav-tasks':     'task.open_tasks',
     'nav-financial': 'financial.title',
   };
@@ -1453,11 +1506,7 @@ init();
     <i class="nav-icon" style="font-size:15px; font-weight:300; font-style:normal;">⬡</i>
     <span id="nav-batches" class="nav-label">Batches</span>
   </button>
-  <button onclick="openMainTab('screen-agenda')" class="nav-item" data-screen="screen-agenda">
-    <i class="nav-icon" style="display:block; border:1.5px solid currentColor; border-radius:3px; position:relative; font-style:normal;"><span style="position:absolute; top:3px; left:2px; right:2px; height:1.5px; background:currentColor;"></span><span style="position:absolute; top:-3px; left:4px; width:1.5px; height:5px; background:currentColor;"></span><span style="position:absolute; top:-3px; right:4px; width:1.5px; height:5px; background:currentColor;"></span></i>
-    <span id="nav-agenda" class="nav-label">Agenda</span>
-  </button>
-  <button onclick="triggerLetsBrew()" class="nav-item" data-screen="screen-brew" aria-label="Let's Brew">
+  <button onclick="triggerLetsBrew()" class="nav-item primary-action" data-screen="screen-brew" aria-label="Let's Brew">
     <span id="nav-lets-brew" class="nav-label">Let’s Brew</span>
   </button>
   <button onclick="openMainTab('screen-tasks')" class="nav-item" data-screen="screen-tasks">

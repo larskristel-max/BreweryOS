@@ -62,11 +62,51 @@ async function getBrewLogsForBatch(recordId, batchFields = {}) {
 
 function isBatchActive(fields = {}) {
   const status = String(sel(fields.Status) || '').toLowerCase();
-  if (!status) return true;
+  if (!status) return false;
   return !['complete', 'completed', 'done', 'archived'].includes(status);
 }
 
 async function triggerLetsBrew() {
+  openLetsBrewActionHub();
+}
+
+function openLetsBrewActionHub() {
+  closeLetsBrewActionHub();
+  document.body.insertAdjacentHTML('beforeend', `
+    <div id="lets-brew-hub-backdrop" class="lets-brew-hub-backdrop" onclick="closeLetsBrewActionHub()"></div>
+    <div id="lets-brew-hub-sheet" class="lets-brew-hub-sheet">
+      <p class="sheet-title" style="margin-bottom:10px;">What do you want to do?</p>
+      <div class="card" style="padding:10px 10px 6px; margin-bottom:10px;">
+        <label class="field-label" style="margin-bottom:6px;">AI input (coming next)</label>
+        <div style="display:flex;gap:8px;align-items:center;">
+          <input id="lets-brew-ai-input" type="text" placeholder="What do you want to do?" style="margin:0;">
+          <button class="action-btn" style="width:44px;height:44px;min-width:44px;" onclick="toast('Voice routing coming soon')">🎙</button>
+        </div>
+        <button class="btn btn-secondary" style="margin-top:8px;margin-bottom:0;min-height:42px;" onclick="handleLetsBrewIntentInput()">Route intent</button>
+      </div>
+
+      <button class="lets-brew-action-btn primary" onclick="letsBrewStartContinue()">Start / Continue Brew</button>
+      <button class="lets-brew-action-btn" onclick="letsBrewQuickLog('gravity')">Log observation · gravity</button>
+      <button class="lets-brew-action-btn" onclick="letsBrewQuickLog('temperature')">Log observation · temperature</button>
+      <button class="lets-brew-action-btn" onclick="letsBrewQuickLog('brew note')">Log observation · brew note</button>
+      <button class="lets-brew-action-btn" onclick="letsBrewQuickLog('packaging note')">Log observation · packaging note</button>
+      <button class="lets-brew-action-btn" onclick="toast('Inventory movement logging coming soon')">Log inventory movement</button>
+      <button class="lets-brew-action-btn" onclick="letsBrewContinueTasks()">Continue open tasks</button>
+      <button class="lets-brew-action-btn" onclick="letsBrewAddTask()">Add a task</button>
+      <button class="lets-brew-action-btn" onclick="toast('Record sale flow coming soon')">Record sale</button>
+      <button class="lets-brew-action-btn" onclick="toast('Compliance / excise / HACCP flow coming soon')">Compliance / excise / HACCP</button>
+      <button class="lets-brew-action-btn" onclick="toast('Documents / exports flow coming soon')">Documents / exports</button>
+      <button class="btn btn-secondary" style="margin-bottom:0;" onclick="closeLetsBrewActionHub()">Close</button>
+    </div>`);
+}
+
+function closeLetsBrewActionHub() {
+  document.getElementById('lets-brew-hub-sheet')?.remove();
+  document.getElementById('lets-brew-hub-backdrop')?.remove();
+}
+
+async function letsBrewStartContinue() {
+  closeLetsBrewActionHub();
   showScreen('screen-brew');
   const stageContent = document.getElementById('brew-stage-content');
   stageContent.innerHTML = '<div class="loading"><div class="spinner"></div></div>';
@@ -80,6 +120,48 @@ async function triggerLetsBrew() {
     return;
   }
   renderBatchSelectionLayer(allBatches);
+}
+
+function letsBrewContinueTasks() {
+  closeLetsBrewActionHub();
+  openMainTab('screen-tasks');
+}
+
+function letsBrewAddTask() {
+  closeLetsBrewActionHub();
+  openMainTab('screen-tasks');
+  setTimeout(() => handleMainTabFab('tasks'), 0);
+}
+
+function letsBrewQuickLog(type) {
+  closeLetsBrewActionHub();
+  toast(`Quick log (${type}) coming soon`);
+}
+
+function handleLetsBrewIntentInput() {
+  const raw = (document.getElementById('lets-brew-ai-input')?.value || '').trim().toLowerCase();
+  if (!raw) {
+    toast('Type a command to route');
+    return;
+  }
+  if (raw.includes('task')) {
+    letsBrewAddTask();
+    return;
+  }
+  if (raw.includes('sale')) {
+    toast('Sale routing coming soon');
+    return;
+  }
+  if (raw.includes('brew') || raw.includes('mash') || raw.includes('boil') || raw.includes('gravity')) {
+    letsBrewStartContinue();
+    return;
+  }
+  toast('Intent router placeholder: no route matched yet');
+}
+
+function getLocalDateInputValue(d = new Date()) {
+  const local = new Date(d.getTime() - d.getTimezoneOffset() * 60000);
+  return local.toISOString().slice(0, 10);
 }
 
 function renderBatchSelectionLayer(batches = []) {
@@ -106,7 +188,7 @@ function openCreateBatchSheet() {
     <div id="lets-brew-batch-sheet" class="card" style="position:fixed;left:12px;right:12px;bottom:calc(env(safe-area-inset-bottom) + 12px);z-index:1300;padding:14px;border-radius:16px;box-shadow:0 12px 26px rgba(17,24,39,0.16);">
       <p class="sheet-title">Create Batch</p>
       <div class="field-group"><label class="field-label">Batch Name</label><input id="lets-brew-batch-name" type="text" placeholder="e.g. Spring Lager"></div>
-      <div class="field-group"><label class="field-label">Brew Date</label><input id="lets-brew-batch-date" type="text" placeholder="YYYY-MM-DD" value="${new Date().toISOString().slice(0, 10)}"></div>
+      <div class="field-group"><label class="field-label">Brew Date</label><input id="lets-brew-batch-date" type="text" placeholder="YYYY-MM-DD" value="${getLocalDateInputValue()}"></div>
       <button class="btn btn-primary" onclick="createBatchForLetsBrew()">Create and Continue</button>
       <button class="btn btn-secondary" onclick="closeCreateBatchSheet()">Cancel</button>
     </div>`);
@@ -321,7 +403,7 @@ async function confirmIntakeAndLinkRecipe() {
     return;
   }
 
-  const recipeName = (prompt('Recipe name for imported intake', `Imported Recipe ${new Date().toISOString().slice(0, 10)}`) || '').trim();
+  const recipeName = (prompt('Recipe name for imported intake', `Imported Recipe ${getLocalDateInputValue()}`) || '').trim();
   if (!recipeName) {
     toast('Recipe not created');
     return;
