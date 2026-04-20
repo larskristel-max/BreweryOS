@@ -142,12 +142,12 @@
     display: flex;
     align-items: center;
     justify-content: center;
-    min-height: 28px;
+    min-height: 56px;
   }
   .brand-logo {
     display: block;
     width: auto;
-    height: 28px;
+    height: 56px;
     object-fit: contain;
   }
   .nav-back { font-size: 15px; color: var(--gray-500); cursor: pointer; display: flex; align-items: center; gap: 4px; }
@@ -484,13 +484,15 @@
     padding: 40px 24px 56px;
   }
   .language-brand {
-    text-align: center;
-    font-size: 28px;
-    line-height: 1.15;
-    font-weight: 650;
-    color: #111827;
-    margin-bottom: 12px;
-    letter-spacing: -0.02em;
+    display: flex;
+    justify-content: center;
+    margin-bottom: 8px;
+  }
+  .language-brand-logo {
+    display: block;
+    width: min(220px, 62vw);
+    height: auto;
+    object-fit: contain;
   }
   .language-subtitle {
     text-align: center;
@@ -557,7 +559,7 @@
 
 <div id="screen-language" class="screen onboarding-screen" style="display:none;">
   <div class="onboarding-inner">
-    <div class="language-brand">Operon</div>
+    <div class="language-brand"><img class="language-brand-logo" src="assets/ChatGPT Image 20 avr. 2026, 11_39_21.png" alt="Operon logo"></div>
     <div class="language-subtitle" data-i18n="language.choose">Choose your language</div>
     <button class="language-option" onclick="selectLanguage('fr')">Français</button>
     <button class="language-option" onclick="selectLanguage('nl')">Nederlands</button>
