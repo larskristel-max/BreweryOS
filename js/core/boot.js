@@ -47,11 +47,6 @@ async function init() {
   for (const record of (batchData.records || [])) {
     runTaskSyncSafely(record, '');
   }
-  const sel2 = document.getElementById('brew-batch-select');
-  sel2.innerHTML = '<option value="">Select a batch...</option>' +
-    (batchData.records||[]).map(r =>
-      `<option value="${r.id}">${resolveBatchLabel(r)}${Array.isArray(r.fields.Recipe)?` — ${r.fields.Recipe[0]}`:''}</option>`
-    ).join('');
   renderHomeBatches(batchData.records || []);
   loadTasks();
   applyHomeLabels();

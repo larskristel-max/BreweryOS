@@ -320,7 +320,7 @@
     border-radius: 22px;
     border: 1px solid var(--line-200);
     display: flex;
-    justify-content: space-around;
+    justify-content: space-between;
     align-items: center;
     padding: 6px;
     box-sizing: border-box;
@@ -337,7 +337,7 @@
     flex-direction: column;
     align-items: center;
     justify-content: center;
-    min-height: 44px;
+    min-height: 42px;
     font-size: 11px;
     line-height: 1.2;
     flex: 1 1 0;
@@ -346,8 +346,24 @@
     border: none;
     cursor: pointer;
     color: #6b7280;
-    padding: 4px 2px;
+    padding: 4px 1px;
     border-radius: 14px;
+  }
+  .bottom-nav .nav-item.primary-action {
+    flex: 0 0 auto;
+    min-width: 110px;
+    height: 50px;
+    border-radius: 999px;
+    background: #111827;
+    color: #fff;
+    font-weight: 600;
+    box-shadow: 0 8px 14px rgba(17,24,39,0.16);
+    transform: translateY(-10px);
+  }
+  .bottom-nav .nav-item.primary-action .nav-icon { margin-bottom: 0; }
+  .bottom-nav .nav-item.primary-action.active {
+    background: #1f2937;
+    color: #fff;
   }
   .bottom-nav .nav-item.active {
     color: #111827;
@@ -876,14 +892,6 @@
   <div class="main-tab-header" style="padding:0;">
     <p class="main-tab-title" id="brew-screen-title">Journal de brassage</p>
   </div>
-  <div class="detail-section">
-    <h3 id="brew-select-label">Select Batch</h3>
-    <div class="field-group">
-      <select id="brew-batch-select" onchange="loadBrewLog()">
-        <option value="" id="brew-loading-option">Loading batches...</option>
-      </select>
-    </div>
-  </div>
   <div id="brew-stage-content"></div>
 </div>
 
@@ -1300,7 +1308,6 @@ function applyTranslations() {
   const navLabels = {
     'nav-home':      'home.today',
     'nav-batches':   'batch.all_batches',
-    'nav-agenda':    'agenda.title',
     'nav-tasks':     'task.open_tasks',
     'nav-financial': 'financial.title',
   };
@@ -1316,7 +1323,6 @@ function applyTranslations() {
     'issues-screen-title': 'issues.title',
     'issues-screen-empty': 'issues.coming_soon',
     'brew-screen-title':   'brew.log_title',
-    'brew-select-label':   'brew.select_batch',
     'settings-title-label':'settings.title',
     'settings-lang-label': 'settings.language',
     'settings-guidance-label': 'settings.guidance_toggle',
@@ -1326,9 +1332,8 @@ function applyTranslations() {
     if (el) el.textContent = t(key);
   });
 
-  // Brew loading option
-  const brewOpt = document.getElementById('brew-loading-option');
-  if (brewOpt) brewOpt.textContent = t('brew.loading');
+  const letsBrewNavLabel = document.getElementById('nav-lets-brew');
+  if (letsBrewNavLabel) letsBrewNavLabel.textContent = 'Let’s Brew';
 
   // Agenda screen labels — use correct IDs matching the HTML
   const agendaMap = {
@@ -1457,15 +1462,14 @@ init();
 <div class="bottom-nav">
   <button onclick="openMainTab('screen-home')" class="nav-item" data-screen="screen-home">
     <i class="nav-icon" style="display:block; border:1.5px solid currentColor; border-radius:4px; position:relative; font-style:normal;"><span style="position:absolute; bottom:0; left:3px; right:3px; height:8px; border:1.5px solid currentColor; border-bottom:none; border-radius:2px 2px 0 0;"></span></i>
-    <span id="nav-home" class="nav-label">Home</span>
+    <span id="nav-home" class="nav-label">Operations</span>
   </button>
   <button onclick="openMainTab('screen-batches')" class="nav-item" data-screen="screen-batches">
     <i class="nav-icon" style="font-size:15px; font-weight:300; font-style:normal;">⬡</i>
     <span id="nav-batches" class="nav-label">Batches</span>
   </button>
-  <button onclick="openMainTab('screen-agenda')" class="nav-item" data-screen="screen-agenda">
-    <i class="nav-icon" style="display:block; border:1.5px solid currentColor; border-radius:3px; position:relative; font-style:normal;"><span style="position:absolute; top:3px; left:2px; right:2px; height:1.5px; background:currentColor;"></span><span style="position:absolute; top:-3px; left:4px; width:1.5px; height:5px; background:currentColor;"></span><span style="position:absolute; top:-3px; right:4px; width:1.5px; height:5px; background:currentColor;"></span></i>
-    <span id="nav-agenda" class="nav-label">Agenda</span>
+  <button onclick="triggerLetsBrew()" class="nav-item primary-action" data-screen="screen-brew" aria-label="Let's Brew">
+    <span id="nav-lets-brew" class="nav-label">Let’s Brew</span>
   </button>
   <button onclick="openMainTab('screen-tasks')" class="nav-item" data-screen="screen-tasks">
     <i class="nav-icon" style="display:flex; align-items:center; justify-content:center; font-style:normal;"><span style="width:14px; height:14px; border:1.5px solid currentColor; border-radius:3px;"></span></i>
@@ -1473,7 +1477,7 @@ init();
   </button>
   <button onclick="openMainTab('screen-financial')" class="nav-item" data-screen="screen-financial">
     <i class="nav-icon" style="font-size:13px; font-weight:600; letter-spacing:-0.5px; font-style:normal;">€</i>
-    <span id="nav-financial" class="nav-label">Financial</span>
+    <span id="nav-financial" class="nav-label">Finances</span>
   </button>
 </div>
 </div>
