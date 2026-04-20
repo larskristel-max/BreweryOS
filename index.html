@@ -80,15 +80,17 @@
     --space-md: 16px;
     --space-lg: 20px;
     --space-xl: 24px;
-    --bottom-fab-offset: 12px;
-    --bottom-sheet-offset: calc(var(--fab-size) + var(--bottom-fab-offset) + env(safe-area-inset-bottom) + 16px);
+    --bottom-fab-offset: 10px;
+    --dock-height: 64px;
+    --dock-side-inset: 16px;
+    --bottom-sheet-offset: calc(var(--dock-height) + var(--fab-size) + env(safe-area-inset-bottom) + 18px);
     --safe-top-space: env(safe-area-inset-top, 0px);
     --safe-right-space: env(safe-area-inset-right, 0px);
     --safe-left-space: env(safe-area-inset-left, 0px);
-    --fab-size: 52px;
-    --content-trailing-clearance: calc(var(--fab-size) + env(safe-area-inset-bottom) + var(--bottom-fab-offset) + 18px);
-    --fab-content-trailing-clearance: calc(var(--content-trailing-clearance) + var(--fab-size) + 12px);
-    --fab-clearance: calc(var(--fab-size) + 12px);
+    --fab-size: 58px;
+    --content-trailing-clearance: calc(var(--dock-height) + var(--fab-size) + env(safe-area-inset-bottom) + 22px);
+    --fab-content-trailing-clearance: calc(var(--content-trailing-clearance) + 10px);
+    --fab-clearance: calc(var(--dock-height) + var(--fab-size) + 8px);
     --keyboard-offset: 0px;
     --app-viewport-height: 100vh;
     --app-viewport-height: 100dvh;
@@ -192,7 +194,8 @@
     padding: 56px 28px 72px;
     gap: 0;
   }
-  .app.onboarding-active .lets-brew-fab {
+  .app.onboarding-active .lets-brew-fab,
+  .app.onboarding-active .lets-brew-dock {
     display: none;
   }
   /* ── Home layout ── */
@@ -310,28 +313,43 @@
   @keyframes spin { to { transform: rotate(360deg); } }
   .toast { position: fixed; left: 50%; bottom: 80px; transform: translateX(-50%) translateY(20px); background: rgba(0,0,0,0.85); color: #fff; padding: 10px 16px; border-radius: 8px; font-size: 14px; z-index: 9999; opacity: 0; pointer-events: none; transition: opacity 0.2s ease, transform 0.2s ease; white-space: nowrap; }
   .toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
+  .lets-brew-dock {
+    position: fixed;
+    left: calc(var(--dock-side-inset) + var(--safe-left-space));
+    right: calc(var(--dock-side-inset) + var(--safe-right-space));
+    bottom: calc(env(safe-area-inset-bottom) + 6px);
+    height: var(--dock-height);
+    border-radius: 26px;
+    border: 1px solid rgba(17, 24, 39, 0.08);
+    background: linear-gradient(180deg, rgba(255, 255, 255, 0.95) 0%, rgba(248, 250, 252, 0.98) 100%);
+    box-shadow: 0 10px 26px rgba(15, 23, 42, 0.1), 0 2px 8px rgba(15, 23, 42, 0.06);
+    backdrop-filter: blur(16px) saturate(140%);
+    -webkit-backdrop-filter: blur(16px) saturate(140%);
+    z-index: 940;
+    pointer-events: none;
+  }
   .lets-brew-fab {
     position: fixed;
     left: 50%;
-    bottom: calc(env(safe-area-inset-bottom) + var(--bottom-fab-offset));
-    width: calc(var(--fab-size) + 10px);
-    height: calc(var(--fab-size) + 10px);
+    bottom: calc(env(safe-area-inset-bottom) + var(--bottom-fab-offset) + 26px);
+    width: var(--fab-size);
+    height: var(--fab-size);
     transform: translateX(-50%);
     border-radius: 999px;
-    border: 1px solid rgba(55,65,81,0.18);
+    border: 1px solid rgba(15, 23, 42, 0.24);
     display: flex;
     justify-content: center;
     align-items: center;
-    background: rgba(55, 65, 81, 0.92);
+    background: linear-gradient(180deg, #1f2937 0%, #111827 100%);
     color: #fff;
-    box-shadow: 0 8px 20px rgba(17,24,39,0.16), 0 1px 4px rgba(17,24,39,0.08);
-    backdrop-filter: saturate(130%) blur(14px);
+    box-shadow: 0 10px 22px rgba(15, 23, 42, 0.24), 0 2px 6px rgba(15, 23, 42, 0.16);
     z-index: 1000;
     font-size: 11px;
-    font-weight: 560;
+    font-weight: 600;
     cursor: pointer;
     text-align: center;
-    line-height: 1.05;
+    line-height: 1.04;
+    letter-spacing: -0.01em;
   }
   .lets-brew-fab-label {
     display: inline-block;
@@ -339,7 +357,7 @@
   }
   .lets-brew-fab:active {
     transform: translateX(-50%) scale(0.96);
-    background: rgba(31, 41, 55, 0.92);
+    background: linear-gradient(180deg, #111827 0%, #0b1220 100%);
   }
   .lets-brew-hub-backdrop {
     position: fixed;
@@ -1474,6 +1492,7 @@ init();
 // ── FINANCIAL PAGE ───────────────────────────────────────────────────────────
 
 </script>
+<div class="lets-brew-dock" aria-hidden="true"></div>
 <button onclick="triggerLetsBrew()" class="lets-brew-fab" aria-label="Let's Brew">
   <span id="nav-lets-brew" class="lets-brew-fab-label">Let’s
 Brew</span>
