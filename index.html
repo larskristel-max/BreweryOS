@@ -137,19 +137,12 @@
       height: var(--app-viewport-height);
     }
   }
-  .nav { background: var(--card); border-bottom: 1px solid var(--border); padding: calc(10px + var(--safe-top-space)) 20px 12px; display: flex; align-items: center; justify-content: space-between; position: sticky; top: 0; z-index: 1100; }
+  .nav { background: var(--card); border-bottom: 1px solid var(--border); padding: calc(8px + var(--safe-top-space)) 20px 10px; display: flex; align-items: center; justify-content: space-between; position: sticky; top: 0; z-index: 1100; }
   .nav-title {
     display: flex;
     align-items: center;
     justify-content: center;
-    min-height: 110px;
-  }
-  .brand-logo {
-    display: block;
-    width: auto;
-    max-width: min(520px, 84vw);
-    height: 132px;
-    object-fit: contain;
+    min-height: 56px;
   }
   .nav-back { font-size: 15px; color: var(--gray-500); cursor: pointer; display: flex; align-items: center; gap: 4px; }
   .screen { flex: 1; display: none; flex-direction: column; width: 100%; max-width: 100%; overflow-y: auto; padding: 14px 20px 16px; gap: var(--space-xl); background: transparent; }
@@ -485,19 +478,12 @@
     flex-direction: column;
     padding: 22px 24px 36px;
   }
-  .language-brand-logo {
-    display: block;
-    width: min(320px, 82vw);
-    height: auto;
-    object-fit: contain;
-    margin: 0 auto 2px;
-  }
   .language-subtitle {
     text-align: center;
     font-size: 16px;
     line-height: 1.4;
     color: #6b7280;
-    margin-bottom: 8px;
+    margin-bottom: 12px;
   }
   .language-option {
     width: 100%;
@@ -541,9 +527,7 @@
 
 <div class="nav">
   <div id="navBack" class="nav-back" style="display:none" onclick="goBack()">← Back</div>
-  <div class="nav-title">
-    <img class="brand-logo" src="assets/operon_logo_refined_3x.png" alt="Operon logo">
-  </div>
+  <div class="nav-title"></div>
   <div style="width:60px"></div>
 </div>
 <div id="toast" class="toast" role="status" aria-live="polite" aria-atomic="true"></div>
@@ -557,7 +541,6 @@
 
 <div id="screen-language" class="screen onboarding-screen" style="display:none;">
   <div class="onboarding-inner">
-    <img class="language-brand-logo" src="assets/operon_logo_refined_3x.png" alt="Operon logo">
     <div class="language-subtitle" data-i18n="language.choose">Choose your language</div>
     <button class="language-option" onclick="selectLanguage('fr')">Français</button>
     <button class="language-option" onclick="selectLanguage('nl')">Nederlands</button>
