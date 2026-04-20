@@ -138,7 +138,18 @@
     }
   }
   .nav { background: var(--card); border-bottom: 1px solid var(--border); padding: calc(10px + var(--safe-top-space)) 20px 14px; display: flex; align-items: center; justify-content: space-between; position: sticky; top: 0; z-index: 1100; }
-  .nav-title { font-size: 17px; font-weight: 600; color: var(--ink-900); letter-spacing: -0.01em; }
+  .nav-title {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    min-height: 28px;
+  }
+  .brand-logo {
+    display: block;
+    width: auto;
+    height: 28px;
+    object-fit: contain;
+  }
   .nav-back { font-size: 15px; color: var(--gray-500); cursor: pointer; display: flex; align-items: center; gap: 4px; }
   .screen { flex: 1; display: none; flex-direction: column; width: 100%; max-width: 100%; overflow-y: auto; padding: 16px 20px; gap: var(--space-xl); background: transparent; }
   .screen.active { display: flex; }
@@ -411,10 +422,15 @@
     background: #ffffff;
   }
   .splash-brand {
-    font-size: 30px;
-    letter-spacing: -0.02em;
-    font-weight: 650;
-    color: #111827;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+  .splash-brand-logo {
+    display: block;
+    width: min(280px, 76vw);
+    height: auto;
+    object-fit: contain;
   }
   .quick-add-open #quick-add-sheet { display: flex !important; }
   #quick-add-sheet,
@@ -525,14 +541,18 @@
 
 <div class="nav">
   <div id="navBack" class="nav-back" style="display:none" onclick="goBack()">← Back</div>
-  <div class="nav-title">BrewOS</div>
+  <div class="nav-title">
+    <img class="brand-logo" src="/assets/operon-logo.jpg" alt="Operon logo">
+  </div>
   <div style="width:60px"></div>
 </div>
 <div id="toast" class="toast" role="status" aria-live="polite" aria-atomic="true"></div>
 <div id="pull-refresh-indicator" class="pull-refresh-indicator" aria-hidden="true"><div class="spinner"></div></div>
 
 <div id="screen-splash" class="screen screen-splash" style="display:none;">
-  <div class="splash-brand">BrewOS</div>
+  <div class="splash-brand">
+    <img class="splash-brand-logo" src="/assets/operon-logo.jpg" alt="Operon logo">
+  </div>
 </div>
 
 <div id="screen-language" class="screen onboarding-screen" style="display:none;">
