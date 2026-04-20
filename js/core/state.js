@@ -3,7 +3,12 @@ const TABLES = {
   batches:  'tblGrw6fTgMyz3ZL5',
   brewLogs: 'tblF6c610KRtvFosJ',
   tasks:    'tblxyLhvY6wyWogqq',
-  recipes:  'tblgq3JTJYrG1hlkj'
+  recipes:  'tblgq3JTJYrG1hlkj',
+  mashSteps: 'Mash Steps',
+  boilAdditions: 'Boil Additions',
+  fermentationChecks: 'Fermentation Checks',
+  recipeMashSteps: 'Recipe Mash Steps',
+  recipeBoilAdditions: 'Recipe Boil Additions'
 };
 
 const RECIPE_TARGETS = {

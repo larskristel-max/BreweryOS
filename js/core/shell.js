@@ -1,9 +1,5 @@
 const MAIN_TAB_SCREENS = new Set([
   'screen-home',
-  'screen-batches',
-  'screen-agenda',
-  'screen-tasks',
-  'screen-financial',
 ]);
 
 function openMainTab(screenId) {
