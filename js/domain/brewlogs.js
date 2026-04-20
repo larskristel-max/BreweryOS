@@ -9,6 +9,10 @@ let currentRecipeContext = null;
 
 const STRUCTURED_IMPORT_EXTENSIONS = new Set(['beerxml', 'xml', 'json', 'csv']);
 const INTELLIGENT_IMPORT_EXTENSIONS = new Set(['xlsx', 'xls', 'pdf', 'docx', 'txt', 'png', 'jpg', 'jpeg', 'webp', 'heic']);
+const tr = (key, fallback) => {
+  const val = t(key);
+  return val === key ? fallback : val;
+};
 
 function normalizeBatchMatchValue(v) {
   if (v === null || v === undefined) return '';
@@ -75,28 +79,28 @@ function openLetsBrewActionHub() {
   document.body.insertAdjacentHTML('beforeend', `
     <div id="lets-brew-hub-backdrop" class="lets-brew-hub-backdrop" onclick="closeLetsBrewActionHub()"></div>
     <div id="lets-brew-hub-sheet" class="lets-brew-hub-sheet">
-      <p class="sheet-title" style="margin-bottom:10px;">What do you want to do?</p>
+      <p class="sheet-title" style="margin-bottom:10px;">${tr('brewhub.title', 'What do you want to do?')}</p>
       <div class="card" style="padding:10px 10px 6px; margin-bottom:10px;">
-        <label class="field-label" style="margin-bottom:6px;">AI input (coming next)</label>
+        <label class="field-label" style="margin-bottom:6px;">${tr('brewhub.ai_zone', 'AI input (coming next)')}</label>
         <div style="display:flex;gap:8px;align-items:center;">
-          <input id="lets-brew-ai-input" type="text" placeholder="What do you want to do?" style="margin:0;">
-          <button class="action-btn" style="width:44px;height:44px;min-width:44px;" onclick="toast('Voice routing coming soon')">🎙</button>
+          <input id="lets-brew-ai-input" type="text" placeholder="${tr('brewhub.ai_placeholder', 'What do you want to do?')}" style="margin:0;">
+          <button class="action-btn" style="width:44px;height:44px;min-width:44px;" onclick="toast('${tr('brewhub.voice_soon', 'Voice routing coming soon')}')">🎙</button>
         </div>
-        <button class="btn btn-secondary" style="margin-top:8px;margin-bottom:0;min-height:42px;" onclick="handleLetsBrewIntentInput()">Route intent</button>
+        <button class="btn btn-secondary" style="margin-top:8px;margin-bottom:0;min-height:42px;" onclick="handleLetsBrewIntentInput()">${tr('brewhub.route_intent', 'Route intent')}</button>
       </div>
 
-      <button class="lets-brew-action-btn primary" onclick="letsBrewStartContinue()">Start / Continue Brew</button>
-      <button class="lets-brew-action-btn" onclick="letsBrewQuickLog('gravity')">Log observation · gravity</button>
-      <button class="lets-brew-action-btn" onclick="letsBrewQuickLog('temperature')">Log observation · temperature</button>
-      <button class="lets-brew-action-btn" onclick="letsBrewQuickLog('brew note')">Log observation · brew note</button>
-      <button class="lets-brew-action-btn" onclick="letsBrewQuickLog('packaging note')">Log observation · packaging note</button>
-      <button class="lets-brew-action-btn" onclick="toast('Inventory movement logging coming soon')">Log inventory movement</button>
-      <button class="lets-brew-action-btn" onclick="letsBrewContinueTasks()">Continue open tasks</button>
-      <button class="lets-brew-action-btn" onclick="letsBrewAddTask()">Add a task</button>
-      <button class="lets-brew-action-btn" onclick="toast('Record sale flow coming soon')">Record sale</button>
-      <button class="lets-brew-action-btn" onclick="toast('Compliance / excise / HACCP flow coming soon')">Compliance / excise / HACCP</button>
-      <button class="lets-brew-action-btn" onclick="toast('Documents / exports flow coming soon')">Documents / exports</button>
-      <button class="btn btn-secondary" style="margin-bottom:0;" onclick="closeLetsBrewActionHub()">Close</button>
+      <button class="lets-brew-action-btn primary" onclick="letsBrewStartContinue()">${tr('brewhub.start_continue', 'Start / Continue Brew')}</button>
+      <button class="lets-brew-action-btn" onclick="letsBrewQuickLog('gravity')">${tr('brewhub.log_gravity', 'Log observation · gravity')}</button>
+      <button class="lets-brew-action-btn" onclick="letsBrewQuickLog('temperature')">${tr('brewhub.log_temperature', 'Log observation · temperature')}</button>
+      <button class="lets-brew-action-btn" onclick="letsBrewQuickLog('brew note')">${tr('brewhub.log_brew_note', 'Log observation · brew note')}</button>
+      <button class="lets-brew-action-btn" onclick="letsBrewQuickLog('packaging note')">${tr('brewhub.log_packaging_note', 'Log observation · packaging note')}</button>
+      <button class="lets-brew-action-btn" onclick="toast('${tr('brewhub.inventory_soon', 'Inventory movement logging coming soon')}')">${tr('brewhub.inventory', 'Log inventory movement')}</button>
+      <button class="lets-brew-action-btn" onclick="letsBrewContinueTasks()">${tr('brewhub.continue_tasks', 'Continue open tasks')}</button>
+      <button class="lets-brew-action-btn" onclick="letsBrewAddTask()">${tr('brewhub.add_task', 'Add a task')}</button>
+      <button class="lets-brew-action-btn" onclick="toast('${tr('brewhub.sale_soon', 'Record sale flow coming soon')}')">${tr('brewhub.sale', 'Record sale')}</button>
+      <button class="lets-brew-action-btn" onclick="toast('${tr('brewhub.compliance_soon', 'Compliance / excise / HACCP flow coming soon')}')">${tr('brewhub.compliance', 'Compliance / excise / HACCP')}</button>
+      <button class="lets-brew-action-btn" onclick="toast('${tr('brewhub.docs_soon', 'Documents / exports flow coming soon')}')">${tr('brewhub.docs', 'Documents / exports')}</button>
+      <button class="btn btn-secondary" style="margin-bottom:0;" onclick="closeLetsBrewActionHub()">${tr('agenda.cancel', 'Close')}</button>
     </div>`);
 }
 
@@ -141,7 +145,7 @@ function letsBrewQuickLog(type) {
 function handleLetsBrewIntentInput() {
   const raw = (document.getElementById('lets-brew-ai-input')?.value || '').trim().toLowerCase();
   if (!raw) {
-    toast('Type a command to route');
+    toast(tr('brewhub.type_to_route', 'Type a command to route'));
     return;
   }
   if (raw.includes('task')) {
@@ -149,14 +153,14 @@ function handleLetsBrewIntentInput() {
     return;
   }
   if (raw.includes('sale')) {
-    toast('Sale routing coming soon');
+    toast(tr('brewhub.sale_soon', 'Record sale flow coming soon'));
     return;
   }
   if (raw.includes('brew') || raw.includes('mash') || raw.includes('boil') || raw.includes('gravity')) {
     letsBrewStartContinue();
     return;
   }
-  toast('Intent router placeholder: no route matched yet');
+  toast(tr('brewhub.no_route', 'Intent router placeholder: no route matched yet'));
 }
 
 function getLocalDateInputValue(d = new Date()) {
@@ -168,8 +172,8 @@ function renderBatchSelectionLayer(batches = []) {
   const stageContent = document.getElementById('brew-stage-content');
   stageContent.innerHTML = `
     <div class="detail-section">
-      <h3>Select Batch</h3>
-      <p class="secondary-text" style="margin-bottom:10px;">No active batch was found. Choose an existing batch or create one.</p>
+      <h3>${tr('brewhub.select_batch', 'Select Batch')}</h3>
+      <p class="secondary-text" style="margin-bottom:10px;">${tr('brewhub.no_active_batch', 'No active batch was found. Choose an existing batch or create one.')}</p>
       <div style="display:flex;flex-direction:column;gap:8px;">
         ${(batches || []).map(r => {
           const name = resolveBatchLabel(r);
@@ -177,7 +181,7 @@ function renderBatchSelectionLayer(batches = []) {
           return `<button class="btn btn-secondary" style="margin-bottom:0;min-height:48px;" onclick="startBrewForBatch('${r.id}')">${name}${recipe ? ` — ${recipe}` : ''}</button>`;
         }).join('') || '<p class="secondary-text">No existing batches.</p>'}
       </div>
-      <button class="btn btn-primary" onclick="openCreateBatchSheet()">Create New Batch</button>
+      <button class="btn btn-primary" onclick="openCreateBatchSheet()">${tr('brewhub.create_batch', 'Create New Batch')}</button>
     </div>`;
 }
 

@@ -259,9 +259,12 @@ function renderAgendaPreview() {
 function applyHomeLabels() {
   const setEl = (id, key) => { const el = document.getElementById(id); if (el) el.textContent = t(key); };
   setEl('home-title', 'home.today');
-  setEl('home-whats-next-label', 'home.whats_next');
   setEl('home-batches-label', 'home.active_batches');
+  setEl('home-batches-more', 'agenda.see_more');
+  setEl('home-tasks-label', 'task.open_tasks');
+  setEl('home-tasks-more', 'agenda.see_more');
   setEl('home-agenda-label', 'home.agenda');
   setEl('home-agenda-more', 'agenda.see_more');
   setEl('home-financial-label', 'home.financial');
+  setEl('home-financial-more', 'agenda.see_more');
 }

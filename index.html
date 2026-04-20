@@ -322,11 +322,11 @@
     display: flex;
     justify-content: space-between;
     align-items: center;
-    padding: 6px;
+    padding: 7px;
     box-sizing: border-box;
     background: rgba(255,255,255,0.98);
     border-color: rgba(17,24,39,0.10);
-    box-shadow: 0 10px 24px rgba(17,24,39,0.12), 0 2px 6px rgba(17,24,39,0.05);
+    box-shadow: 0 8px 18px rgba(17,24,39,0.1), 0 1px 4px rgba(17,24,39,0.05);
     backdrop-filter: saturate(130%) blur(14px);
     z-index: 1000;
   }
@@ -340,25 +340,25 @@
     min-height: 42px;
     font-size: 11px;
     line-height: 1.2;
-    flex: 1 1 0;
+    flex: 0 1 auto;
     min-width: 0;
     background: none;
     border: none;
     cursor: pointer;
     color: #6b7280;
-    padding: 4px 1px;
+    padding: 5px 10px;
     border-radius: 14px;
   }
   .bottom-nav .nav-item.primary-action {
     flex: 0 0 auto;
-    min-width: 116px;
+    min-width: 132px;
     padding: 0 12px;
     height: 52px;
     border-radius: 999px;
-    margin-top: -18px;
+    margin-top: -22px;
     background: #111827;
     color: #fff;
-    box-shadow: 0 10px 22px rgba(17,24,39,0.18), 0 2px 6px rgba(17,24,39,0.09);
+    box-shadow: 0 12px 22px rgba(17,24,39,0.16), 0 2px 6px rgba(17,24,39,0.08);
     font-weight: 600;
   }
   .bottom-nav .nav-item.primary-action.active {
@@ -623,6 +623,7 @@
 
   <!-- Header -->
   <div class="main-tab-header">
+    <button onclick="goBack()" class="action-btn" aria-label="Retour agenda" title="Retour">‹</button>
     <p class="main-tab-title" id="agenda-title-label">Agenda</p>
     <div class="main-tab-header-actions">
       <button id="quick-add-action" class="action-btn" onclick="handleMainTabFab('agenda')" aria-label="Ajouter dans agenda" title="Ajouter">+</button>
@@ -738,6 +739,7 @@
 
   <!-- Header -->
   <div class="main-tab-header" style="position:sticky; top:0; background:var(--bg); z-index:10;">
+    <button onclick="goBack()" class="action-btn" aria-label="Retour finances" title="Retour">‹</button>
     <p class="main-tab-title" id="fin-page-title">Finances</p>
     <div class="main-tab-header-actions"></div>
   </div>
@@ -864,16 +866,22 @@
     <p class="color-tip-line"><span style="color:var(--status-blue);">●</span> In progress</p>
   </div>
 
-  <!-- WHAT'S NEXT -->
-  <div class="home-section">
-    <p class="section-label" id="home-whats-next-label">What's next</p>
-    <div id="whats-next-cards" style="display:flex; flex-direction:column; gap:12px;"></div>
-  </div>
-
   <!-- ACTIVE BATCHES -->
   <div class="home-section">
-    <p class="section-label" id="home-batches-label">Active batches</p>
+    <div class="home-section-header">
+      <p class="section-label" id="home-batches-label">Active batches</p>
+      <button onclick="showScreen('screen-batches')" style="background:none; border:none; color:#6b7280; font-size:15px; cursor:pointer; padding:0;" id="home-batches-more">See more</button>
+    </div>
     <div id="home-batch-list" style="display:flex; flex-direction:column; gap:10px;"></div>
+  </div>
+
+  <!-- TASKS PREVIEW -->
+  <div class="home-section">
+    <div class="home-section-header">
+      <p class="section-label" id="home-tasks-label">Tasks</p>
+      <button onclick="showScreen('screen-tasks')" style="background:none; border:none; color:#6b7280; font-size:15px; cursor:pointer; padding:0;" id="home-tasks-more">See more</button>
+    </div>
+    <div id="whats-next-cards" style="display:flex; flex-direction:column; gap:12px;"></div>
   </div>
 
   <!-- AGENDA PREVIEW -->
@@ -887,7 +895,10 @@
 
   <!-- FINANCIAL PREVIEW -->
   <div class="home-section" id="home-financial-section">
-    <p class="section-label" id="home-financial-label">Financial</p>
+    <div class="home-section-header">
+      <p class="section-label" id="home-financial-label">Financial</p>
+      <button onclick="showScreen('screen-financial')" style="background:none; border:none; color:#6b7280; font-size:15px; cursor:pointer; padding:0;" id="home-financial-more">See more</button>
+    </div>
     <div onclick="showScreen('screen-financial')" class="financial-preview-card">
       <div class="financial-metric">
         <p class="metric-label" id="fin-rev-label">Revenue</p>
@@ -912,6 +923,7 @@
 <!-- BATCH LIST -->
 <div id="screen-batches" class="screen refresh-scroll-surface shell-content-clearance">
   <div class="main-tab-header" style="padding:0;">
+    <button onclick="goBack()" class="action-btn" aria-label="Retour brassins" title="Retour">‹</button>
     <p class="main-tab-title" id="batch-screen-title">Brassins</p>
     <div class="main-tab-header-actions">
       <button class="action-btn" onclick="handleMainTabFab('batches')" aria-label="Ajouter dans brassins" title="Ajouter">+</button>
@@ -928,6 +940,7 @@
 <!-- BREW DAY -->
 <div id="screen-brew" class="screen shell-content-clearance">
   <div class="main-tab-header" style="padding:0;">
+    <button onclick="goBack()" class="action-btn" aria-label="Retour brassage" title="Retour">‹</button>
     <p class="main-tab-title" id="brew-screen-title">Journal de brassage</p>
   </div>
   <div id="brew-stage-content"></div>
@@ -936,6 +949,7 @@
 <!-- TASKS -->
 <div id="screen-tasks" class="screen refresh-scroll-surface">
   <div class="main-tab-header" style="padding:0;">
+    <button onclick="goBack()" class="action-btn" aria-label="Retour tâches" title="Retour">‹</button>
     <p class="main-tab-title" id="task-screen-title">Tâches</p>
     <div class="main-tab-header-actions">
       <button id="task-add-action" class="action-btn" onclick="handleMainTabFab('tasks')" aria-label="Ajouter une tâche" title="Ajouter une tâche">+</button>
@@ -1345,9 +1359,6 @@ function applyTranslations() {
   document.getElementById('value-cta-btn').textContent = t('entry.cta');
   const navLabels = {
     'nav-home':      'home.today',
-    'nav-batches':   'batch.all_batches',
-    'nav-tasks':     'task.open_tasks',
-    'nav-financial': 'financial.title',
   };
   Object.entries(navLabels).forEach(([id, key]) => {
     const el = document.getElementById(id);
@@ -1502,20 +1513,8 @@ init();
     <i class="nav-icon" style="display:block; border:1.5px solid currentColor; border-radius:4px; position:relative; font-style:normal;"><span style="position:absolute; bottom:0; left:3px; right:3px; height:8px; border:1.5px solid currentColor; border-bottom:none; border-radius:2px 2px 0 0;"></span></i>
     <span id="nav-home" class="nav-label">Operations</span>
   </button>
-  <button onclick="openMainTab('screen-batches')" class="nav-item" data-screen="screen-batches">
-    <i class="nav-icon" style="font-size:15px; font-weight:300; font-style:normal;">⬡</i>
-    <span id="nav-batches" class="nav-label">Batches</span>
-  </button>
   <button onclick="triggerLetsBrew()" class="nav-item primary-action" data-screen="screen-brew" aria-label="Let's Brew">
     <span id="nav-lets-brew" class="nav-label">Let’s Brew</span>
-  </button>
-  <button onclick="openMainTab('screen-tasks')" class="nav-item" data-screen="screen-tasks">
-    <i class="nav-icon" style="display:flex; align-items:center; justify-content:center; font-style:normal;"><span style="width:14px; height:14px; border:1.5px solid currentColor; border-radius:3px;"></span></i>
-    <span id="nav-tasks" class="nav-label">Tasks</span>
-  </button>
-  <button onclick="openMainTab('screen-financial')" class="nav-item" data-screen="screen-financial">
-    <i class="nav-icon" style="font-size:13px; font-weight:600; letter-spacing:-0.5px; font-style:normal;">€</i>
-    <span id="nav-financial" class="nav-label">Finances</span>
   </button>
 </div>
 </div>
