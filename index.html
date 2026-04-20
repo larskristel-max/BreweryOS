@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, viewport-fit=cover">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-<title>Brewery OS</title>
+<title>Operon</title>
 <style>
   /*
   BrewOS DESIGN BASELINE — LOCKED
@@ -142,12 +142,12 @@
     display: flex;
     align-items: center;
     justify-content: center;
-    min-height: 28px;
+    min-height: 44px;
   }
   .brand-logo {
     display: block;
     width: auto;
-    height: 28px;
+    height: 44px;
     object-fit: contain;
   }
   .nav-back { font-size: 15px; color: var(--gray-500); cursor: pointer; display: flex; align-items: center; gap: 4px; }
@@ -483,14 +483,12 @@
     flex-direction: column;
     padding: 40px 24px 56px;
   }
-  .language-brand {
-    text-align: center;
-    font-size: 28px;
-    line-height: 1.15;
-    font-weight: 650;
-    color: #111827;
-    margin-bottom: 12px;
-    letter-spacing: -0.02em;
+  .language-brand-logo {
+    display: block;
+    width: min(240px, 68vw);
+    height: auto;
+    object-fit: contain;
+    margin: 0 auto 18px;
   }
   .language-subtitle {
     text-align: center;
@@ -542,7 +540,7 @@
 <div class="nav">
   <div id="navBack" class="nav-back" style="display:none" onclick="goBack()">← Back</div>
   <div class="nav-title">
-    <img class="brand-logo" src="/assets/operon-logo.jpg" alt="Operon logo">
+    <img class="brand-logo" src="assets/ChatGPT Image 20 avr. 2026, 11_39_21.png" alt="Operon logo">
   </div>
   <div style="width:60px"></div>
 </div>
@@ -551,13 +549,13 @@
 
 <div id="screen-splash" class="screen screen-splash" style="display:none;">
   <div class="splash-brand">
-    <img class="splash-brand-logo" src="/assets/operon-logo.jpg" alt="Operon logo">
+    <img class="splash-brand-logo" src="assets/ChatGPT Image 20 avr. 2026, 11_39_21.png" alt="Operon logo">
   </div>
 </div>
 
 <div id="screen-language" class="screen onboarding-screen" style="display:none;">
   <div class="onboarding-inner">
-    <div class="language-brand">BrewOS</div>
+    <img class="language-brand-logo" src="assets/ChatGPT Image 20 avr. 2026, 11_39_21.png" alt="Operon logo">
     <div class="language-subtitle" data-i18n="language.choose">Choose your language</div>
     <button class="language-option" onclick="selectLanguage('fr')">Français</button>
     <button class="language-option" onclick="selectLanguage('nl')">Nederlands</button>
@@ -568,10 +566,10 @@
 
 <div id="screen-entry" class="screen onboarding-screen" style="display:none;">
   <div class="onboarding-inner">
-    <div class="access-title" data-i18n="access.welcome" id="entry-welcome-title">Welcome to BrewOS</div>
+    <div class="access-title" data-i18n="access.welcome" id="entry-welcome-title">Welcome to Operon</div>
     <button class="btn btn-primary" onclick="handleLoginUnavailable()" data-i18n="access.login" id="entry-login-btn">Log in</button>
     <button class="btn btn-secondary" onclick="handleSignupUnavailable()" data-i18n="access.create_account" id="entry-account-btn" style="margin-top:10px;">Create account</button>
-    <div class="access-demo-link" onclick="enterDemo()" data-i18n="access.try_demo" id="entry-try-btn">Try BrewOS</div>
+    <div class="access-demo-link" onclick="enterDemo()" data-i18n="access.try_demo" id="entry-try-btn">Try Operon</div>
   </div>
 </div>
 
@@ -593,7 +591,7 @@
       <p style="font-size:14px; color:#6b7280; margin:0;" id="value-b3-body">Compliance and reporting without the manual work.</p>
     </div>
   </div>
-  <button onclick="enterDemo()" style="width:100%; padding:16px; border-radius:14px; background:#111827; color:#fff; font-size:16px; font-weight:600; border:none; cursor:pointer;" id="value-cta-btn">See BrewOS in action</button>
+  <button onclick="enterDemo()" style="width:100%; padding:16px; border-radius:14px; background:#111827; color:#fff; font-size:16px; font-weight:600; border:none; cursor:pointer;" id="value-cta-btn">See Operon in action</button>
 </div>
 
 <div id="screen-agenda" class="screen refresh-scroll-surface" style="display:none; overflow:hidden;">
