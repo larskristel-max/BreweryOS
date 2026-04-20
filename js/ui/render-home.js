@@ -2,7 +2,7 @@ async function renderWhatsNext() {
   const container = document.getElementById('whats-next-cards');
   if (!container) return;
 
-  container.innerHTML = `<div style="color:#9ca3af;font-size:13px;padding:12px 0;">Loading…</div>`;
+  container.innerHTML = `<div style="color:#9ca3af;font-size:13px;padding:12px 0;">${t('whats_next_loading') || 'Loading tasks…'}</div>`;
 
   try {
     const formula = encodeURIComponent(
@@ -160,7 +160,7 @@ async function renderWhatsNext() {
     console.error('[WhatsNext]', err);
     container.innerHTML = `
       <div style="color:#9e9e9e;font-size:13px;padding:12px 0;">
-        ${t('whats_next_error') || 'Could not load tasks.'}
+        ${t('whats_next_error_retry') || 'Could not load tasks. Please retry.'}
       </div>`;
   }
 }
