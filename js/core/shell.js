@@ -1,6 +1,7 @@
 const MAIN_TAB_SCREENS = new Set([
   'screen-home',
   'screen-batches',
+  'screen-agenda',
   'screen-brew',
   'screen-tasks',
   'screen-financial',

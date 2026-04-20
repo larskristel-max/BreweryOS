@@ -3,9 +3,9 @@ let currentSection = 0;
 let currentLogId = null;
 let currentBatchId = '';
 let currentBatchFields = {};
-let currentTargets = {};
 let currentLogFields = {};
 let brewDraftIntake = null;
+let currentRecipeContext = null;
 
 const STRUCTURED_IMPORT_EXTENSIONS = new Set(['beerxml', 'xml', 'json', 'csv']);
 const INTELLIGENT_IMPORT_EXTENSIONS = new Set(['xlsx', 'xls', 'pdf', 'docx', 'txt', 'png', 'jpg', 'jpeg', 'webp', 'heic']);
@@ -95,22 +95,38 @@ function renderBatchSelectionLayer(batches = []) {
           return `<button class="btn btn-secondary" style="margin-bottom:0;min-height:48px;" onclick="startBrewForBatch('${r.id}')">${name}${recipe ? ` — ${recipe}` : ''}</button>`;
         }).join('') || '<p class="secondary-text">No existing batches.</p>'}
       </div>
-      <button class="btn btn-primary" onclick="createBatchForLetsBrew()">Create New Batch</button>
+      <button class="btn btn-primary" onclick="openCreateBatchSheet()">Create New Batch</button>
     </div>`;
 }
 
+function openCreateBatchSheet() {
+  closeCreateBatchSheet();
+  const stageContent = document.getElementById('brew-stage-content');
+  stageContent.insertAdjacentHTML('beforeend', `
+    <div id="lets-brew-batch-sheet" class="card" style="position:fixed;left:12px;right:12px;bottom:calc(env(safe-area-inset-bottom) + 12px);z-index:1300;padding:14px;border-radius:16px;box-shadow:0 12px 26px rgba(17,24,39,0.16);">
+      <p class="sheet-title">Create Batch</p>
+      <div class="field-group"><label class="field-label">Batch Name</label><input id="lets-brew-batch-name" type="text" placeholder="e.g. Spring Lager"></div>
+      <div class="field-group"><label class="field-label">Brew Date</label><input id="lets-brew-batch-date" type="text" placeholder="YYYY-MM-DD" value="${new Date().toISOString().slice(0, 10)}"></div>
+      <button class="btn btn-primary" onclick="createBatchForLetsBrew()">Create and Continue</button>
+      <button class="btn btn-secondary" onclick="closeCreateBatchSheet()">Cancel</button>
+    </div>`);
+}
+
+function closeCreateBatchSheet() {
+  document.getElementById('lets-brew-batch-sheet')?.remove();
+}
+
 async function createBatchForLetsBrew() {
-  const displayName = (prompt('Batch name') || '').trim();
+  const displayName = (document.getElementById('lets-brew-batch-name')?.value || '').trim();
   if (!displayName) {
-    toast('Batch creation cancelled');
+    toast('Batch name is required');
     return;
   }
-  const brewDate = (prompt('Brew date (YYYY-MM-DD)', new Date().toISOString().slice(0, 10)) || '').trim();
-  const created = await airtableCreate(TABLES.batches, {
-    'Display Name': displayName,
-    'Date': brewDate || null,
-    'Status': 'Brewing'
-  });
+  const brewDate = (document.getElementById('lets-brew-batch-date')?.value || '').trim();
+  const fields = { 'Display Name': displayName, 'Status': 'Brewing' };
+  if (brewDate) fields['Date'] = brewDate;
+  const created = await airtableCreate(TABLES.batches, fields);
+  closeCreateBatchSheet();
   toast('Batch created');
   await startBrewForBatch(created.id, { skipRecipeGate: false });
 }
@@ -123,7 +139,7 @@ async function startBrewForBatch(batchId, opts = {}) {
   currentBatchFields = batchData.fields || {};
 
   const recipeId = Array.isArray(currentBatchFields.Recipe) ? currentBatchFields.Recipe[0] : '';
-  currentTargets = RECIPE_TARGETS[recipeId] || {};
+  currentRecipeContext = recipeId ? await loadRecipeContext(recipeId) : null;
 
   if (!recipeId && !opts.skipRecipeGate) {
     renderNoRecipeBranching();
@@ -139,6 +155,15 @@ async function startBrewForBatch(batchId, opts = {}) {
   if (currentSection < 0) currentSection = 0;
 
   renderBrewExecution();
+}
+
+async function loadRecipeContext(recipeId) {
+  try {
+    const recipe = await airtable(TABLES.recipes, `/${recipeId}`);
+    return recipe?.fields || null;
+  } catch (e) {
+    return null;
+  }
 }
 
 function renderNoRecipeBranching() {
@@ -160,10 +185,7 @@ function openRecipeCreateFlow() {
       <h3>Create Recipe</h3>
       <p class="secondary-text" style="margin-bottom:10px;">Lightweight draft: structure + free text (AI-ready).</p>
       <div class="field-group"><label class="field-label">Recipe Name</label><input id="new-recipe-name" type="text" placeholder="e.g. House Pale Ale"></div>
-      <div class="field-group"><label class="field-label">Style</label><input id="new-recipe-style" type="text" placeholder="e.g. IPA"></div>
-      <div class="field-group"><label class="field-label">Target OG</label><input id="new-recipe-og" type="number" step="0.001" placeholder="1.052"></div>
-      <div class="field-group"><label class="field-label">Batch Volume (L)</label><input id="new-recipe-volume" type="number" step="0.1" placeholder="20"></div>
-      <div class="field-group"><label class="field-label">Free Text Notes (AI context)</label><textarea id="new-recipe-free-text" placeholder="same as last time, lightly hazy, dry hop day 3..."></textarea></div>
+      <div class="field-group"><label class="field-label">Recipe Notes</label><textarea id="new-recipe-free-text" placeholder="same as last time, lightly hazy, dry hop day 3..."></textarea></div>
       <button class="btn btn-primary" onclick="createAndLinkRecipeFromForm()">Save and Continue</button>
       <button class="btn btn-secondary" onclick="renderNoRecipeBranching()">Back</button>
     </div>`;
@@ -175,17 +197,11 @@ async function createAndLinkRecipeFromForm() {
     toast('Recipe name is required');
     return;
   }
-  const style = (document.getElementById('new-recipe-style')?.value || '').trim();
-  const og = parseFloat(document.getElementById('new-recipe-og')?.value || '');
-  const volume = parseFloat(document.getElementById('new-recipe-volume')?.value || '');
   const notes = (document.getElementById('new-recipe-free-text')?.value || '').trim();
 
   const recipePayload = {
     'Name': name,
-    'Style': style || null,
-    'Target OG': Number.isFinite(og) ? og : null,
-    'Batch Volume': Number.isFinite(volume) ? volume : null,
-    'AI Intake Notes': notes || null
+    'Notes': notes || null
   };
   Object.keys(recipePayload).forEach((k) => recipePayload[k] == null && delete recipePayload[k]);
   const recipe = await airtableCreate(TABLES.recipes, recipePayload);
@@ -311,14 +327,8 @@ async function confirmIntakeAndLinkRecipe() {
     return;
   }
 
-  const recipe = await airtableCreate(TABLES.recipes, {
-    Name: recipeName,
-    'AI Intake Source': brewDraftIntake.fileName || 'manual-input',
-    'AI Intake Type': brewDraftIntake.type,
-    'AI Intake Lane': brewDraftIntake.lane,
-    'AI Intake Confidence': brewDraftIntake.confidence,
-    'AI Intake Notes': brewDraftIntake.rawText || null
-  });
+  const intakeSummary = `source=${brewDraftIntake.fileName || 'manual-input'}; lane=${brewDraftIntake.lane}; type=${brewDraftIntake.type}; confidence=${Math.round(brewDraftIntake.confidence * 100)}%`;
+  const recipe = await airtableCreate(TABLES.recipes, { Name: recipeName, Notes: `${intakeSummary}\n\n${brewDraftIntake.rawText || ''}`.trim() });
 
   await airtablePatch(TABLES.batches, currentBatchId, { Recipe: [recipe.id] });
   toast('Recipe imported and linked');
@@ -331,7 +341,7 @@ async function continueWithoutRecipe() {
 }
 
 function isSectionComplete(section, f) {
-  if (section === 'Overview') return !!(f['Brew Date Actual'] || f['Brew Session Started']);
+  if (section === 'Overview') return true;
   if (section === 'Mash') return !!(f['Mash Temp Actual'] || f['Mash Start Time']);
   if (section === 'Boil') return !!(f['Pre-boil Volume Actual'] || f['Boil Duration Confirmed']);
   if (section === 'Transfer') return !!(f['OG Actual'] || f['Transfer Volume Actual']);
@@ -354,28 +364,27 @@ function renderBrewExecution() {
   let fields = '';
   if (section === 'Overview') {
     fields = `
-      <div class="field-group"><label class="field-label">Brew Session Started</label><input type="text" id="f-session-started" value="${currentLogFields['Brew Session Started'] || ''}" placeholder="YYYY-MM-DD HH:mm"></div>
-      <div class="field-group"><label class="field-label">Brew Date</label><input type="text" id="f-brew-date" value="${currentLogFields['Brew Date Actual'] || ''}" placeholder="YYYY-MM-DD"></div>
-      <div class="field-group"><label class="field-label">Overview Notes</label><textarea id="f-overview-notes">${currentLogFields['Overview Notes'] || ''}</textarea></div>`;
+      <p class="secondary-text">Start with any section below. Brewing remains non-blocking even when recipe or measurements are incomplete.</p>
+      <p class="secondary-text">Recipe context loaded from Airtable: <strong>${currentRecipeContext?.Name || 'Not linked'}</strong>.</p>`;
   } else if (section === 'Mash') {
     fields = `
-      <div class="field-group"><label class="field-label">Mash Temp Actual (°C)</label>${currentTargets.mash ? `<span class="field-hint">Target: ${currentTargets.mash}°C</span>` : ''}<input type="number" id="f-mash-temp" value="${currentLogFields['Mash Temp Actual'] || ''}" step="0.1"></div>
+      <div class="field-group"><label class="field-label">Mash Temp Actual (°C)</label><input type="number" id="f-mash-temp" value="${currentLogFields['Mash Temp Actual'] || ''}" step="0.1"></div>
       <div class="field-group"><label class="field-label">Mash pH Actual</label><input type="number" id="f-mash-ph" value="${currentLogFields['Mash pH Actual'] || ''}" step="0.01"></div>
       <div class="field-group"><label class="field-label">Mash Start Time</label><input type="text" id="f-mash-time" value="${currentLogFields['Mash Start Time'] || ''}" placeholder="08:30"></div>
       <div class="field-group"><label class="field-label">Mash Step Note</label><input type="text" id="f-mash-step-note" placeholder="Optional step observation"></div>
       <button class="btn btn-secondary" onclick="addMashStepActual()">Record Mash Step Actual</button>`;
   } else if (section === 'Boil') {
     fields = `
-      <div class="field-group"><label class="field-label">Pre-boil Volume (L)</label>${currentTargets.preboil ? `<span class="field-hint">Target: ${currentTargets.preboil}L</span>` : ''}<input type="number" id="f-preboil-vol" value="${currentLogFields['Pre-boil Volume Actual'] || ''}" step="1"></div>
+      <div class="field-group"><label class="field-label">Pre-boil Volume (L)</label><input type="number" id="f-preboil-vol" value="${currentLogFields['Pre-boil Volume Actual'] || ''}" step="1"></div>
       <div class="field-group"><label class="field-label">Pre-boil Gravity</label><input type="number" id="f-preboil-grav" value="${currentLogFields['Pre-boil Gravity Actual'] || ''}" step="0.001"></div>
-      <div class="field-group"><label class="checkbox-field"><input type="checkbox" id="f-boil-confirmed" ${currentLogFields['Boil Duration Confirmed'] ? 'checked' : ''}>Boil duration confirmed (${currentTargets.boil || 60} min)</label></div>
+      <div class="field-group"><label class="checkbox-field"><input type="checkbox" id="f-boil-confirmed" ${currentLogFields['Boil Duration Confirmed'] ? 'checked' : ''}>Boil duration confirmed</label></div>
       <div class="field-group"><label class="field-label">Hop Additions Notes</label><textarea id="f-hop-notes">${currentLogFields['Hop Additions Notes'] || ''}</textarea></div>
       <div class="field-group"><label class="field-label">Boil Addition Note</label><input id="f-boil-addition-note" type="text" placeholder="Optional addition detail"></div>
       <button class="btn btn-secondary" onclick="addBoilAdditionActual()">Record Boil Addition Actual</button>`;
   } else if (section === 'Transfer') {
     fields = `
       <div class="field-group"><label class="field-label">Transfer Volume (L)</label><input type="number" id="f-transfer-vol" value="${currentLogFields['Transfer Volume Actual'] || ''}" step="1"></div>
-      <div class="field-group"><label class="field-label">OG Actual</label>${currentTargets.og ? `<span class="field-hint">Target: ${currentTargets.og}</span>` : ''}<input type="number" id="f-og" value="${currentLogFields['OG Actual'] || ''}" step="0.001"></div>
+      <div class="field-group"><label class="field-label">OG Actual</label><input type="number" id="f-og" value="${currentLogFields['OG Actual'] || ''}" step="0.001"></div>
       <div class="field-group"><label class="field-label">Transfer Temp (°C)</label><input type="number" id="f-transfer-temp" value="${currentLogFields['Transfer Temp Actual'] || ''}" step="1"></div>
       <div class="field-group"><label class="field-label">Fermenter ID</label><input type="text" id="f-fermenter" value="${currentLogFields['Fermenter ID'] || ''}"></div>`;
   } else if (section === 'Fermentation') {
@@ -385,15 +394,13 @@ function renderBrewExecution() {
       <button class="btn btn-secondary" onclick="addFermentationCheckActual()">Record Fermentation Check</button>`;
   } else if (section === 'Packaging') {
     fields = `
-      <div class="field-group"><label class="field-label">FG Actual</label>${currentTargets.fg ? `<span class="field-hint">Target: ${currentTargets.fg}</span>` : ''}<input type="number" id="f-fg" value="${currentLogFields['FG Actual'] || ''}" step="0.001"></div>
-      <div class="field-group"><label class="field-label">Packaging Type</label><input type="text" id="f-packaging-type" value="${currentLogFields['Packaging Type'] || ''}" placeholder="keg / bottle / can"></div>
+      <div class="field-group"><label class="field-label">FG Actual</label><input type="number" id="f-fg" value="${currentLogFields['FG Actual'] || ''}" step="0.001"></div>
       <div class="field-group"><label class="field-label">Packaging Volume (L)</label><input type="number" id="f-bottle-vol" value="${currentLogFields['Bottling Volume Actual'] || ''}" step="1"></div>
       <div class="field-group"><label class="field-label">Priming Sugar (g)</label><input type="number" id="f-priming" value="${currentLogFields['Priming Sugar Amount'] || ''}" step="1"></div>
       <div class="field-group"><label class="field-label">Packaging Date</label><input type="text" id="f-bottle-date" value="${currentLogFields['Bottling Date'] || ''}" placeholder="YYYY-MM-DD"></div>`;
   } else {
     fields = `
-      <div class="field-group"><label class="field-label">Brewer Notes</label><textarea id="f-notes">${currentLogFields['Brewer Notes'] || ''}</textarea></div>
-      <div class="field-group"><label class="field-label">Exceptions</label><textarea id="f-exceptions">${currentLogFields['Exceptions'] || ''}</textarea></div>`;
+      <div class="field-group"><label class="field-label">Brewer Notes</label><textarea id="f-notes">${currentLogFields['Brewer Notes'] || ''}</textarea></div>`;
   }
 
   document.getElementById('brew-stage-content').innerHTML = `
@@ -428,11 +435,7 @@ async function saveSection(section) {
   }
 
   const fields = {};
-  if (section === 'Overview') {
-    fields['Brew Session Started'] = document.getElementById('f-session-started')?.value || null;
-    fields['Brew Date Actual'] = document.getElementById('f-brew-date')?.value || null;
-    fields['Overview Notes'] = document.getElementById('f-overview-notes')?.value || null;
-  } else if (section === 'Mash') {
+  if (section === 'Mash') {
     fields['Mash Temp Actual'] = parseFloat(document.getElementById('f-mash-temp')?.value) || null;
     fields['Mash pH Actual'] = parseFloat(document.getElementById('f-mash-ph')?.value) || null;
     fields['Mash Start Time'] = document.getElementById('f-mash-time')?.value || null;
@@ -450,13 +453,11 @@ async function saveSection(section) {
     fields['Gravity Checks'] = document.getElementById('f-grav-checks')?.value || null;
   } else if (section === 'Packaging') {
     fields['FG Actual'] = parseFloat(document.getElementById('f-fg')?.value) || null;
-    fields['Packaging Type'] = document.getElementById('f-packaging-type')?.value || null;
     fields['Bottling Volume Actual'] = parseFloat(document.getElementById('f-bottle-vol')?.value) || null;
     fields['Priming Sugar Amount'] = parseFloat(document.getElementById('f-priming')?.value) || null;
     fields['Bottling Date'] = document.getElementById('f-bottle-date')?.value || null;
   } else {
     fields['Brewer Notes'] = document.getElementById('f-notes')?.value || null;
-    fields['Exceptions'] = document.getElementById('f-exceptions')?.value || null;
   }
 
   Object.keys(fields).forEach((k) => (fields[k] === null || fields[k] === '') && delete fields[k]);
@@ -485,9 +486,9 @@ async function addMashStepActual() {
   }
   try {
     const logId = await ensureBrewLogForActuals();
-    await airtableCreate(TABLES.mashSteps, {
-      'Brew Log': [logId],
-      'Step Notes': note
+    await createChildActualRecord(TABLES.mashSteps, logId, note, {
+      linkCandidates: ['Brew Log', 'Brew Logs', 'Brew Log ID', 'Log'],
+      noteCandidates: ['Notes']
     });
     document.getElementById('f-mash-step-note').value = '';
     toast('Mash step recorded');
@@ -504,9 +505,9 @@ async function addBoilAdditionActual() {
   }
   try {
     const logId = await ensureBrewLogForActuals();
-    await airtableCreate(TABLES.boilAdditions, {
-      'Brew Log': [logId],
-      'Addition Notes': note
+    await createChildActualRecord(TABLES.boilAdditions, logId, note, {
+      linkCandidates: ['Brew Log', 'Brew Logs', 'Brew Log ID', 'Log'],
+      noteCandidates: ['Notes']
     });
     document.getElementById('f-boil-addition-note').value = '';
     toast('Boil addition recorded');
@@ -523,13 +524,39 @@ async function addFermentationCheckActual() {
   }
   try {
     const logId = await ensureBrewLogForActuals();
-    await airtableCreate(TABLES.fermentationChecks, {
-      'Brew Log': [logId],
-      'Check Notes': note
+    await createChildActualRecord(TABLES.fermentationChecks, logId, note, {
+      linkCandidates: ['Brew Log', 'Brew Logs', 'Brew Log ID', 'Log'],
+      noteCandidates: ['Notes', 'Check Notes', 'Observation']
     });
     document.getElementById('f-fermentation-note').value = '';
     toast('Fermentation check recorded');
   } catch (e) {
     toast('Could not add fermentation check');
   }
+}
+
+const tableFieldCache = {};
+
+async function resolveTableFieldName(table, candidates = [], fallback = '') {
+  const cacheKey = `${table}:${candidates.join('|')}:${fallback}`;
+  if (tableFieldCache[cacheKey]) return tableFieldCache[cacheKey];
+  try {
+    const sample = await airtable(table, '?maxRecords=1');
+    const keys = Object.keys(sample?.records?.[0]?.fields || {});
+    const found = candidates.find((c) => keys.includes(c));
+    tableFieldCache[cacheKey] = found || fallback;
+    return tableFieldCache[cacheKey];
+  } catch (e) {
+    tableFieldCache[cacheKey] = fallback;
+    return fallback;
+  }
+}
+
+async function createChildActualRecord(table, brewLogId, note, options = {}) {
+  const linkField = await resolveTableFieldName(table, options.linkCandidates || [], (options.linkCandidates || [])[0] || 'Brew Log');
+  const noteField = await resolveTableFieldName(table, options.noteCandidates || [], (options.noteCandidates || [])[0] || 'Notes');
+  await airtableCreate(table, {
+    [linkField]: [brewLogId],
+    [noteField]: note
+  });
 }
