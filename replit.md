@@ -6,7 +6,8 @@ Brewery management app. React + TypeScript + Tailwind frontend built with Vite, 
 
 - **Frontend**: React + TypeScript + Vite (Tailwind v4 via `@tailwindcss/vite`)
 - **Routing**: React Router v7 (`BrowserRouter`)
-- **App shell**: `src/components/AppShell.tsx` + `src/components/BottomNav.tsx`
+- **App shell**: `src/components/AppShell.tsx` — consolidated nav + FAB + Outlet
+- **UI components**: `src/components/ui/` — full iOS-like design system (see below)
 - **State**: `src/context/AppContext.tsx` — session, brewery, role, permissions
 - **i18n**: `src/contexts/LanguageContext.tsx` + `src/hooks/useTranslation.ts` — typed translation context supporting EN/FR/NL/DE. All UI strings accessed via `useTranslation()` hook with English fallback. Language persisted in `localStorage` under key `operon_language`.
 - **Language gate**: `src/components/LanguageGate.tsx` — intercepts first launch if no language set; full-screen selector; smooth fade transition into app shell on tap.
@@ -15,6 +16,8 @@ Brewery management app. React + TypeScript + Tailwind frontend built with Vite, 
 - **Domain types**: `src/types/domain.ts` — all entities in the canonical chain
 - **Pages Functions**: `functions/api/` — stub handlers, full implementation in Task #9
 - **Deployment**: Cloudflare Pages via `wrangler pages deploy dist/`
+- **Animations**: Framer Motion (`framer-motion`) — BottomSheet, Modal
+- **Icons**: Phosphor Icons (`@phosphor-icons/react`) — Regular weight for nav/list, Bold for FAB/CTAs
 
 ## Development
 
@@ -41,18 +44,69 @@ The Express server (`server/index.js`) is no longer on the critical path. Develo
 | `/signin` | `SignInPage` | Auth (no shell) |
 | `/signup` | `SignUpPage` | Auth (no shell) |
 
-## Design Tokens (Tailwind v4 CSS `@theme`)
+## Design System (`src/components/ui/`)
 
-Defined in `src/index.css`:
-- **Ink scale**: `--color-ink-900` (#111827), `--color-ink-800` (#1f2937), `--color-ink-700` (#374151)
-- **State colors**: green (#22c55e), yellow (#eab308), red (#ef4444), orange (#ea580c), blue (#3b82f6)
-- **Backgrounds**: white main, soft (#eaf0f5), page (#f8f9fb)
-- **Radius**: card (16px), btn (16px), dock (26px)
-- **Font sizes**: screen-title (24px), section-title (13px), card-title (16px), body (14px), meta (11px)
+Premium iOS-like design system. All components exported from `src/components/ui/index.ts`.
 
-## Auth, Multi-Tenancy & Roles (Task #9)
+### Design Tokens
 
-- **AuthGate**: `src/components/AuthGate.tsx` — wraps entire app; no session → redirect /signin; no brewery → show OnboardingWizard; session + brewery → render children
+**Token source:** Tailwind v4 uses a `@theme` block in `src/index.css` (not `tailwind.config.ts` — Tailwind v4 does not use a config file). Custom `--color-*`, `--radius-*`, `--shadow-*` CSS variables defined in `@theme` automatically become Tailwind utility classes (`bg-*`, `text-*`, `rounded-*`, `shadow-*`). All component sizing uses Tailwind arbitrary values or `@theme`-backed utilities — no raw inline styles.
+
+**Files:** `src/index.css` (`@theme` block), `src/styles/globals.css` (CSS utilities: `.tab-bar-blur`, `.skeleton-shimmer`, `.interactive`, `.page-enter`, `.spinner`, `.tabular`)
+
+**Colors:**
+- Page background: `#F2F2F7` (iOS grouped background)
+- Card/surface: `#FFFFFF` with `shadow-sm` (1px 3px rgba(0,0,0,0.08))
+- Accent amber: `#B45309` + `rgba(180,83,9,0.10)` tint
+- Status: Success `#34C759`, Warning `#FF9500`, Danger `#FF3B30`, Info `#007AFF` — each with 10% opacity variant
+- Text: Primary `#000000`, Secondary `rgba(60,60,67,0.6)`, Tertiary `rgba(60,60,67,0.3)`, Placeholder `rgba(60,60,67,0.25)`
+- Hairline: `rgba(0,0,0,0.08)`
+
+**Typography (iOS SF Pro rhythm):**
+- Display: 34px/700, Title: 28px/700, Title2: 22px/700
+- Headline: 17px/600, Body: 17px/400, Callout: 16px/400
+- Subhead: 15px/400, Footnote: 13px/400, Caption: 11px/400
+- Font stack: `-apple-system, BlinkMacSystemFont, 'Inter', sans-serif`
+
+**Spacing:** 4px base grid. Page horizontal margin 16px. Section gap 28px. Min row height 44px.
+
+**Radii:** Cards 16px, Inputs 10px, Buttons 12px, Chips 999px, Sheets 24px.
+
+### Components
+
+| Component | File | Description |
+|-----------|------|-------------|
+| `PageLayout` | `PageLayout.tsx` | Full page wrapper with page-enter animation and 16px padding |
+| `PageHeader` | `PageHeader.tsx` | Large-title iOS header; animates compact on scroll; optional back chevron + right action |
+| `SectionHeader` | `SectionHeader.tsx` | Uppercase 11px iOS section label with optional action button |
+| `Card` | `Card.tsx` | White surface, rounded-2xl, shadow-sm, standard padding |
+| `GroupedList` | `GroupedList.tsx` | Container for ListRow items with inset hairline dividers between rows |
+| `ListRow` | `ListRow.tsx` | 44px min-height row: icon slot, label, optional value + chevron; press state |
+| `StatusChip` | `StatusChip.tsx` | Pill chips: success/warning/danger/info/neutral; 10% opacity bg |
+| `StatCard` | `StatCard.tsx` | Metric display: large tabular number, unit, title label |
+| `Button` | `Button.tsx` | primary (amber solid) / secondary (amber tint) / ghost variants; 44px min height |
+| `IconButton` | `IconButton.tsx` | 44×44 circular button; primary/secondary/ghost variants |
+| `FAB` | `FAB.tsx` | 56px amber FAB with spring shadow + press scale animation |
+| `TabBar` | `TabBar.tsx` | Bottom nav: frosted glass, amber active, Phosphor icons |
+| `BottomSheet` | `BottomSheet.tsx` | Framer Motion spring sheet: drag handle, drag-to-dismiss, spring stiffness 400 damping 40 |
+| `Modal` | `Modal.tsx` | Centered dialog with spring-scale entry; backdrop dismiss |
+| `Skeleton` | `Skeleton.tsx` | Shimmer loading state; `SkeletonCard` variant |
+| `EmptyState` | `EmptyState.tsx` | Centered icon + title + body + optional CTA |
+| `ToastProvider` / `useToast` | `Toast.tsx` | Pill toasts; auto-dismiss 3s; success/warning/danger/info; Framer Motion |
+| `Divider` | `Divider.tsx` | 1px hairline rgba(0,0,0,0.08); optional inset |
+
+### Interactions
+
+- All tappable elements: `active:scale-[0.97] transition-transform duration-100` via `.interactive` class
+- Page transitions: `page-enter` keyframe (200ms fade + 16px vertical slide)
+- BottomSheet: spring (stiffness 400, damping 40); drag-to-dismiss
+- Color transitions: `transition-colors duration-200` globally
+- Tabular numbers: `.tabular` utility class (`font-variant-numeric: tabular-nums`)
+
+## Auth, Multi-Tenancy & Roles
+
+- **AuthGate**: `src/components/AuthGate.tsx` — wraps entire app; no session → redirect /signin; no brewery → show OnboardingWizard; session + brewery → render children; `isDemoMode` bypasses all auth checks (UI only — backend RLS still enforced)
+- **Demo mode**: `AppContext.isDemoMode` persisted in `sessionStorage` key `"operon_demo"`. Enter via `enterDemoMode()` (called by "Try demo" on SignInPage), exit via `exitDemoMode()`. Provides `DEMO_BREWERY` context + static data from `src/data/demo.ts`. Demo mode must never grant access to protected backend mutations — all real Supabase writes still require a valid session.
 - **OnboardingWizard**: `src/components/OnboardingWizard.tsx` — multi-step: brewery name/language/timezone/country/excise → calls `/api/provision-brewery` → confirms completion
 - **Permissions**: `src/types/permissions.ts` — `Role` type, `Permissions` interface, `resolvePermissions(role)`, `escalationMessage(action)`, role threshold map
 - **PermissionGuard**: `src/components/PermissionGuard.tsx` — `<CanDo action="...">`, `<RequiresRole action="..." explanation="...">` UI utilities

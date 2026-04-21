@@ -1,15 +1,19 @@
 import { useTranslation } from "@/hooks/useTranslation";
+import { PageLayout, PageHeader, Card, EmptyState } from "@/components/ui";
+import { Plus } from "@phosphor-icons/react";
 
 export default function RecipeNewPage() {
   const { t } = useTranslation();
   return (
-    <div style={{ padding: "20px 20px 16px", display: "flex", flexDirection: "column", gap: 20 }}>
-      <header>
-        <h1 style={{ fontSize: 24, fontWeight: 600, letterSpacing: "-0.02em", color: "#111827", margin: 0 }}>
-          {t("recipe.titleNew")}
-        </h1>
-      </header>
-      <p style={{ fontSize: 14, color: "#6b7280" }}>{t("recipe.newComingSoon")}</p>
-    </div>
+    <PageLayout>
+      <PageHeader title={t("recipe.titleNew")} showBack />
+      <Card className="mt-2">
+        <EmptyState
+          icon={<Plus />}
+          title={t("recipe.newComingSoon")}
+          body="Recipe builder coming soon."
+        />
+      </Card>
+    </PageLayout>
   );
 }

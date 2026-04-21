@@ -2,106 +2,126 @@ import { supabase } from "@/lib/supabase";
 import { useApp } from "@/context/AppContext";
 import { ROLE_LABELS } from "@/types/permissions";
 import { CanDo } from "@/components/PermissionGuard";
+import { useNavigate } from "react-router-dom";
+import {
+  PageLayout,
+  PageHeader,
+  SectionHeader,
+  GroupedList,
+  ListRow,
+  Card,
+} from "@/components/ui";
+import { Buildings, Users, SignOut, Globe, Clock, Receipt, Notebook } from "@phosphor-icons/react";
 
 export default function SettingsPage() {
-  const { breweryContext, role } = useApp();
+  const { breweryContext, role, isDemoMode, exitDemoMode } = useApp();
+  const navigate = useNavigate();
 
   async function handleSignOut() {
     await supabase.auth.signOut();
     window.location.href = "/signin";
   }
 
+  function handleExitDemo() {
+    exitDemoMode();
+    navigate("/signin");
+  }
+
   return (
-    <div style={{ padding: "20px 20px 16px", display: "flex", flexDirection: "column", gap: 20 }}>
-      <header>
-        <h1 style={{ fontSize: 24, fontWeight: 600, letterSpacing: "-0.02em", color: "#111827", margin: 0 }}>
-          Settings
-        </h1>
-        {breweryContext && (
-          <p style={{ fontSize: 13, color: "#6b7280", margin: "4px 0 0" }}>
-            {breweryContext.name} · {ROLE_LABELS[role]}
-          </p>
-        )}
-      </header>
+    <PageLayout>
+      <PageHeader
+        title="Settings"
+        subtitle={breweryContext ? `${breweryContext.name} · ${ROLE_LABELS[role]}` : undefined}
+      />
 
-      <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
-        {breweryContext && (
-          <div
-            style={{
-              padding: "14px 16px",
-              borderRadius: 14,
-              background: "#f9fafb",
-              border: "1px solid #e5e7eb",
-              fontSize: 14,
-              color: "#374151",
-            }}
-          >
-            <div style={{ fontWeight: 500, marginBottom: 6 }}>Brewery details</div>
-            <div style={{ color: "#6b7280", lineHeight: 1.6 }}>
-              <div>Country: {breweryContext.country}</div>
-              <div>Language: {breweryContext.language}</div>
-              <div>Timezone: {breweryContext.timezone}</div>
-              <div>Excise duty: {breweryContext.exciseEnabled ? "Enabled" : "Disabled"}</div>
-              {breweryContext.notionSourceId && (
-                <div>Notion source: {breweryContext.notionSourceId}</div>
-              )}
-            </div>
-          </div>
-        )}
+      {isDemoMode && (
+        <>
+          <SectionHeader title="Demo mode" />
+          <Card padding="p-4">
+            <p className="text-[15px] text-secondary m-0 mb-3 leading-relaxed">
+              You're exploring Operon with demo data from{" "}
+              <strong className="text-primary font-semibold">Hopsburg Brewing Co.</strong>{" "}
+              — nothing is saved.
+            </p>
+            <button
+              onClick={handleExitDemo}
+              className="w-full py-3 rounded-button border-0 bg-amber-tint text-amber
+                         text-[16px] font-semibold cursor-pointer font-[inherit]"
+            >
+              Exit demo & sign in
+            </button>
+          </Card>
+        </>
+      )}
 
-        <CanDo action="canManageSettings">
-          <div
-            style={{
-              padding: "14px 16px",
-              borderRadius: 14,
-              background: "#f9fafb",
-              border: "1px solid #e5e7eb",
-              fontSize: 14,
-              color: "#374151",
-              fontWeight: 500,
-            }}
-          >
-            Brewery settings
-          </div>
-        </CanDo>
+      {breweryContext && (
+        <>
+          <SectionHeader title="Brewery" />
+          <GroupedList>
+            <ListRow
+              icon={<Globe size={20} weight="regular" />}
+              label="Country"
+              value={breweryContext.country}
+            />
+            <ListRow
+              icon={<Globe size={20} weight="regular" />}
+              label="Language"
+              value={breweryContext.language}
+            />
+            <ListRow
+              icon={<Clock size={20} weight="regular" />}
+              label="Timezone"
+              value={breweryContext.timezone}
+            />
+            <ListRow
+              icon={<Receipt size={20} weight="regular" />}
+              label="Excise duty"
+              value={breweryContext.exciseEnabled ? "Enabled" : "Disabled"}
+            />
+            {breweryContext.notionSourceId && (
+              <ListRow
+                icon={<Notebook size={20} weight="regular" />}
+                label="Notion source"
+                value={breweryContext.notionSourceId}
+              />
+            )}
+          </GroupedList>
+        </>
+      )}
 
-        <CanDo action="canManageUsers">
-          <div
-            style={{
-              padding: "14px 16px",
-              borderRadius: 14,
-              background: "#f9fafb",
-              border: "1px solid #e5e7eb",
-              fontSize: 14,
-              color: "#374151",
-              fontWeight: 500,
-            }}
-          >
-            Manage team members
-          </div>
-        </CanDo>
-      </div>
+      {!isDemoMode && (
+        <>
+          <CanDo action="canManageSettings">
+            <SectionHeader title="Administration" />
+            <GroupedList>
+              <ListRow
+                icon={<Buildings size={20} weight="regular" />}
+                label="Brewery settings"
+                showChevron
+                onClick={() => {}}
+              />
+              <CanDo action="canManageUsers">
+                <ListRow
+                  icon={<Users size={20} weight="regular" />}
+                  label="Manage team members"
+                  showChevron
+                  onClick={() => {}}
+                />
+              </CanDo>
+            </GroupedList>
+          </CanDo>
 
-      <div style={{ marginTop: "auto", paddingTop: 20 }}>
-        <button
-          onClick={handleSignOut}
-          style={{
-            width: "100%",
-            padding: "14px 16px",
-            borderRadius: 14,
-            border: "1px solid #fecaca",
-            background: "#fef2f2",
-            color: "#dc2626",
-            fontSize: 15,
-            fontWeight: 500,
-            cursor: "pointer",
-            fontFamily: "inherit",
-            textAlign: "center",
-          }}
-        >
-          Sign out
-        </button>
-      </div>
-    </div>
+          <SectionHeader title="Account" />
+          <GroupedList>
+            <ListRow
+              icon={<SignOut size={20} weight="regular" />}
+              label="Sign out"
+              onClick={handleSignOut}
+              destructive
+            />
+          </GroupedList>
+        </>
+      )}
+    </PageLayout>
   );
 }

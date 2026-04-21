@@ -1,0 +1,43 @@
+/* ── CSS variable aliases for safe-area insets ── */
+:root {
+  --safe-top: env(safe-area-inset-top, 0px);
+  --safe-bottom: env(safe-area-inset-bottom, 0px);
+}
+
+/* ── Color transitions on theme change (scoped to known color-bearing elements) ── */
+button, a, input, select, textarea, label,
+[role="button"], [role="tab"],
+.bg-surface, .bg-page, .bg-amber, .bg-amber-tint,
+.text-primary, .text-secondary, .text-amber {
+  transition-property: color, background-color, border-color;
+  transition-duration: 200ms;
+  transition-timing-function: ease;
+}
+
+button, a, [role="button"] {
+  transition-property: color, background-color, border-color, transform, box-shadow;
+  transition-duration: 200ms, 200ms, 200ms, 100ms, 100ms;
+  transition-timing-function: ease;
+}
+
+/* ── Tab bar frosted glass (webkit requires vendor-prefixed property) ── */
+.tab-bar-blur {
+  -webkit-backdrop-filter: blur(20px) saturate(180%);
+}
+
+/* ── Skeleton shimmer — sizing controlled entirely by Tailwind utility classes ── */
+.skeleton-shimmer {
+  background: linear-gradient(
+    90deg,
+    rgba(0, 0, 0, 0.06) 0%,
+    rgba(0, 0, 0, 0.03) 40%,
+    rgba(0, 0, 0, 0.06) 100%
+  );
+  background-size: 200% 100%;
+  animation: shimmer 1.4s ease-in-out infinite;
+}
+
+@keyframes shimmer {
+  0%   { background-position: 200% 0; }
+  100% { background-position: -200% 0; }
+}

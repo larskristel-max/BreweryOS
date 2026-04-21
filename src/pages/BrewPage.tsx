@@ -1,15 +1,19 @@
 import { useTranslation } from "@/hooks/useTranslation";
+import { PageLayout, PageHeader, Card, EmptyState } from "@/components/ui";
+import { BeerBottle } from "@phosphor-icons/react";
 
 export default function BrewPage() {
   const { t } = useTranslation();
   return (
-    <div style={{ padding: "20px 20px 16px", display: "flex", flexDirection: "column", gap: 20 }}>
-      <header>
-        <h1 style={{ fontSize: 24, fontWeight: 600, letterSpacing: "-0.02em", color: "#111827", margin: 0 }}>
-          {t("brew.title")}
-        </h1>
-      </header>
-      <p style={{ fontSize: 14, color: "#6b7280" }}>{t("brew.comingSoon")}</p>
-    </div>
+    <PageLayout>
+      <PageHeader title={t("brew.title")} />
+      <Card className="mt-2">
+        <EmptyState
+          icon={<BeerBottle />}
+          title={t("brew.comingSoon")}
+          body="Let's Brew will guide you through each step of your brew day."
+        />
+      </Card>
+    </PageLayout>
   );
 }

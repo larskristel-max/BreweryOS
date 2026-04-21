@@ -11,9 +11,7 @@ import type { Session } from "@supabase/supabase-js";
 import type { User, BreweryProfile } from "@/types/domain";
 import type { Role, Permissions } from "@/types/permissions";
 import { resolvePermissions } from "@/types/permissions";
-
-// Role = UserRole (both types are identical — domain.ts and permissions.ts share the same values)
-// No compatibility mapping needed.
+import { DEMO_BREWERY } from "@/data/demo";
 
 export interface BreweryContext {
   breweryId: string;
@@ -36,6 +34,9 @@ interface AppContextValue {
   isLoading: boolean;
   isResolvingBrewery: boolean;
   hasNoBrewery: boolean;
+  isDemoMode: boolean;
+  enterDemoMode: () => void;
+  exitDemoMode: () => void;
   setBrewery: (brewery: BreweryProfile | null) => void;
   setBreweryContext: (ctx: BreweryContext | null) => void;
   refreshBreweryContext: () => Promise<void>;
@@ -43,11 +44,7 @@ interface AppContextValue {
 
 const AppContext = createContext<AppContextValue | null>(null);
 
-// Resolves brewery context for the current authenticated user.
-// Uses RLS: brewery_profiles is filtered by app_metadata.brewery_id from the JWT.
-// Returns null if no brewery is linked (user hasn't completed onboarding).
 async function resolveBreweryContext(userId: string): Promise<BreweryContext | null> {
-  // Query brewery_profiles — RLS uses auth_brewery_id() from the JWT's app_metadata
   const { data: brewery, error: breweryError } = await supabase
     .from("brewery_profiles")
     .select("id, name, language, timezone, country, emcs_enabled, notion_source_id")
@@ -55,7 +52,6 @@ async function resolveBreweryContext(userId: string): Promise<BreweryContext | n
 
   if (breweryError || !brewery) return null;
 
-  // Get the current user's role from the users table
   const { data: userRow } = await supabase
     .from("users")
     .select("role")
@@ -79,13 +75,31 @@ export function AppProvider({ children }: { children: ReactNode }) {
   const [isLoading, setIsLoading] = useState(true);
   const [isResolvingBrewery, setIsResolvingBrewery] = useState(false);
   const [brewery, setBrewery] = useState<BreweryProfile | null>(null);
-  const [breweryContextState, setBreweryContextState] = useState<BreweryContext | null>(null);
+  const [breweryContextState, setBreweryContextState] = useState<BreweryContext | null>(
+    () => sessionStorage.getItem("operon_demo") === "1" ? DEMO_BREWERY : null
+  );
   const [hasNoBrewery, setHasNoBrewery] = useState(false);
+  const [isDemoMode, setIsDemoMode] = useState<boolean>(
+    () => sessionStorage.getItem("operon_demo") === "1"
+  );
 
-  // Exposed setter that atomically updates both breweryContext and hasNoBrewery
   const setBreweryContext = useCallback((ctx: BreweryContext | null) => {
     setBreweryContextState(ctx);
     setHasNoBrewery(ctx === null);
+  }, []);
+
+  const enterDemoMode = useCallback(() => {
+    sessionStorage.setItem("operon_demo", "1");
+    setIsDemoMode(true);
+    setBreweryContextState(DEMO_BREWERY);
+    setHasNoBrewery(false);
+  }, []);
+
+  const exitDemoMode = useCallback(() => {
+    sessionStorage.removeItem("operon_demo");
+    setIsDemoMode(false);
+    setBreweryContextState(null);
+    setHasNoBrewery(false);
   }, []);
 
   const refreshBreweryContext = useCallback(async () => {
@@ -142,7 +156,9 @@ export function AppProvider({ children }: { children: ReactNode }) {
           if (mounted) setIsResolvingBrewery(false);
         }
       } else {
-        if (mounted) setBreweryContext(null);
+        if (mounted) {
+          setBreweryContext(null);
+        }
       }
     });
 
@@ -152,7 +168,9 @@ export function AppProvider({ children }: { children: ReactNode }) {
     };
   }, [setBreweryContext]);
 
-  const role: Role = breweryContextState?.role ?? "viewer";
+  const role: Role = isDemoMode
+    ? DEMO_BREWERY.role
+    : (breweryContextState?.role ?? "viewer");
   const permissions = resolvePermissions(role);
 
   const user: User | null = session?.user
@@ -175,12 +193,15 @@ export function AppProvider({ children }: { children: ReactNode }) {
         session,
         user,
         brewery,
-        breweryContext: breweryContextState,
+        breweryContext: isDemoMode ? DEMO_BREWERY : breweryContextState,
         role,
         permissions,
         isLoading,
         isResolvingBrewery,
-        hasNoBrewery,
+        hasNoBrewery: isDemoMode ? false : hasNoBrewery,
+        isDemoMode,
+        enterDemoMode,
+        exitDemoMode,
         setBrewery,
         setBreweryContext,
         refreshBreweryContext,
