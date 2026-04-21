@@ -450,10 +450,25 @@
     justify-content: center;
     transform: translateY(-5vh);
   }
-  .splash-brand-logo {
+  .splash-brand-mark {
+    display: inline-flex;
+    align-items: center;
+    gap: 9px;
+  }
+  .splash-ring {
+    flex: 0 0 auto;
+    width: 36px;
+    height: 36px;
     display: block;
-    width: min(220px, 60vw);
-    height: auto;
+  }
+  .splash-wordmark {
+    font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Display', 'Helvetica Neue', Arial, sans-serif;
+    font-size: 22px;
+    font-weight: 500;
+    letter-spacing: -0.03em;
+    color: #111827;
+    line-height: 1;
+    user-select: none;
   }
   .quick-add-open #quick-add-sheet { display: flex !important; }
   #quick-add-sheet,
@@ -558,7 +573,13 @@
 
 <div id="screen-splash" class="screen screen-splash" style="display:none;">
   <div class="splash-brand">
-    <img class="splash-brand-logo" src="assets/operon-logo.svg" alt="Operon logo">
+    <div class="splash-brand-mark" role="img" aria-label="Operon">
+      <svg class="splash-ring" viewBox="0 0 36 36" fill="none" xmlns="http://www.w3.org/2000/svg">
+        <circle cx="18" cy="18" r="15.5" stroke="#111827" stroke-width="1.8"/>
+        <circle cx="18" cy="18" r="9.5"  stroke="#111827" stroke-width="1.8"/>
+      </svg>
+      <span class="splash-wordmark">PERON</span>
+    </div>
   </div>
 </div>
 
