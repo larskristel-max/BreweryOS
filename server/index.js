@@ -6,7 +6,6 @@ import {
   clearCache, whoami
 } from "./notion-contract.js";
 import { supabase } from "./supabase.js";
-import { runMigration, validateMigration, getMigrationSql } from "./db/migrate.js";
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const ROOT = path.resolve(__dirname, "..");
@@ -100,7 +99,7 @@ app.get("/notion/graph", async (req, res) => {
 
 app.post("/notion/cache/clear", (req, res) => { clearCache(); res.json({ ok: true }); });
 
-// ---------- Supabase: connectivity + schema migration ----------
+// ---------- Supabase: connectivity check ----------
 app.get("/supabase/test", async (req, res) => {
   if (!supabase) {
     return res.status(503).json({ success: false, error: "Supabase client not initialised — check SUPABASE_URL and SUPABASE_SERVICE_ROLE_KEY" });
@@ -109,33 +108,6 @@ app.get("/supabase/test", async (req, res) => {
     const { error } = await supabase.auth.admin.listUsers({ perPage: 1 });
     if (error) return res.status(500).json({ success: false, error: error.message });
     res.json({ success: true });
-  } catch (e) {
-    res.status(500).json({ success: false, error: e.message });
-  }
-});
-
-app.get("/supabase/schema", (req, res) => {
-  try {
-    const sql = getMigrationSql("001_initial_schema.sql");
-    res.type("text/plain").send(sql);
-  } catch (e) {
-    res.status(500).json({ error: e.message });
-  }
-});
-
-app.post("/supabase/migrate/dry-run", async (req, res) => {
-  try {
-    const result = await validateMigration("001_initial_schema.sql");
-    res.json(result);
-  } catch (e) {
-    res.status(500).json({ success: false, error: e.message });
-  }
-});
-
-app.post("/supabase/migrate", async (req, res) => {
-  try {
-    const result = await runMigration("001_initial_schema.sql");
-    res.json(result);
   } catch (e) {
     res.status(500).json({ success: false, error: e.message });
   }
