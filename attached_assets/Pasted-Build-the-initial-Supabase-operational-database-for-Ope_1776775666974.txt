@@ -1,0 +1,560 @@
+Build the initial Supabase operational database for Operon based on the current Airtable operational model and the existing implementation pack.
+
+Important:
+
+* Read and respect the repo `agent.md`
+* Use this prompt as product/data-model direction
+* Do not invent a generic startup schema
+* This is a brewery operating system with traceability requirements
+
+Core architecture:
+
+* Supabase/Postgres = operational database
+* Notion = semantic / readiness / translation layer
+* Frontend = TypeScript + Tailwind
+* Backend/service layer = normalization, business logic, privileged writes
+
+Goal:
+Create a clean Supabase schema that faithfully translates the current Airtable operational structure into a normalized PostgreSQL design suitable for long-term use.
+
+---
+
+1. GENERAL DATABASE RULES
+
+---
+
+1. Use PostgreSQL in Supabase.
+
+2. This is multi-brewery-capable architecture.
+   Every operational table must support tenancy from the beginning.
+
+3. Prefer a shared database with strict brewery separation by `brewery_id`.
+
+4. Every major operational table must include:
+
+* `id uuid primary key default gen_random_uuid()`
+* `brewery_id uuid not null`
+* `created_at timestamptz default now()`
+* `updated_at timestamptz default now()` where appropriate
+
+5. Do not use Airtable IDs as primary identifiers in the new system.
+
+6. Use proper foreign keys.
+
+7. Keep schema clean, typed, and extensible.
+   Do not overbuild.
+
+---
+
+2. SOURCE MODEL TO TRANSLATE
+
+---
+
+Use the current Airtable structure as the source reference.
+
+Operational tables currently present in Airtable and relevant to migrate into Supabase:
+
+Core:
+
+* Brewery Profile
+* Packaging Formats
+* Ingredients
+* Ingredient Receipts
+* Recipes
+* Recipe Ingredients
+* Batches
+* Batch Inputs
+* Brew Logs
+* Mash Steps
+* Boil Additions
+* Fermentation Checks
+* Lots
+* Pending Movements
+* Inventory Movements
+* Sales
+* Declarations
+* Tasks
+* Issues
+* Users
+
+Secondary / later:
+
+* Agenda Items
+* Financial Snapshots
+* Cost Breakdown
+* Obligations
+* App Config
+
+Use the core set first.
+Secondary tables can be staged for later if needed.
+
+---
+
+3. REQUIRED CORE TABLES TO CREATE NOW
+
+---
+
+Create these Supabase tables now:
+
+1. brewery_profiles
+2. packaging_formats
+3. ingredients
+4. ingredient_receipts
+5. recipes
+6. recipe_ingredients
+7. recipe_mash_steps
+8. recipe_boil_additions
+9. batches
+10. batch_inputs
+11. brew_logs
+12. mash_steps
+13. boil_additions
+14. fermentation_checks
+15. lots
+16. pending_movements
+17. inventory_movements
+18. sales
+19. declarations
+20. tasks
+21. issues
+22. users
+23. event_logs
+
+---
+
+4. DATA MODEL DIRECTION PER TABLE
+
+---
+
+Use this direction when building the schema.
+
+brewery_profiles
+Represents one brewery instance / tenant root.
+Include fields equivalent to current brewery metadata such as:
+
+* brewery name
+* stable brewery identifier
+* legal entity name
+* display name
+* country
+* timezone
+* currency
+* language
+* VAT number
+* excise authorization number
+* small independent brewery flag
+* EMCS enabled flag
+* packaging contribution mode
+* onboarding status
+* template/schema metadata if useful
+
+packaging_formats
+Structured reusable packaging definitions.
+Include:
+
+* name
+* container_type
+* package_size_label
+* size_liters
+* reusable flag
+* packaging contribution category
+* active flag
+* notes
+
+ingredients
+Input master.
+Include:
+
+* name
+* category/type
+* unit
+* active flag
+
+ingredient_receipts
+Inbound supplier-lot receipt layer for full backward traceability.
+Include:
+
+* ingredient_id
+* supplier_name
+* supplier_lot_number
+* internal_lot_code
+* quantity_received
+* unit
+* received_date
+* best_before_date
+* quality_status
+* storage_location
+* notes
+
+recipes
+Working recipe plan.
+Include:
+
+* name
+* default_batch_size
+* target_og
+* target_fg
+* target_pre_boil_volume
+* target_post_boil_volume
+* target_fermenter_volume
+* default_boil_duration_min
+* default_yeast_notes
+* default_packaging_type
+* default_packaging_format_id if appropriate
+
+recipe_ingredients
+Recipe plan inputs.
+Include:
+
+* recipe_id
+* ingredient_id
+* suggested_quantity
+
+recipe_mash_steps
+Planned mash schedule.
+Include:
+
+* recipe_id
+* step_order
+* stage
+* target_temp_c
+* duration_min
+* target_ph
+* notes
+
+recipe_boil_additions
+Planned boil schedule.
+Include:
+
+* recipe_id
+* ingredient_id
+* step_order
+* addition_stage
+* time_min
+* quantity
+* unit
+* addition_type
+* notes
+
+batches
+Core process run object.
+Include:
+
+* batch_number or declaration_number strategy
+* date / brew_date
+* recipe_id
+* status
+* summary/display fields if useful
+* readiness fields or normalized readiness summary placeholders
+* declaration_number
+* optional target/actual volume fields
+
+Important:
+Support canonical statuses in a clean enum-like pattern:
+planned / brewing / fermenting / ready / packaged / closed
+Do not preserve messy Airtable-only select structure if it weakens the model.
+
+batch_inputs
+Actual material usage.
+Include:
+
+* batch_id
+* ingredient_id
+* ingredient_receipt_id
+* quantity
+* used_at
+* stage
+* linked inventory movement reference if appropriate
+
+brew_logs
+Execution reality at batch level.
+Include:
+
+* batch_id
+* brew_date
+* actual mash / boil / transfer / packaging factual fields where appropriate
+* exceptions
+* brewer_notes
+* log_status
+* packaging fields where useful but keep execution separate from recipe
+
+mash_steps
+Actual mash execution steps linked to brew log.
+Include:
+
+* brew_log_id
+* step_order
+* stage
+* target_temp_c
+* actual_temp_c
+* duration_min
+* ph_actual
+* notes
+
+boil_additions
+Actual boil additions linked to brew log.
+Include:
+
+* brew_log_id
+* step_order
+* ingredient_id
+* time_min
+* quantity
+* unit
+* addition_type
+* addition_stage
+* notes
+
+fermentation_checks
+Actual fermentation observations over time.
+Include:
+
+* brew_log_id
+* check_date
+* check_time
+* day_number
+* gravity
+* temperature_c
+* ph
+* sensory_notes
+* check_type
+
+lots
+Output inventory / traceability unit.
+Include:
+
+* batch_id
+* parent_lot_id
+* packaging_format_id
+* user-facing lot number
+* internal lot identifier if needed
+* lot_type
+* status
+* packaging_state
+* excise_state
+* quantity / volume
+* units_count
+* date
+* open_container_size fallback only if really needed
+
+Important:
+Prefer a structured packaging format relation over free text packaging.
+
+pending_movements
+Critical staging table for incomplete stock events.
+Include:
+
+* pending movement identifier
+* created_at
+* pending_type
+* scope
+* ingredient_id nullable
+* ingredient_receipt_id nullable
+* batch_id nullable
+* lot_id nullable
+* source_lot_id nullable
+* destination_lot_id nullable
+* sale_id nullable
+* quantity
+* unit
+* direction
+* missing_fields_summary
+* why_completion_matters
+* resolution_status
+* completion_notes
+* elimination_reason nullable
+* linked task id nullable
+
+Important:
+This table must preserve truthfulness when stock/accounting data is incomplete.
+Do not replace this concept with fake final movements.
+
+inventory_movements
+Authoritative operational ledger.
+Include:
+
+* movement identifier
+* timestamp
+* movement_type
+* scope
+* ingredient_id nullable
+* ingredient_receipt_id nullable
+* lot_id nullable
+* source_lot_id nullable
+* destination_lot_id nullable
+* batch_id nullable
+* sale_id nullable
+* quantity
+* unit
+* base_quantity_liters nullable
+* base_quantity_kg nullable
+* direction
+* excise_effect
+* reference_number
+* reason
+* notes
+* source_pending_movement_id nullable
+* elimination_reason nullable
+
+Important:
+This is stock/accounting truth.
+Incomplete movements do not belong here.
+
+sales
+Commercial outgoing event.
+Include:
+
+* customer
+* date
+* lot_id
+* volume_sold
+* unit
+* invoice_number
+* status
+* due_date
+* amount
+* excise_mode
+* ARC / EMCS reference
+* effective stock direction
+* elimination_reason nullable for exceptional cases only
+
+declarations
+Compliance grouping object.
+Include:
+
+* declaration identifier
+* declaration_type
+* period_start
+* period_end
+* submission_date
+* status
+* reference_number
+
+tasks
+Self-healing operational follow-up system.
+Include:
+
+* title
+* due_date
+* priority
+* status
+* type
+* notes
+* linked_issue_id nullable
+* linked_batch_id nullable
+* linked_sale_id nullable
+* linked_pending_movement_id nullable
+* suggestion_type
+* suggestion_reason
+* is_system_generated
+* relevance_score
+* source
+* deduplication_key
+* completed_at
+* is_archived
+* is_deleted
+* scheduled_time
+
+issues
+Fast incident/problem capture.
+Include:
+
+* title
+* date
+* severity
+* status
+* description
+* linked_batch_id nullable
+* linked_lot_id nullable
+* linked_sale_id nullable
+
+users
+Initial brewery users / roles.
+Include:
+
+* name
+* email
+* role
+
+Use role direction already discussed:
+owner / brewmaster_admin / brewer / assistant / viewer
+
+event_logs
+Auditable system event layer.
+Include:
+
+* brewery_id
+* actor_user_id nullable
+* actor_role nullable
+* event_type
+* object_type nullable
+* object_id nullable
+* related_ids jsonb nullable
+* timestamp
+* summary
+* payload_json jsonb nullable
+
+---
+
+5. IMPORTANT PRODUCT RULES TO ENFORCE IN THE SCHEMA
+
+---
+
+1. Recipe data is the plan.
+2. Brew-log and execution tables are actual reality.
+3. Do not merge planned and actual into one table.
+4. Pending movements must exist as a first-class concept.
+5. Inventory movements must be the authoritative stock ledger.
+6. Lot genealogy must be possible through parent/source/destination relationships.
+7. Brewery isolation must be possible through brewery_id on all major operational tables.
+8. The schema must support future row-level security by brewery and user role.
+
+---
+
+6. RELATIONSHIP / NORMALIZATION RULES
+
+---
+
+1. Replace Airtable multiple-record-links with proper relational foreign keys and junction tables only where needed.
+2. Avoid Airtable-style reverse-link duplication.
+3. Remove duplicated reverse-link artifacts from the new schema.
+4. Use normalized one-to-many / many-to-one relations where possible.
+5. Only use junction tables where a true many-to-many relationship is required.
+
+---
+
+7. WHAT NOT TO DO
+
+---
+
+Do NOT:
+
+* invent startup/SaaS-generic tables unrelated to brewery operations
+* flatten everything into one giant batch table
+* collapse recipe and execution into the same object
+* remove pending movements
+* use raw Airtable IDs
+* keep Airtable-specific field naming when a cleaner SQL name exists
+* hardcode one-brewery-forever assumptions
+* add frontend code at this step
+* add auth/billing flows at this step
+* build full RLS policies yet unless needed minimally
+
+---
+
+8. WHAT TO DELIVER
+
+---
+
+Deliver:
+
+1. Supabase SQL schema for the core operational model
+2. clean table creation order respecting foreign keys
+3. clear SQL names in snake_case
+4. initial indexes where obviously needed
+5. a short explanation of any assumptions or simplifications made
+
+Do not run any destructive migration against existing data without showing the plan first.
+
+This schema is the operational backbone of Operon.
+Accuracy matters more than speed.
