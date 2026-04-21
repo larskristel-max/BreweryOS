@@ -1,0 +1,142 @@
+Project: Convert static frontend into full-stack Node app with Airtable + Notion proxies
+
+Goal:
+Replace the current static setup (which depends on Netlify functions) with a small Node/Express backend that works natively in Replit and supports both Airtable and Notion.
+
+---
+
+1. SERVER SETUP
+
+Create a Node.js + Express server that:
+
+* Runs on port 5000
+* Serves the existing frontend:
+
+  * `/` → index.html
+  * `/js/*` → existing JS files
+  * `/assets/*` → static assets (if present)
+
+Use Express + CORS + JSON middleware.
+
+---
+
+2. AIRTABLE PROXY
+
+Create endpoint:
+
+POST /airtable
+
+* Port the logic from the existing Netlify function (netlify/functions/airtable.js)
+* Use environment variable:
+
+  * AIRTABLE_KEY
+* Accept:
+
+  * baseId
+  * table
+  * method (GET, POST, PATCH, DELETE)
+  * payload
+
+Forward requests to Airtable REST API
+
+Reason:
+Replit does not support Netlify serverless functions, so we must run a backend proxy instead ([DEV Community][1])
+
+---
+
+3. NOTION PROXY
+
+Create endpoint:
+
+POST /notion
+
+Use:
+
+* NOTION_TOKEN (from Notion internal integration)
+
+Support:
+
+* Query database
+* Retrieve page
+
+Example actions:
+
+* "queryDatabase"
+* "getPage"
+
+Return raw JSON response
+
+---
+
+4. ENVIRONMENT VARIABLES (REPLIT SECRETS)
+
+Add:
+
+* AIRTABLE_KEY = your Airtable API key
+* NOTION_TOKEN = your Notion integration token
+
+Use Replit Secrets panel (do NOT hardcode)
+
+---
+
+5. CLIENT LAYER
+
+Create:
+
+js/notion.js
+
+Functions:
+
+* notion.queryDatabase(databaseId)
+* notion.getPage(pageId)
+
+Use fetch to call `/notion`
+
+Keep same pattern as existing airtable.js
+
+---
+
+6. FRONTEND INTEGRATION
+
+Do NOT redesign UI.
+
+Only:
+
+* enable calls to notion.js where needed
+* keep current Airtable usage working via /airtable
+
+---
+
+7. DO NOT ADD (IMPORTANT)
+
+* No authentication
+* No database
+* No caching
+* No restructuring UI
+* No overengineering
+
+This is only a proxy + backend bridge
+
+---
+
+8. SUCCESS CRITERIA
+
+* App runs fully inside Replit
+* No more 501 errors on /airtable
+* Notion data can be fetched successfully
+* Frontend loads normally on port 5000
+
+---
+
+Notes:
+
+* This follows a standard pattern where a backend proxy handles API calls instead of client-side direct access, which avoids CORS and credential issues ([community.airtable.com][2])
+* Replit works best with full Node apps instead of static + serverless hybrids ([LogRocket Blog][3])
+
+---
+
+Execute step-by-step. Do not refactor unrelated parts of the app.
+
+[1]: https://dev.to/sandramartin/basic-express-server-using-replitcom-2ba9?utm_source=chatgpt.com "Basic Express Server Using Replit.com"
+[2]: https://community.airtable.com/development-apis-11/setting-up-a-proxy-server-3174?utm_source=chatgpt.com "Setting up a proxy server"
+[3]: https://blog.logrocket.com/using-replit-node-js-build-deploy-apps/?utm_source=chatgpt.com "Using Replit with Node.js to build and deploy apps"
