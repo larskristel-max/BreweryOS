@@ -26,15 +26,23 @@ function buildConnectionString() {
     );
   }
   const ref = new URL(supabaseUrl).hostname.split(".")[0];
-  return `postgresql://postgres.${ref}:${password}@aws-0-eu-west-3.pooler.supabase.com:5432/postgres?sslmode=require`;
+  // URL-encode the password to handle any special chars.
+  // Use the session pooler (port 5432) — supports DDL, confirmed reachable.
+  const encodedPw = encodeURIComponent(password);
+  return `postgresql://postgres.${ref}:${encodedPw}@aws-0-eu-west-3.pooler.supabase.com:5432/postgres`;
+}
+
+function makeClient() {
+  return new Client({
+    connectionString: buildConnectionString(),
+    ssl: { rejectUnauthorized: false },
+  });
 }
 
 export async function runMigration(migrationFile = "001_initial_schema.sql") {
-  const connStr = buildConnectionString();
   const filePath = path.join(__dirname, migrationFile);
   const sql = readFileSync(filePath, "utf8");
-
-  const client = new Client({ connectionString: connStr });
+  const client = makeClient();
   await client.connect();
   try {
     await client.query(sql);
@@ -45,11 +53,9 @@ export async function runMigration(migrationFile = "001_initial_schema.sql") {
 }
 
 export async function validateMigration(migrationFile = "001_initial_schema.sql") {
-  const connStr = buildConnectionString();
   const filePath = path.join(__dirname, migrationFile);
   const sql = readFileSync(filePath, "utf8");
-
-  const client = new Client({ connectionString: connStr });
+  const client = makeClient();
   await client.connect();
   try {
     await client.query("BEGIN");
