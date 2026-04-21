@@ -117,7 +117,7 @@ async function renderWhatsNext() {
       const brewLogId = deriveTaskBrewLogId(taskFields);
       const isDone = normalizeTaskStatus(getField(rec, 'Status')) === 'done';
       return `
-        <div class="wn-card" data-task-id="${rec.id}" onclick="openTaskContext('${rec.id}','${batchId}','${brewLogId}')" style="
+        <div class="wn-card" data-task-id="${rec.id}" onclick="showScreen('screen-tasks')" style="
           background:#fff;
           border:1px solid #e0e0e0;
           border-radius:10px;
@@ -200,7 +200,7 @@ function renderHomeBatches(batches) {
       : summaryRaw;
     const statusPillClass = pillClassFromStatus(status);
     return `
-      <div onclick="openBatchDetail('${b.id}')" style="background:#fff; border:1.5px solid #f3f4f6; border-radius:16px; padding:16px; cursor:pointer; display:flex; justify-content:space-between; align-items:center;">
+      <div onclick="showScreen('screen-batches')" style="background:#fff; border:1.5px solid #f3f4f6; border-radius:16px; padding:16px; cursor:pointer; display:flex; justify-content:space-between; align-items:center;">
         <div>
           <p style="font-size:15px; font-weight:600; color:#111827; margin:0 0 4px;">${batchLabel}</p>
           <p style="font-size:13px; color:#6b7280; margin:0;">${summary}</p>
