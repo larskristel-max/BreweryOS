@@ -369,8 +369,8 @@
     position: fixed;
     left: calc(12px + var(--safe-left-space));
     right: calc(12px + var(--safe-right-space));
-    bottom: calc(var(--bottom-sheet-offset) + 8px);
-    max-height: calc(var(--app-viewport-height) - 130px);
+    bottom: calc(env(safe-area-inset-bottom) + 6px);
+    max-height: calc(var(--app-viewport-height) - 90px);
     overflow-y: auto;
     background: #fff;
     border: 1px solid rgba(17,24,39,0.08);
