@@ -70,11 +70,35 @@ function isBatchActive(fields = {}) {
   return !['complete', 'completed', 'done', 'archived'].includes(status);
 }
 
-async function triggerLetsBrew() {
-  openLetsBrewActionHub();
+async function triggerLetsBrew(defaultAction = '') {
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', () => openLetsBrewActionHub(defaultAction), { once: true });
+    return;
+  }
+  openLetsBrewActionHub(defaultAction);
 }
 
-function openLetsBrewActionHub() {
+function routeLetsBrewAction(action, options = {}) {
+  const handlers = {
+    'brew.start_continue': () => letsBrewStartContinue(options),
+    'log.gravity': () => letsBrewQuickLog('gravity', options),
+    'log.temperature': () => letsBrewQuickLog('temperature', options),
+    'log.brew_note': () => letsBrewQuickLog('brew note', options),
+    'log.packaging_note': () => letsBrewQuickLog('packaging note', options),
+    'packaging.continue': () => letsBrewContinuePackaging(options),
+    'inventory.move': () => letsBrewInventoryMovement(options),
+    'tasks.continue': () => letsBrewContinueTasks(options),
+    'tasks.add': () => letsBrewAddTask(options)
+  };
+  const handler = handlers[action];
+  if (!handler) {
+    toast(tr('brewhub.no_route', 'Intent router placeholder: no route matched yet'));
+    return;
+  }
+  handler();
+}
+
+function openLetsBrewActionHub(defaultAction = '') {
   closeLetsBrewActionHub();
   document.body.insertAdjacentHTML('beforeend', `
     <div id="lets-brew-hub-backdrop" class="lets-brew-hub-backdrop" onclick="closeLetsBrewActionHub()"></div>
@@ -89,19 +113,23 @@ function openLetsBrewActionHub() {
         <button class="btn btn-secondary" style="margin-top:8px;margin-bottom:0;min-height:42px;" onclick="handleLetsBrewIntentInput()">${tr('brewhub.route_intent', 'Route intent')}</button>
       </div>
 
-      <button class="lets-brew-action-btn primary" onclick="letsBrewStartContinue()">${tr('brewhub.start_continue', 'Start / Continue Brew')}</button>
-      <button class="lets-brew-action-btn" onclick="letsBrewQuickLog('gravity')">${tr('brewhub.log_gravity', 'Log observation · gravity')}</button>
-      <button class="lets-brew-action-btn" onclick="letsBrewQuickLog('temperature')">${tr('brewhub.log_temperature', 'Log observation · temperature')}</button>
-      <button class="lets-brew-action-btn" onclick="letsBrewQuickLog('brew note')">${tr('brewhub.log_brew_note', 'Log observation · brew note')}</button>
-      <button class="lets-brew-action-btn" onclick="letsBrewQuickLog('packaging note')">${tr('brewhub.log_packaging_note', 'Log observation · packaging note')}</button>
-      <button class="lets-brew-action-btn" onclick="toast('${tr('brewhub.inventory_soon', 'Inventory movement logging coming soon')}')">${tr('brewhub.inventory', 'Log inventory movement')}</button>
-      <button class="lets-brew-action-btn" onclick="letsBrewContinueTasks()">${tr('brewhub.continue_tasks', 'Continue open tasks')}</button>
-      <button class="lets-brew-action-btn" onclick="letsBrewAddTask()">${tr('brewhub.add_task', 'Add a task')}</button>
+      <button class="lets-brew-action-btn primary" onclick="routeLetsBrewAction('brew.start_continue')">${tr('brewhub.start_continue', 'Start / Continue Brew')}</button>
+      <button class="lets-brew-action-btn" onclick="routeLetsBrewAction('log.gravity')">${tr('brewhub.log_gravity', 'Log observation · gravity')}</button>
+      <button class="lets-brew-action-btn" onclick="routeLetsBrewAction('log.temperature')">${tr('brewhub.log_temperature', 'Log observation · temperature')}</button>
+      <button class="lets-brew-action-btn" onclick="routeLetsBrewAction('log.brew_note')">${tr('brewhub.log_brew_note', 'Log observation · brew note')}</button>
+      <button class="lets-brew-action-btn" onclick="routeLetsBrewAction('log.packaging_note')">${tr('brewhub.log_packaging_note', 'Log observation · packaging note')}</button>
+      <button class="lets-brew-action-btn" onclick="routeLetsBrewAction('packaging.continue')">${tr('brewhub.packaging_continue', 'Continue packaging')}</button>
+      <button class="lets-brew-action-btn" onclick="routeLetsBrewAction('inventory.move')">${tr('brewhub.inventory', 'Log inventory movement')}</button>
+      <button class="lets-brew-action-btn" onclick="routeLetsBrewAction('tasks.continue')">${tr('brewhub.continue_tasks', 'Continue open tasks')}</button>
+      <button class="lets-brew-action-btn" onclick="routeLetsBrewAction('tasks.add')">${tr('brewhub.add_task', 'Add a task')}</button>
       <button class="lets-brew-action-btn" onclick="toast('${tr('brewhub.sale_soon', 'Record sale flow coming soon')}')">${tr('brewhub.sale', 'Record sale')}</button>
       <button class="lets-brew-action-btn" onclick="toast('${tr('brewhub.compliance_soon', 'Compliance / excise / HACCP flow coming soon')}')">${tr('brewhub.compliance', 'Compliance / excise / HACCP')}</button>
       <button class="lets-brew-action-btn" onclick="toast('${tr('brewhub.docs_soon', 'Documents / exports flow coming soon')}')">${tr('brewhub.docs', 'Documents / exports')}</button>
       <button class="btn btn-secondary" style="margin-bottom:0;" onclick="closeLetsBrewActionHub()">${tr('agenda.cancel', 'Close')}</button>
     </div>`);
+  if (defaultAction) {
+    setTimeout(() => routeLetsBrewAction(defaultAction), 0);
+  }
 }
 
 function closeLetsBrewActionHub() {
@@ -134,12 +162,55 @@ function letsBrewContinueTasks() {
 function letsBrewAddTask() {
   closeLetsBrewActionHub();
   openMainTab('screen-tasks');
-  setTimeout(() => handleMainTabFab('tasks'), 0);
+  setTimeout(() => toggleTaskCreateForm(true), 0);
 }
 
-function letsBrewQuickLog(type) {
+function mapQuickLogToSection(type) {
+  if (type === 'packaging note') return 'Packaging';
+  if (type === 'gravity' || type === 'temperature') return 'Fermentation';
+  return 'Overview';
+}
+
+async function letsBrewQuickLog(type) {
   closeLetsBrewActionHub();
-  toast(`Quick log (${type}) coming soon`);
+  await routeLetsBrewAction('brew.start_continue');
+  const section = mapQuickLogToSection(type);
+  const sectionIndex = BREW_SECTIONS.indexOf(section);
+  if (sectionIndex >= 0) {
+    currentSection = sectionIndex;
+    renderBrewExecution();
+  }
+  toast(`Ready to log ${type}`);
+}
+
+async function letsBrewContinuePackaging() {
+  closeLetsBrewActionHub();
+  await routeLetsBrewAction('brew.start_continue');
+  const packagingIndex = BREW_SECTIONS.indexOf('Packaging');
+  if (packagingIndex >= 0) {
+    currentSection = packagingIndex;
+    renderBrewExecution();
+  }
+  toast('Packaging context ready');
+}
+
+function letsBrewInventoryMovement() {
+  closeLetsBrewActionHub();
+  openMainTab('screen-tasks');
+  setTimeout(() => {
+    toggleTaskCreateForm(true);
+    const reason = document.getElementById('task-reason');
+    const taskInput = document.getElementById('new-task-input');
+    if (taskInput && !taskInput.value) {
+      taskInput.value = 'Inventory movement entry';
+      taskInput.dispatchEvent(new Event('input', { bubbles: true }));
+    }
+    if (reason && !reason.value) {
+      reason.value = 'Inventory movement';
+      reason.dispatchEvent(new Event('input', { bubbles: true }));
+    }
+    toast('Capture inventory movement as an operational task');
+  }, 0);
 }
 
 function handleLetsBrewIntentInput() {
@@ -149,7 +220,15 @@ function handleLetsBrewIntentInput() {
     return;
   }
   if (raw.includes('task')) {
-    letsBrewAddTask();
+    routeLetsBrewAction('tasks.add');
+    return;
+  }
+  if (raw.includes('inventory') || raw.includes('stock')) {
+    routeLetsBrewAction('inventory.move');
+    return;
+  }
+  if (raw.includes('packag')) {
+    routeLetsBrewAction('packaging.continue');
     return;
   }
   if (raw.includes('sale')) {
@@ -157,7 +236,7 @@ function handleLetsBrewIntentInput() {
     return;
   }
   if (raw.includes('brew') || raw.includes('mash') || raw.includes('boil') || raw.includes('gravity')) {
-    letsBrewStartContinue();
+    routeLetsBrewAction('brew.start_continue');
     return;
   }
   toast(tr('brewhub.no_route', 'Intent router placeholder: no route matched yet'));

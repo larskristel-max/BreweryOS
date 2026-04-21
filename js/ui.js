@@ -18,11 +18,15 @@ function handleMainTabFab(tab) {
     return;
   }
   if (tab === 'tasks') {
-    toggleTaskCreateForm(true);
+    triggerLetsBrew('tasks.add');
     return;
   }
-  if (tab === 'operations' || tab === 'batches') {
-    toast('Not available yet');
+  if (tab === 'operations') {
+    triggerLetsBrew();
+    return;
+  }
+  if (tab === 'batches') {
+    triggerLetsBrew('brew.start_continue');
     return;
   }
 }
