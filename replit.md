@@ -58,18 +58,33 @@ Defined in `src/index.css`:
 ## Supabase Schema
 
 Tables (all multi-brewery, RLS-enforced):
-`brewery_profiles`, `packaging_formats`, `ingredients`, `ingredient_receipts`, `recipes`, `recipe_malts`, `recipe_hops`, `recipe_misc`, `users`, `batches`, `batch_inputs`, `brew_logs`, `mash_steps`, `boil_additions`, `fermentation_checks`, `lots`, `sales`, `declarations`, `inventory_movements`, `tasks`, `pending_movements`, `issues`, `event_logs`.
+`brewery_profiles`, `packaging_formats`, `ingredients`, `ingredient_receipts`, `recipes`, `recipe_ingredients`, `recipe_mash_steps`, `recipe_boil_additions`, `users`, `batches`, `batch_inputs`, `brew_logs`, `mash_steps`, `boil_additions`, `fermentation_checks`, `lots`, `sales`, `declarations`, `inventory_movements`, `tasks`, `pending_movements`, `issues`, `event_logs`.
 
-Schema at: `server/db/001_initial_schema.sql`
+Schema migrations at `server/db/`:
+- `001_initial_schema.sql` — full table definitions + triggers
+- `002_rls_policies.sql` — Row Level Security policies for every table
+
+## Data Layer
+
+- **Typed query helpers**: `src/api/db.ts` — `getBatches()`, `getBatch(id)`, `createBatch()`, `updateBatch()`, `getLots()`, etc. All RLS-enforced via the anon client.
+- **DB row types**: `DbBreweryProfile`, `DbBatch`, `DbLot`, etc. in `src/api/db.ts`
+- **Domain mappers**: DB rows mapped to `src/types/domain.ts` shapes inside `src/api/db.ts`
+
+## Migration & Seeding
+
+- **Airtable migration**: `scripts/migrate-from-airtable.js` — one-time migration with dry-run mode. Requires `AIRTABLE_KEY`, `AIRTABLE_BASE_ID`, `SUPABASE_URL`, `SUPABASE_SERVICE_ROLE_KEY`, `BREWERY_ID`.
+- **Seed helpers**: `server/seed.ts` — `seedNewBrewery()`, `seedBreweryProfile()`, `seedPackagingFormats()` used by Task #9 provisioning.
 
 ## Secrets Required
 
-- `VITE_SUPABASE_URL` — Supabase project URL (browser-safe)
-- `VITE_SUPABASE_ANON_KEY` — Supabase anon key (browser-safe)
+- `VITE_SUPABASE_URL` — Supabase project URL (browser-safe, set as env var)
+- `VITE_SUPABASE_ANON_KEY` — Supabase anon key (browser-safe, set as env var)
 - `SUPABASE_SERVICE_ROLE_KEY` — Service role key (server-side only, Pages Functions)
 - `NOTION_TOKEN` — Notion integration token (Pages Functions)
-- `AIRTABLE_KEY` — Airtable API key (legacy, still used by server/index.js)
+- `AIRTABLE_KEY` — Airtable API key (migration script only)
 
 ## Legacy
 
-`server/index.js` — Express server, no longer the primary server for the app. Kept for reference. Was replaced by Vite + Cloudflare Pages Functions architecture.
+`server/index.js` — Express server, retired. Not on the critical path. Vite + Cloudflare Pages Functions is the active architecture.
+`js/airtable.js` — Legacy Airtable proxy client. No longer called by React UI code. Retained as reference; removed from the active data path.
+`netlify/functions/airtable.js` — Legacy Netlify function proxy. Not used in active Pages deployment.

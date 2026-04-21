@@ -42,3 +42,9 @@ build = ["npm", "run", "build"]
 [postMerge]
 path = "scripts/post-merge.sh"
 timeoutMs = 60000
+
+[userenv]
+
+[userenv.shared]
+VITE_SUPABASE_URL = "https://curjxdjlrlenqlitdspd.supabase.co"
+VITE_SUPABASE_ANON_KEY = "sb_publishable_-7x2Evs39sZc0Wc-iVms7A_G4WEOw2u"
