@@ -38,3 +38,7 @@ deploymentTarget = "static"
 publicDir = "dist"
 run = ["npm", "run", "preview"]
 build = ["npm", "run", "build"]
+
+[postMerge]
+path = "scripts/post-merge.sh"
+timeoutMs = 60000
