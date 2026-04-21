@@ -1,7 +1,9 @@
 import { useNavigate } from "react-router-dom";
+import { useTranslation } from "@/hooks/useTranslation";
 
 export default function SignUpPage() {
   const navigate = useNavigate();
+  const { t } = useTranslation();
   return (
     <div
       style={{
@@ -26,10 +28,10 @@ export default function SignUpPage() {
             marginBottom: 18,
           }}
         >
-          Create your account
+          {t("auth.createAccount")}
         </h1>
         <p style={{ textAlign: "center", fontSize: 14, color: "#6b7280" }}>
-          Auth system coming soon.
+          {t("auth.comingSoon")}
         </p>
         <button
           onClick={() => navigate("/signin")}
@@ -46,7 +48,7 @@ export default function SignUpPage() {
             fontFamily: "inherit",
           }}
         >
-          Back to sign in
+          {t("auth.backToSignIn")}
         </button>
       </div>
     </div>

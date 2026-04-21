@@ -1,8 +1,9 @@
 import { useLocation, useNavigate } from "react-router-dom";
+import { useTranslation } from "@/hooks/useTranslation";
 
 interface NavItem {
   path: string;
-  label: string;
+  labelKey: "nav.operations" | "nav.batches" | "nav.recipes" | "nav.settings";
   icon: React.ReactNode;
 }
 
@@ -52,17 +53,19 @@ function SettingsIcon() {
 }
 
 const NAV_ITEMS: NavItem[] = [
-  { path: "/", label: "Operations", icon: <OpsIcon /> },
-  { path: "/batches", label: "Batches", icon: <BatchesIcon /> },
-  { path: "/recipes", label: "Recipes", icon: <RecipesIcon /> },
-  { path: "/settings", label: "Settings", icon: <SettingsIcon /> },
+  { path: "/", labelKey: "nav.operations", icon: <OpsIcon /> },
+  { path: "/batches", labelKey: "nav.batches", icon: <BatchesIcon /> },
+  { path: "/recipes", labelKey: "nav.recipes", icon: <RecipesIcon /> },
+  { path: "/settings", labelKey: "nav.settings", icon: <SettingsIcon /> },
 ];
 
-function BrewFab({ onPress }: { onPress: () => void }) {
+function BrewFab({ label, onPress }: { label: string; onPress: () => void }) {
+  const lines = label.split(" ");
+  const displayText = lines.length >= 2 ? `${lines[0]}\n${lines.slice(1).join(" ")}` : label;
   return (
     <button
       onClick={onPress}
-      aria-label="Let's Brew"
+      aria-label={label}
       style={{
         position: "fixed",
         left: "50%",
@@ -89,7 +92,7 @@ function BrewFab({ onPress }: { onPress: () => void }) {
         fontFamily: "inherit",
       }}
     >
-      {"Let's\nBrew"}
+      {displayText}
     </button>
   );
 }
@@ -97,8 +100,7 @@ function BrewFab({ onPress }: { onPress: () => void }) {
 export function BottomNav() {
   const location = useLocation();
   const navigate = useNavigate();
-
-  const isBrewActive = location.pathname === "/brew";
+  const { t } = useTranslation();
 
   const leftItems = NAV_ITEMS.slice(0, 2);
   const rightItems = NAV_ITEMS.slice(2);
@@ -144,7 +146,8 @@ export function BottomNav() {
           return (
             <NavButton
               key={item.path}
-              item={item}
+              label={t(item.labelKey)}
+              icon={item.icon}
               isActive={isActive}
               onPress={() => navigate(item.path)}
             />
@@ -160,7 +163,8 @@ export function BottomNav() {
           return (
             <NavButton
               key={item.path}
-              item={item}
+              label={t(item.labelKey)}
+              icon={item.icon}
               isActive={isActive}
               onPress={() => navigate(item.path)}
             />
@@ -169,17 +173,19 @@ export function BottomNav() {
       </nav>
 
       {/* Center FAB */}
-      <BrewFab onPress={() => navigate("/brew")} />
+      <BrewFab label={t("nav.brew")} onPress={() => navigate("/brew")} />
     </>
   );
 }
 
 function NavButton({
-  item,
+  label,
+  icon,
   isActive,
   onPress,
 }: {
-  item: NavItem;
+  label: string;
+  icon: React.ReactNode;
   isActive: boolean;
   onPress: () => void;
 }) {
@@ -205,7 +211,7 @@ function NavButton({
       }}
     >
       <span style={{ display: "flex", alignItems: "center", justifyContent: "center" }}>
-        {item.icon}
+        {icon}
       </span>
       <span
         style={{
@@ -215,7 +221,7 @@ function NavButton({
           letterSpacing: "0.01em",
         }}
       >
-        {item.label}
+        {label}
       </span>
     </button>
   );

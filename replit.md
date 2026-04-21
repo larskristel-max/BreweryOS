@@ -8,6 +8,8 @@ Brewery management app. React + TypeScript + Tailwind frontend built with Vite, 
 - **Routing**: React Router v7 (`BrowserRouter`)
 - **App shell**: `src/components/AppShell.tsx` + `src/components/BottomNav.tsx`
 - **State**: `src/context/AppContext.tsx` — session, brewery, role, permissions
+- **i18n**: `src/contexts/LanguageContext.tsx` + `src/hooks/useTranslation.ts` — typed translation context supporting EN/FR/NL/DE. All UI strings accessed via `useTranslation()` hook with English fallback. Language persisted in `localStorage` under key `operon_language`.
+- **Language gate**: `src/components/LanguageGate.tsx` — intercepts first launch if no language set; full-screen selector; smooth fade transition into app shell on tap.
 - **Supabase client**: `src/lib/supabase.ts` — initialized with `VITE_SUPABASE_URL` and `VITE_SUPABASE_ANON_KEY`
 - **Notion API client**: `src/api/notion.ts` — typed fetch wrapper calling `/api/notion/*`
 - **Domain types**: `src/types/domain.ts` — all entities in the canonical chain

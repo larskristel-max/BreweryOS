@@ -1,7 +1,9 @@
 import { useNavigate } from "react-router-dom";
+import { useTranslation } from "@/hooks/useTranslation";
 
 export default function SignInPage() {
   const navigate = useNavigate();
+  const { t } = useTranslation();
   return (
     <div
       style={{
@@ -26,7 +28,7 @@ export default function SignInPage() {
             marginBottom: 18,
           }}
         >
-          Welcome to Operon
+          {t("auth.welcome")}
         </h1>
         <button
           onClick={() => navigate("/")}
@@ -43,7 +45,7 @@ export default function SignInPage() {
             fontFamily: "inherit",
           }}
         >
-          Log in
+          {t("auth.signIn")}
         </button>
         <button
           onClick={() => navigate("/signup")}
@@ -60,7 +62,7 @@ export default function SignInPage() {
             fontFamily: "inherit",
           }}
         >
-          Create account
+          {t("auth.createAccount")}
         </button>
         <button
           onClick={() => navigate("/")}
@@ -74,7 +76,7 @@ export default function SignInPage() {
             fontFamily: "inherit",
           }}
         >
-          Continue as demo
+          {t("auth.continueAsDemo")}
         </button>
       </div>
     </div>
