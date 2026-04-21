@@ -95,7 +95,7 @@ function routeLetsBrewAction(action, options = {}) {
     toast(tr('brewhub.no_route', 'Intent router placeholder: no route matched yet'));
     return;
   }
-  handler();
+  return handler();
 }
 
 function openLetsBrewActionHub(defaultAction = '') {
