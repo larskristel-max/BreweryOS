@@ -32,11 +32,22 @@ Brewery management app. Static frontend (`index.html` + `js/`) backed by a small
 
 `js/notion.js` exposes `window.notion` with methods that match the endpoints (`entities`, `entity`, `links`, `graph`, `readiness`, `health`) plus convenience selectors (`productFoundations`, `executionReadiness`, `controlEntities`, `systemEntities`).
 
+## Supabase (operational DB backbone)
+
+- **Client**: `server/supabase.js` — service-role client, server-side only, never exposed to browser.
+- **Schema**: `server/db/001_initial_schema.sql` — 23 tables, 14 ENUMs, updated_at triggers. Applied manually via Supabase Dashboard SQL Editor. RLS enabled on all tables.
+- **Tables**: `brewery_profiles`, `packaging_formats`, `ingredients`, `ingredient_receipts`, `recipes`, `recipe_malts/hops/misc`, `users`, `batches`, `batch_inputs`, `brew_logs`, `mash_steps`, `boil_additions`, `fermentation_checks`, `lots`, `sales`, `declarations`, `inventory_movements`, `tasks`, `pending_movements`, `issues`, `event_logs`.
+- **Endpoint**: `GET /supabase/test` — confirms service-role client is live.
+- **Access pattern**: all reads/writes go through `server/supabase.js` using the service-role key; RLS is bypassed server-side intentionally.
+
 ## Secrets
 
 - `AIRTABLE_KEY` (required)
 - `AIRTABLE_BASE_ID` is **not** stored as a secret; the frontend currently hardcodes the base via `BASE`.
 - `NOTION_TOKEN` (required) — internal integration with the four databases shared.
+- `SUPABASE_URL` (required) — project URL.
+- `SUPABASE_ANON_KEY` (required) — public anon key.
+- `SUPABASE_SERVICE_ROLE_KEY` (required) — service role key for server-side access.
 
 ## Notion databases consumed
 
