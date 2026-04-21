@@ -2,6 +2,7 @@
 // Returns typed semantic contract objects — never raw Notion shapes.
 
 import type { SemanticEntity, SemanticLink, SemanticGraph } from "@/types/domain";
+import { supabase } from "@/lib/supabase";
 
 class NotionApiError extends Error {
   status: number;
@@ -15,6 +16,13 @@ class NotionApiError extends Error {
   }
 }
 
+async function getAuthHeader(): Promise<Record<string, string>> {
+  const { data } = await supabase.auth.getSession();
+  const token = data.session?.access_token;
+  if (!token) return {};
+  return { Authorization: `Bearer ${token}` };
+}
+
 async function notionGet<T>(path: string, params?: Record<string, string>): Promise<T> {
   const url = new URL(path, window.location.origin);
   if (params) {
@@ -22,7 +30,8 @@ async function notionGet<T>(path: string, params?: Record<string, string>): Prom
       if (v !== undefined && v !== null && v !== "") url.searchParams.set(k, v);
     }
   }
-  const res = await fetch(url.toString(), { method: "GET" });
+  const authHeader = await getAuthHeader();
+  const res = await fetch(url.toString(), { method: "GET", headers: authHeader });
   const data = await res.json().catch(() => ({}));
   if (!res.ok) {
     throw new NotionApiError(

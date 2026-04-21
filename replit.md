@@ -50,10 +50,20 @@ Defined in `src/index.css`:
 - **Radius**: card (16px), btn (16px), dock (26px)
 - **Font sizes**: screen-title (24px), section-title (13px), card-title (16px), body (14px), meta (11px)
 
-## Cloudflare Pages Functions (stubs)
+## Auth, Multi-Tenancy & Roles (Task #9)
 
-- `functions/api/notion/[[path]].ts` — Notion proxy (Task #9)
-- `functions/api/provision-brewery.ts` — brewery provisioning (Task #9)
+- **AuthGate**: `src/components/AuthGate.tsx` — wraps entire app; no session → redirect /signin; no brewery → show OnboardingWizard; session + brewery → render children
+- **OnboardingWizard**: `src/components/OnboardingWizard.tsx` — multi-step: brewery name/language/timezone/country/excise → calls `/api/provision-brewery` → confirms completion
+- **Permissions**: `src/types/permissions.ts` — `Role` type, `Permissions` interface, `resolvePermissions(role)`, `escalationMessage(action)`, role threshold map
+- **PermissionGuard**: `src/components/PermissionGuard.tsx` — `<CanDo action="...">`, `<RequiresRole action="..." explanation="...">` UI utilities
+- **AppContext** (extended): session, user, breweryContext (`BreweryContext`), role, permissions, isResolvingBrewery, hasNoBrewery, refreshBreweryContext
+- **SignInPage**: Email/password + Google OAuth via Supabase; form validation and error display
+- **SignUpPage**: Email/password signup + Google OAuth; optional display name; confirmation screen
+
+## Cloudflare Pages Functions
+
+- `functions/api/notion/[[path]].ts` — Notion proxy: verifies Supabase JWT via Authorization header; proxies to Notion API; returns 401 if unauthenticated
+- `functions/api/provision-brewery.ts` — Brewery provisioning: verifies JWT; uses SUPABASE_SERVICE_ROLE_KEY to insert brewery + brewery_users (owner role) + seed packaging formats
 - `functions/api/ai/intent.ts` — AI intent router (Task #8)
 - `functions/api/ai/transcribe.ts` — audio transcription (Task #8)
 

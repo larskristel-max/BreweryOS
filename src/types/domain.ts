@@ -16,6 +16,7 @@ export type BatchStatus =
 export type UserRole =
   | "owner"
   | "brewmaster_admin"
+  | "finance"
   | "brewer"
   | "assistant"
   | "viewer";

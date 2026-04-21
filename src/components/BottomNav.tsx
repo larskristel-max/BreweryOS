@@ -1,5 +1,7 @@
 import { useLocation, useNavigate } from "react-router-dom";
 import { useTranslation } from "@/hooks/useTranslation";
+import { usePermissions } from "@/context/AppContext";
+import { escalationMessage } from "@/types/permissions";
 
 interface NavItem {
   path: string;
@@ -59,13 +61,25 @@ const NAV_ITEMS: NavItem[] = [
   { path: "/settings", labelKey: "nav.settings", icon: <SettingsIcon /> },
 ];
 
-function BrewFab({ label, onPress }: { label: string; onPress: () => void }) {
+function BrewFab({
+  label,
+  onPress,
+  disabled = false,
+  disabledReason,
+}: {
+  label: string;
+  onPress: () => void;
+  disabled?: boolean;
+  disabledReason?: string;
+}) {
   const lines = label.split(" ");
   const displayText = lines.length >= 2 ? `${lines[0]}\n${lines.slice(1).join(" ")}` : label;
   return (
     <button
-      onClick={onPress}
-      aria-label={label}
+      onClick={disabled ? undefined : onPress}
+      aria-label={disabled ? (disabledReason ?? label) : label}
+      title={disabled ? disabledReason : undefined}
+      disabled={disabled}
       style={{
         position: "fixed",
         left: "50%",
@@ -75,13 +89,17 @@ function BrewFab({ label, onPress }: { label: string; onPress: () => void }) {
         transform: "translateX(-50%)",
         borderRadius: 999,
         border: "1px solid rgba(15,23,42,0.24)",
-        background: "linear-gradient(180deg, #1f2937 0%, #111827 100%)",
+        background: disabled
+          ? "linear-gradient(180deg, #9ca3af 0%, #6b7280 100%)"
+          : "linear-gradient(180deg, #1f2937 0%, #111827 100%)",
         color: "#fff",
-        boxShadow: "0 10px 22px rgba(15,23,42,0.24), 0 2px 6px rgba(15,23,42,0.16)",
+        boxShadow: disabled
+          ? "none"
+          : "0 10px 22px rgba(15,23,42,0.24), 0 2px 6px rgba(15,23,42,0.16)",
         zIndex: 1000,
         fontSize: 11,
         fontWeight: 600,
-        cursor: "pointer",
+        cursor: disabled ? "not-allowed" : "pointer",
         textAlign: "center",
         lineHeight: 1.04,
         letterSpacing: "-0.01em",
@@ -90,6 +108,7 @@ function BrewFab({ label, onPress }: { label: string; onPress: () => void }) {
         justifyContent: "center",
         whiteSpace: "pre-line",
         fontFamily: "inherit",
+        opacity: disabled ? 0.6 : 1,
       }}
     >
       {displayText}
@@ -101,6 +120,7 @@ export function BottomNav() {
   const location = useLocation();
   const navigate = useNavigate();
   const { t } = useTranslation();
+  const permissions = usePermissions();
 
   const leftItems = NAV_ITEMS.slice(0, 2);
   const rightItems = NAV_ITEMS.slice(2);
@@ -172,8 +192,13 @@ export function BottomNav() {
         })}
       </nav>
 
-      {/* Center FAB */}
-      <BrewFab label={t("nav.brew")} onPress={() => navigate("/brew")} />
+      {/* Center FAB — disabled for roles without canResumeLetsBrew */}
+      <BrewFab
+        label={t("nav.brew")}
+        onPress={() => navigate("/brew")}
+        disabled={!permissions.canResumeLetsBrew}
+        disabledReason={escalationMessage("canResumeLetsBrew")}
+      />
     </>
   );
 }
