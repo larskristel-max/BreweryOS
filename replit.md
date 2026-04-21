@@ -1,62 +1,75 @@
-# BreweryOS
+# Operon BrewOS
 
-Brewery management app. Static frontend (`index.html` + `js/`) backed by a small Node/Express server that proxies to the operational + semantic data layers.
+Brewery management app. React + TypeScript + Tailwind frontend built with Vite, deployed to Cloudflare Pages. Backend concerns are Cloudflare Pages Functions. Operational data reads/writes go directly from the frontend to Supabase (RLS-enforced).
 
 ## Architecture
 
-- **Operational facts layer** → Airtable (existing bases).
-  Browser → `POST /airtable` → Airtable REST API. Contract preserved 1:1 from `netlify/functions/airtable.js`.
+- **Frontend**: React + TypeScript + Vite (Tailwind v4 via `@tailwindcss/vite`)
+- **Routing**: React Router v7 (`BrowserRouter`)
+- **App shell**: `src/components/AppShell.tsx` + `src/components/BottomNav.tsx`
+- **State**: `src/context/AppContext.tsx` — session, brewery, role, permissions
+- **Supabase client**: `src/lib/supabase.ts` — initialized with `VITE_SUPABASE_URL` and `VITE_SUPABASE_ANON_KEY`
+- **Notion API client**: `src/api/notion.ts` — typed fetch wrapper calling `/api/notion/*`
+- **Domain types**: `src/types/domain.ts` — all entities in the canonical chain
+- **Pages Functions**: `functions/api/` — stub handlers, full implementation in Task #9
+- **Deployment**: Cloudflare Pages via `wrangler pages deploy dist/`
 
-- **Semantic / rules / readiness layer** → Notion (existing workspace, read-only for now).
-  Browser → `GET /notion/*` → Notion API → normalized into the app contract types defined in `server/notion-contract.js`. **UI never sees raw Notion shapes.**
+## Development
 
-## Notion app contract
+```
+npm run dev      # Vite dev server on port 5000
+npm run build    # TypeScript check + Vite build → dist/
+npm run preview  # Preview dist/ locally
+```
 
-`SemanticEntity` (from `App Semantic Graph`):
-`id, key, name, description, layer, memoryLayer, entityClass, canonicalObjectType, canonicalWorkflowType, ruleGroup, appRole, workspaceRole, entityId, displayLabel, localAlias, semanticConfidence, sourceNote, flags{active,isReadinessDriver,requiresDispatch,requiresClosure,tracksDensity,appComputed,...}, airtable{target,fieldName}, status, createdTime, lastEditedTime`
+The Express server (`server/index.js`) is no longer on the critical path. Development uses `vite dev`.
 
-`SemanticLink` (from `App Semantic Links`, `App Semantic Links — Relational`, `Brasserie ... Semantic Links`):
-`id, variant, name, relationType, source{ids,key}, target{ids,key}, weight, confidence, note, description, status, createdTime, lastEditedTime`
+## Routes
 
-## Notion endpoints (read-only)
+| Path | Component | Notes |
+|------|-----------|-------|
+| `/` | `OperationsPage` | Main dashboard |
+| `/brew` | `BrewPage` | Let's Brew assistant |
+| `/batches` | `BatchesPage` | Batch list |
+| `/batches/:id` | `BatchDetailPage` | Batch detail |
+| `/recipes` | `RecipesPage` | Recipe library |
+| `/recipes/new` | `RecipeNewPage` | Recipe builder |
+| `/recipes/:id` | `RecipeDetailPage` | Recipe detail |
+| `/settings` | `SettingsPage` | Settings |
+| `/signin` | `SignInPage` | Auth (no shell) |
+| `/signup` | `SignUpPage` | Auth (no shell) |
 
-- `GET /notion/health` — token + workspace check
-- `GET /notion/entities?ruleGroup=&entityClass=&memoryLayer=&layer=&appRole=&active=true`
-- `GET /notion/entities/:idOrKey`
-- `GET /notion/links?relationType=&sourceKey=&targetKey=`
-- `GET /notion/graph` — entities + links bundle
-- `GET /notion/readiness` — execution-readiness drivers + connected links
-- `POST /notion/cache/clear` — invalidate the 60s in-memory cache
+## Design Tokens (Tailwind v4 CSS `@theme`)
 
-## Frontend client
+Defined in `src/index.css`:
+- **Ink scale**: `--color-ink-900` (#111827), `--color-ink-800` (#1f2937), `--color-ink-700` (#374151)
+- **State colors**: green (#22c55e), yellow (#eab308), red (#ef4444), orange (#ea580c), blue (#3b82f6)
+- **Backgrounds**: white main, soft (#eaf0f5), page (#f8f9fb)
+- **Radius**: card (16px), btn (16px), dock (26px)
+- **Font sizes**: screen-title (24px), section-title (13px), card-title (16px), body (14px), meta (11px)
 
-`js/notion.js` exposes `window.notion` with methods that match the endpoints (`entities`, `entity`, `links`, `graph`, `readiness`, `health`) plus convenience selectors (`productFoundations`, `executionReadiness`, `controlEntities`, `systemEntities`).
+## Cloudflare Pages Functions (stubs)
 
-## Supabase (operational DB backbone)
+- `functions/api/notion/[[path]].ts` — Notion proxy (Task #9)
+- `functions/api/provision-brewery.ts` — brewery provisioning (Task #9)
+- `functions/api/ai/intent.ts` — AI intent router (Task #8)
+- `functions/api/ai/transcribe.ts` — audio transcription (Task #8)
 
-- **Client**: `server/supabase.js` — service-role client, server-side only, never exposed to browser.
-- **Schema**: `server/db/001_initial_schema.sql` — 23 tables, 14 ENUMs, updated_at triggers. Applied manually via Supabase Dashboard SQL Editor. RLS enabled on all tables.
-- **Tables**: `brewery_profiles`, `packaging_formats`, `ingredients`, `ingredient_receipts`, `recipes`, `recipe_malts/hops/misc`, `users`, `batches`, `batch_inputs`, `brew_logs`, `mash_steps`, `boil_additions`, `fermentation_checks`, `lots`, `sales`, `declarations`, `inventory_movements`, `tasks`, `pending_movements`, `issues`, `event_logs`.
-- **Endpoint**: `GET /supabase/test` — confirms service-role client is live.
-- **Access pattern**: all reads/writes go through `server/supabase.js` using the service-role key; RLS is bypassed server-side intentionally.
+## Supabase Schema
 
-## Secrets
+Tables (all multi-brewery, RLS-enforced):
+`brewery_profiles`, `packaging_formats`, `ingredients`, `ingredient_receipts`, `recipes`, `recipe_malts`, `recipe_hops`, `recipe_misc`, `users`, `batches`, `batch_inputs`, `brew_logs`, `mash_steps`, `boil_additions`, `fermentation_checks`, `lots`, `sales`, `declarations`, `inventory_movements`, `tasks`, `pending_movements`, `issues`, `event_logs`.
 
-- `AIRTABLE_KEY` (required)
-- `AIRTABLE_BASE_ID` is **not** stored as a secret; the frontend currently hardcodes the base via `BASE`.
-- `NOTION_TOKEN` (required) — internal integration with the four databases shared.
-- `SUPABASE_URL` (required) — project URL.
-- `SUPABASE_ANON_KEY` (required) — public anon key.
-- `SUPABASE_SERVICE_ROLE_KEY` (required) — service role key for server-side access.
+Schema at: `server/db/001_initial_schema.sql`
 
-## Notion databases consumed
+## Secrets Required
 
-- `716a5c2f-b909-4e87-8c82-7aad235bf75c` — App Semantic Graph (entities)
-- `01c7b203-f8a8-492f-86f5-45e3ad7538b9` — App Semantic Links (relations)
-- `2f8bd4cb-dcb5-4ed4-8cdb-a43bd37a5865` — App Semantic Links — Relational (key-based)
-- `8cdb9495-fd8c-4727-8ddb-d7043edde09a` — Brasserie ... Semantic Links (legacy edges)
+- `VITE_SUPABASE_URL` — Supabase project URL (browser-safe)
+- `VITE_SUPABASE_ANON_KEY` — Supabase anon key (browser-safe)
+- `SUPABASE_SERVICE_ROLE_KEY` — Service role key (server-side only, Pages Functions)
+- `NOTION_TOKEN` — Notion integration token (Pages Functions)
+- `AIRTABLE_KEY` — Airtable API key (legacy, still used by server/index.js)
 
-## Run / deploy
+## Legacy
 
-- Dev: `node server/index.js` on port 5000 (configured workflow).
-- Deploy: autoscale, `node server/index.js`.
+`server/index.js` — Express server, no longer the primary server for the app. Kept for reference. Was replaced by Vite + Cloudflare Pages Functions architecture.
