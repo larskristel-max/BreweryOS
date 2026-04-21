@@ -5,6 +5,7 @@ import {
   loadEntities, loadLinks, loadGraph, loadReadiness,
   clearCache, whoami
 } from "./notion-contract.js";
+import { supabase } from "./supabase.js";
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const ROOT = path.resolve(__dirname, "..");
@@ -97,6 +98,20 @@ app.get("/notion/graph", async (req, res) => {
 });
 
 app.post("/notion/cache/clear", (req, res) => { clearCache(); res.json({ ok: true }); });
+
+// ---------- Supabase connectivity test (server-side only) ----------
+app.get("/supabase/test", async (req, res) => {
+  if (!supabase) {
+    return res.status(503).json({ success: false, error: "Supabase client not initialised — check SUPABASE_URL and SUPABASE_SERVICE_ROLE_KEY" });
+  }
+  try {
+    const { data, error } = await supabase.auth.admin.listUsers({ perPage: 1 });
+    if (error) return res.status(500).json({ success: false, error: error.message });
+    res.json({ success: true });
+  } catch (e) {
+    res.status(500).json({ success: false, error: e.message });
+  }
+});
 
 // ---------- Static assets ----------
 app.use(express.static(ROOT, { extensions: ["html"] }));
