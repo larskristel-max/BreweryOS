@@ -1,0 +1,418 @@
+---
+
+15. ROLES AND PERMISSIONS ARCHITECTURE
+
+---
+
+The app must support role-based access and action permissions.
+
+This is not only a UI concern.
+It affects:
+
+* who can see what
+* who can do what
+* who can override what
+* who can validate what
+* how the app explains blocked or limited actions
+
+The role model must be part of the core system design from the beginning.
+
+---
+
+## 15.1 ROLE HIERARCHY
+
+Use this role hierarchy:
+
+1. Owner
+2. Brewmaster / Admin / Finance
+3. Brewer
+4. Brewer’s Assistant
+5. Viewer
+
+This is the practical authority order unless a later permissions layer refines it.
+
+---
+
+## 15.2 ROLE DEFINITIONS
+
+Owner
+Highest authority.
+Represents the brewery owner or final business authority.
+
+Can:
+
+* view everything
+* create and edit operational objects
+* validate key actions
+* override readiness blocks
+* approve sensitive actions
+* access finance / compliance / admin data
+* manage structural settings
+* manage users / roles later
+* view audit/event history
+
+Brewmaster / Admin / Finance
+Operational and administrative lead role.
+This role may combine brewing authority with admin / finance responsibility.
+
+Can:
+
+* view everything needed for operations
+* create and edit batches
+* log brew execution
+* execute packaging
+* complete pending movements
+* manage inventory corrections
+* access finance / compliance / declarations if this sub-role includes that scope
+* override readiness blocks with justification
+* review operational issues
+* see audit/event history relevant to operations
+
+Brewer
+Primary execution role.
+
+Can:
+
+* view operational work areas
+* create batches if allowed by brewery policy
+* update batch progress
+* log brew notes
+* log measurements
+* resume Let’s Brew execution
+* view inventory context needed for work
+* execute some operational actions if allowed by brewery policy
+* potentially complete some pending movements if policy allows
+
+Cannot by default:
+
+* access all finance/admin areas
+* perform unrestricted overrides
+* access structural configuration
+* manage users/roles
+
+Brewer’s Assistant
+Support execution role.
+
+Can:
+
+* view assigned or relevant operational screens
+* log notes / observations
+* help with execution steps
+* contribute data entry
+* follow workflows
+
+Cannot by default:
+
+* create or finalize critical records independently unless specifically allowed
+* override readiness
+* execute sensitive corrections
+* access finance/admin data
+* manage structural settings
+
+Viewer
+Read-only role.
+
+Can:
+
+* view selected information
+* view status / summaries / dashboards where allowed
+
+Cannot:
+
+* create records
+* edit records
+* execute packaging
+* complete pending movements
+* override readiness
+* change settings
+* access sensitive admin functions unless explicitly allowed later
+
+---
+
+## 15.3 PERMISSION PRINCIPLE
+
+Permissions must control both:
+
+1. action authority
+2. UI visibility
+
+But permissions must NOT be implemented in a way that makes the app feel bureaucratic or unusable.
+
+The philosophy is:
+
+* guide users
+* prevent unsafe actions where needed
+* allow operational continuity
+* explain limits clearly
+* permit overrides only to the right roles with justification
+
+---
+
+## 15.4 MINIMUM ACTION PERMISSION MATRIX
+
+Use this minimum direction.
+
+View batches
+
+* Viewer: yes
+* Assistant: yes
+* Brewer: yes
+* Brewmaster/Admin/Finance: yes
+* Owner: yes
+
+Create batch
+
+* Viewer: no
+* Assistant: no by default
+* Brewer: allowed if brewery policy permits
+* Brewmaster/Admin/Finance: yes
+* Owner: yes
+
+Log brew notes / observations
+
+* Viewer: no
+* Assistant: yes
+* Brewer: yes
+* Brewmaster/Admin/Finance: yes
+* Owner: yes
+
+Log measurements
+
+* Viewer: no
+* Assistant: yes if workflow allows
+* Brewer: yes
+* Brewmaster/Admin/Finance: yes
+* Owner: yes
+
+Resume Let’s Brew execution
+
+* Viewer: no
+* Assistant: yes if assigned / allowed
+* Brewer: yes
+* Brewmaster/Admin/Finance: yes
+* Owner: yes
+
+Execute packaging
+
+* Viewer: no
+* Assistant: no by default
+* Brewer: limited by policy
+* Brewmaster/Admin/Finance: yes
+* Owner: yes
+
+Complete pending movement
+
+* Viewer: no
+* Assistant: no by default
+* Brewer: limited by policy
+* Brewmaster/Admin/Finance: yes
+* Owner: yes
+
+Create inventory correction / elimination
+
+* Viewer: no
+* Assistant: no
+* Brewer: limited / usually no by default
+* Brewmaster/Admin/Finance: yes
+* Owner: yes
+
+Override readiness
+
+* Viewer: no
+* Assistant: no
+* Brewer: limited only if explicitly allowed by brewery policy
+* Brewmaster/Admin/Finance: yes with justification
+* Owner: yes with justification
+
+Access finance data
+
+* Viewer: no by default
+* Assistant: no
+* Brewer: no by default
+* Brewmaster/Admin/Finance: yes if finance scope included
+* Owner: yes
+
+Access compliance / declarations
+
+* Viewer: no by default
+* Assistant: no
+* Brewer: limited if needed for execution visibility only
+* Brewmaster/Admin/Finance: yes
+* Owner: yes
+
+Manage users / roles
+
+* Viewer: no
+* Assistant: no
+* Brewer: no
+* Brewmaster/Admin/Finance: later maybe limited, but not by default
+* Owner: yes
+
+Access system configuration / structural settings
+
+* Viewer: no
+* Assistant: no
+* Brewer: no
+* Brewmaster/Admin/Finance: limited if required
+* Owner: yes
+
+---
+
+## 15.5 OVERRIDE RULE
+
+Override is a controlled exception, not a silent bypass.
+
+If a readiness block exists:
+
+* the app must explain why
+* the app must show whether the current role may override
+* if override is allowed, the user must provide a reason
+* the override must be logged in the event/audit log
+
+No role should be able to bypass readiness silently.
+
+---
+
+## 15.6 UI BEHAVIOR FOR PERMISSIONS
+
+The UI should not only hard-block actions.
+It should communicate clearly.
+
+Preferred behavior:
+
+* hide actions the role should never know about
+* disable or gate actions the role can see but not perform
+* explain why an action is unavailable
+* suggest escalation path where useful
+
+Examples:
+
+* “Only Brewmaster or Owner can validate this movement.”
+* “Override requires higher permission.”
+* “You can log an observation, but not finalize packaging.”
+
+This should feel helpful, not punishing.
+
+---
+
+## 15.7 ROLE VS POLICY
+
+Some permissions should be role-based.
+Some should be role + brewery-policy based.
+
+Example:
+A Brewer may or may not be allowed to:
+
+* create a batch
+* execute packaging
+* complete a pending movement
+
+So the system should support:
+
+* role baseline
+* optional brewery-level policy overrides later
+
+Meaning:
+role = default authority framework
+policy = local adjustment
+
+Do not hardcode every action as globally fixed forever.
+
+---
+
+## 15.8 BREWERY CONTEXT + ROLE CONTEXT
+
+When a brewery signs up, the app must not only resolve:
+
+* which Airtable source belongs to that brewery
+* which Notion source belongs to that brewery
+
+It must also resolve:
+
+* who the current user is
+* what role they have in that brewery
+* what permissions that implies in that brewery context
+
+Important:
+roles are brewery-bound, not global in principle.
+
+A person could theoretically have:
+
+* one role in brewery A
+* another role in brewery B
+
+So permissions should resolve inside the active brewery context.
+
+---
+
+## 15.9 WHAT TO IMPLEMENT NOW
+
+Implement now:
+
+* role enum / type
+* permission checks for core actions
+* role-aware UI visibility for main workflows
+* override with justification
+* event logging for override and critical actions
+
+Can be simplified for now:
+
+* full user management UI
+* advanced custom permission editor
+* invitation flows
+* multi-brewery user switching UX
+* delegated admin tooling
+
+---
+
+## 15.10 SIMPLE IMPLEMENTATION MODEL
+
+Think of permissions in three layers:
+
+Layer 1:
+Role
+
+* Owner
+* Brewmaster/Admin/Finance
+* Brewer
+* Assistant
+* Viewer
+
+Layer 2:
+Capability check
+Examples:
+
+* canCreateBatch
+* canExecutePackaging
+* canCompletePendingMovement
+* canOverrideReadiness
+* canAccessFinance
+* canAccessCompliance
+* canManageSettings
+
+Layer 3:
+UI behavior
+
+* show
+* hide
+* disable
+* explain
+* escalate
+
+This is cleaner than scattering role checks everywhere in components.
+
+---
+
+## 15.11 FINAL RULE
+
+Roles and permissions must protect operational integrity without destroying usability.
+
+The goal is not to simulate corporate bureaucracy.
+
+The goal is:
+
+* safe execution
+* clear authority
+* explainable limits
+* controlled override
+* future multi-brewery compatibility
