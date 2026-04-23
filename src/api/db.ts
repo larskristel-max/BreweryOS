@@ -2,8 +2,8 @@
 // All helpers use the authenticated client so RLS applies automatically.
 // No application-level brewery_id filter is required — the DB enforces isolation.
 
-import { createClient, type SupabaseClient } from "@supabase/supabase-js";
-import { SUPABASE_ANON_KEY, SUPABASE_URL, hasSupabaseEnv } from "@/config/env";
+import type { SupabaseClient } from "@supabase/supabase-js";
+import { supabase } from "@/lib/supabase";
 import type {
   BreweryProfile,
   Ingredient,
@@ -454,14 +454,7 @@ function mapEventLog(r: DbEventLog): EventLog {
 
 // ── Client factory ──
 
-if (!hasSupabaseEnv()) {
-  console.warn("[db] VITE_SUPABASE_URL or VITE_SUPABASE_ANON_KEY is not set.");
-}
-
-export const dbClient: SupabaseClient = createClient(
-  SUPABASE_URL ?? "https://placeholder.supabase.co",
-  SUPABASE_ANON_KEY ?? "placeholder-anon-key"
-);
+export const dbClient: SupabaseClient = supabase;
 
 // Helper: throw on Supabase error
 function assertOk<T>(data: T | null, error: { message: string } | null): T {
