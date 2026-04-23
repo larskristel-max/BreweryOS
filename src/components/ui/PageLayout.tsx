@@ -14,7 +14,7 @@ export function PageLayout({ children }: PageLayoutProps) {
         ref={scrollRef}
         className="absolute inset-0 overflow-y-auto overflow-x-hidden overscroll-y-contain bg-page page-enter"
       >
-        <div className="flex flex-col px-4 pt-[env(safe-area-inset-top,0px)] pb-[calc(136px+env(safe-area-inset-bottom,0px))]">
+        <div className="mx-auto flex w-full max-w-[720px] flex-col gap-6 px-5 pt-[calc(env(safe-area-inset-top,0px)+12px)] pb-[calc(140px+env(safe-area-inset-bottom,0px))]">
           {children}
         </div>
       </div>

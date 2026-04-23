@@ -6,8 +6,8 @@ interface SectionHeaderProps {
 
 export function SectionHeader({ title, action, onAction }: SectionHeaderProps) {
   return (
-    <div className="flex items-center justify-between pt-7 pb-1.5 pl-1 pr-1">
-      <span className="text-caption font-semibold uppercase tracking-[0.06em] text-secondary">
+    <div className="flex items-center justify-between pb-1.5 pl-1 pr-1">
+      <span className="text-caption font-semibold uppercase tracking-[0.08em] text-tertiary">
         {title}
       </span>
       {action && (
