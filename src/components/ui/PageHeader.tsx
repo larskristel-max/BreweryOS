@@ -23,41 +23,39 @@ export function PageHeader({
   useEffect(() => {
     const el = scrollRef.current;
     if (!el) return;
-    const handler = () => setCompact(el.scrollTop > 48);
+    const handler = () => setCompact(el.scrollTop > 42);
     el.addEventListener("scroll", handler, { passive: true });
     return () => el.removeEventListener("scroll", handler);
   }, [scrollRef]);
 
   return (
-    <header className="flex items-end justify-between gap-2 pb-1">
+    <header className="flex items-end justify-between gap-3 pb-0.5">
       <div className="flex-1 min-w-0">
         {showBack && (
           <button
             onClick={() => navigate(-1)}
-            className="interactive flex items-center gap-1 text-amber text-headline mb-1.5 bg-transparent border-0 cursor-pointer font-[inherit]"
+            className="interactive mb-2 inline-flex items-center gap-1.5 rounded-full border border-primary/10 bg-white/70 px-3 py-1 text-[13px] font-medium text-secondary"
           >
-            <CaretLeft size={20} weight="bold" />
+            <CaretLeft size={16} weight="bold" />
             <span>Back</span>
           </button>
         )}
+        {subtitle && (
+          <p className="text-[12px] font-medium tracking-[0.01em] text-secondary/90">
+            {subtitle}
+          </p>
+        )}
         <h1
           className={`
-            font-semibold tracking-[-0.02em] text-primary truncate m-0
-            transition-[font-size,line-height] duration-200
-            ${compact ? "text-[20px] leading-[1.2]" : "text-[26px] leading-[1.12]"}
+            m-0 truncate text-primary tracking-[-0.03em]
+            transition-[font-size,line-height,margin] duration-200
+            ${compact ? "mt-1 text-[30px] leading-[1.03] font-semibold" : "mt-1.5 text-[36px] leading-[0.98] font-semibold"}
           `}
         >
           {title}
         </h1>
-        {subtitle && (
-          <p className="text-[12px] tracking-[0.03em] uppercase text-tertiary mt-1 font-medium">
-            {subtitle}
-          </p>
-        )}
       </div>
-      {rightAction && (
-        <div className="shrink-0 pb-1">{rightAction}</div>
-      )}
+      {rightAction && <div className="shrink-0 pb-1">{rightAction}</div>}
     </header>
   );
 }

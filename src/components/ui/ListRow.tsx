@@ -25,7 +25,7 @@ export function ListRow({
       onClick={onClick}
       disabled={!onClick}
       className={`
-        interactive w-full min-h-[44px] flex items-center gap-3 px-4 py-2.5
+        interactive w-full min-h-[56px] flex items-center gap-3.5 px-4 py-3
         bg-transparent border-0 cursor-pointer font-[inherit] text-left
         [WebkitTapHighlightColor:transparent]
         ${!onClick ? "cursor-default" : ""}
@@ -33,25 +33,25 @@ export function ListRow({
     >
       {icon && (
         <span
-          className={`shrink-0 w-7 h-7 flex items-center justify-center ${destructive ? "text-danger" : "text-secondary"}`}
+          className={`shrink-0 w-9 h-9 rounded-2xl border border-primary/8 bg-page/60 flex items-center justify-center ${destructive ? "text-danger" : "text-secondary"}`}
         >
           {icon}
         </span>
       )}
       <span className="flex-1 min-w-0 flex flex-col gap-0.5">
         <span
-          className={`text-body font-normal leading-snug ${destructive ? "text-danger" : "text-primary"}`}
+          className={`text-[16px] font-medium leading-[1.2] tracking-[-0.01em] ${destructive ? "text-danger" : "text-primary"}`}
         >
           {label}
         </span>
         {secondaryLabel && (
-          <span className="text-footnote text-secondary leading-snug">
+          <span className="text-[13px] text-secondary leading-[1.3]">
             {secondaryLabel}
           </span>
         )}
       </span>
       {value && (
-        <span className="shrink-0 text-body text-secondary">{value}</span>
+        <span className="shrink-0 text-[14px] font-medium text-secondary">{value}</span>
       )}
       {showChevron && (
         <CaretRight

@@ -6,14 +6,14 @@ interface SectionHeaderProps {
 
 export function SectionHeader({ title, action, onAction }: SectionHeaderProps) {
   return (
-    <div className="flex items-center justify-between pb-1.5 pl-1 pr-1">
-      <span className="text-caption font-semibold uppercase tracking-[0.08em] text-tertiary">
+    <div className="flex items-end justify-between px-0.5 pb-2">
+      <span className="text-[14px] font-medium tracking-[-0.01em] text-secondary">
         {title}
       </span>
       {action && (
         <button
           onClick={onAction}
-          className="interactive text-footnote text-amber bg-transparent border-0 cursor-pointer font-[inherit]"
+          className="interactive rounded-full px-2 py-1 text-[12px] font-medium text-primary/80 bg-transparent border-0 cursor-pointer"
         >
           {action}
         </button>

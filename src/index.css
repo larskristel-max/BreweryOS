@@ -2,24 +2,19 @@
 @import "./styles/globals.css";
 
 @theme {
-  /* ── Font family ── */
   --font-family-sans: -apple-system, BlinkMacSystemFont, 'Inter', sans-serif;
 
-  /* ── Color: page & surface ── */
-  --color-page: #f1f5f9;
-  --color-surface: #FFFFFF;
+  --color-page: #eaf0f6;
+  --color-surface: #fbfdff;
 
-  /* ── Color: text tiers (named for Tailwind class access) ── */
-  --color-primary: #111827;
-  --color-secondary: #6b7280;
-  --color-tertiary: #9ca3af;
-  --color-placeholder: rgba(107, 114, 128, 0.45);
+  --color-primary: #101828;
+  --color-secondary: #5d6878;
+  --color-tertiary: #8d98a8;
+  --color-placeholder: rgba(93, 104, 120, 0.45);
 
-  /* ── Color: accent amber ── */
-  --color-amber: #111827;
-  --color-amber-tint: rgba(17, 24, 39, 0.08);
+  --color-amber: #1a2638;
+  --color-amber-tint: rgba(26, 38, 56, 0.08);
 
-  /* ── Color: status ── */
   --color-success: #34C759;
   --color-success-tint: rgba(52, 199, 89, 0.10);
   --color-warning: #FF9500;
@@ -28,18 +23,15 @@
   --color-danger-tint: rgba(255, 59, 48, 0.10);
   --color-info: #2563eb;
   --color-info-tint: rgba(37, 99, 235, 0.10);
-  --color-neutral-tint: rgba(17, 24, 39, 0.07);
+  --color-neutral-tint: rgba(16, 24, 40, 0.07);
 
-  /* ── Color: divider / hairline ── */
-  --color-hairline: rgba(17, 24, 39, 0.1);
+  --color-hairline: rgba(16, 24, 40, 0.1);
 
-  /* ── Color: status text (darker for readability on tint bg) ── */
   --color-success-text: #1a7a35;
   --color-warning-text: #a05f00;
   --color-danger-text: #cc2f25;
   --color-info-text: #0062cc;
 
-  /* ── Typography: iOS SF Pro rhythm ── */
   --font-size-display: 34px;
   --font-size-title: 28px;
   --font-size-title2: 22px;
@@ -50,21 +42,18 @@
   --font-size-footnote: 13px;
   --font-size-caption: 11px;
 
-  /* ── Border radius ── */
-  --radius-card: 16px;
+  --radius-card: 18px;
   --radius-input: 10px;
   --radius-button: 12px;
   --radius-pill: 999px;
   --radius-sheet: 24px;
 
-  /* ── Shadows ── */
-  --shadow-card: 0 1px 2px rgba(17, 24, 39, 0.05), 0 8px 22px rgba(17, 24, 39, 0.05);
-  --shadow-fab: 0 12px 24px rgba(15, 23, 42, 0.26), 0 2px 7px rgba(15, 23, 42, 0.16);
-  --shadow-fab-press: 0 6px 14px rgba(15, 23, 42, 0.2), 0 2px 4px rgba(15, 23, 42, 0.14);
+  --shadow-card: 0 8px 26px rgba(15, 23, 42, 0.08), 0 1px 2px rgba(15, 23, 42, 0.06);
+  --shadow-fab: 0 12px 30px rgba(15, 23, 42, 0.32), 0 3px 8px rgba(15, 23, 42, 0.18);
+  --shadow-fab-press: 0 7px 16px rgba(15, 23, 42, 0.24), 0 2px 4px rgba(15, 23, 42, 0.14);
   --shadow-modal: 0 8px 40px rgba(0, 0, 0, 0.18);
 }
 
-/* ── Global reset ── */
 *, *::before, *::after {
   box-sizing: border-box;
   margin: 0;
@@ -78,7 +67,7 @@ html, body {
   width: 100%;
   height: 100dvh;
   overflow: hidden;
-  background: linear-gradient(180deg, #f8fafc 0%, #f1f5f9 100%);
+  background: linear-gradient(180deg, #f8fbff 0%, #eaf0f6 100%);
   color: #000000;
 }
 
@@ -95,26 +84,23 @@ body {
   display: flex;
   flex-direction: column;
   overflow: hidden;
-  background: linear-gradient(180deg, #f8fafc 0%, #f1f5f9 100%);
+  background: linear-gradient(180deg, #f8fbff 0%, #eaf0f6 100%);
 }
 
-/* ── iOS PWA mode ── */
 @media (display-mode: standalone) {
   html, body, #root { height: 100dvh; }
 }
 
-/* ── Interactive press state ── */
 .interactive:active,
 [role="button"]:active,
 button:active {
-  transform: scale(0.97);
+  transform: scale(0.98);
 }
 
 button {
   transition: transform 100ms ease, color 200ms ease, background-color 200ms ease;
 }
 
-/* ── Page enter animation ── */
 @keyframes page-enter {
   from { opacity: 0; transform: translateY(16px); }
   to   { opacity: 1; transform: translateY(0); }
@@ -128,12 +114,10 @@ button {
   to { opacity: 1; transform: translateY(0); }
 }
 
-/* ── Tabular numbers ── */
 .tabular {
   font-variant-numeric: tabular-nums;
 }
 
-/* ── Spinner ── */
 @keyframes spin { to { transform: rotate(360deg); } }
 .spinner {
   display: inline-block;
