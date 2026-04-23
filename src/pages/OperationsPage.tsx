@@ -7,26 +7,9 @@ import { DEMO_BATCHES, STATUS_LABELS, STATUS_VARIANTS } from "@/data/demo";
 import { useNavigate } from "react-router-dom";
 
 const METRICS = [
-  {
-    key: "batches",
-    label: "Active batches",
-    description: "Current production lanes",
-  },
-  {
-    key: "tasks",
-    label: "Open tasks",
-    description: "Items waiting continuation",
-  },
-  {
-    key: "agenda",
-    label: "Agenda",
-    description: "Checkpoints scheduled today",
-  },
-  {
-    key: "finance",
-    label: "Finance",
-    description: "Tax + margin snapshot",
-  },
+  { key: "batches", label: "Active batches", description: "Production lanes in motion" },
+  { key: "tasks", label: "Open tasks", description: "Continuations waiting" },
+  { key: "agenda", label: "Agenda today", description: "Upcoming checkpoints" },
 ] as const;
 
 export default function OperationsPage() {
@@ -43,63 +26,55 @@ export default function OperationsPage() {
         subtitle={breweryContext ? `${breweryContext.name} · ${ROLE_LABELS[role]}` : undefined}
       />
 
-      <section className="relative overflow-hidden rounded-[24px] border border-primary/10 bg-[linear-gradient(152deg,#273346_0%,#111827_72%)] px-5 py-5 text-white shadow-[0_16px_36px_rgba(15,23,42,0.3)]">
-        <div className="absolute -top-14 -right-10 h-40 w-40 rounded-full bg-white/10 blur-2xl" aria-hidden="true" />
-        <p className="text-[11px] uppercase tracking-[0.12em] text-white/65">Let&apos;s Brew core</p>
-        <h2 className="mt-1 text-[30px] font-semibold leading-[1.02] tracking-[-0.03em]">Operate with confidence</h2>
-        <p className="mt-2 max-w-[36ch] text-[13px] leading-relaxed text-white/78">
-          Start real work in Let&apos;s Brew. Ops stays your calm mission overview.
+      <section className="relative overflow-hidden rounded-[32px] border border-white/85 bg-[linear-gradient(160deg,#334661_0%,#1A2538_58%,#131C2C_100%)] px-5 py-5 text-white shadow-[0_18px_46px_rgba(15,23,42,0.30)]">
+        <div className="absolute -top-16 -right-14 h-48 w-48 rounded-full bg-white/12 blur-3xl" aria-hidden="true" />
+        <div className="absolute -bottom-20 left-0 h-40 w-40 rounded-full bg-sky-200/10 blur-3xl" aria-hidden="true" />
+
+        <p className="text-[12px] font-medium tracking-[0.01em] text-white/78">Mission control</p>
+        <h2 className="mt-1.5 text-[34px] font-semibold leading-[0.98] tracking-[-0.03em]">Everything calm. Everything visible.</h2>
+        <p className="mt-3 max-w-[36ch] text-[14px] leading-relaxed text-white/80">
+          Ops stays overview-first. Start any live work through On brasse to keep guidance and traceability intact.
         </p>
 
-        <div className="mt-4 flex items-center justify-between gap-3">
-          <div className="flex items-center gap-2 rounded-full border border-white/15 bg-white/8 px-2.5 py-1.5">
-            <span className="text-[11px] text-white/75">Active</span>
-            <span className="text-[13px] font-semibold tabular">{activeBatches.length}</span>
+        <div className="mt-5 flex items-center justify-between gap-3 border-t border-white/14 pt-3.5">
+          <div>
+            <p className="text-[12px] text-white/72">Current production</p>
+            <p className="text-[20px] font-semibold tracking-[-0.02em] tabular">{activeBatches.length} active lanes</p>
           </div>
           <button
             onClick={() => navigate("/brew")}
-            className="interactive shrink-0 rounded-full bg-white text-primary px-4 py-2 text-[13px] font-semibold inline-flex items-center gap-1.5"
+            className="interactive shrink-0 rounded-full bg-white/94 px-4 py-2 text-[13px] font-semibold text-primary inline-flex items-center gap-1.5"
           >
-            Open Let&apos;s Brew
-            <ArrowRight size={14} weight="bold" />
+            Enter On brasse
+            <ArrowRight size={13} weight="bold" />
           </button>
         </div>
       </section>
 
-      <section className="rounded-[22px] border border-primary/10 bg-surface/95 p-3.5 shadow-card">
-        <div className="grid grid-cols-2 gap-2.5">
-          {METRICS.map((metric) => {
-            const value =
-              metric.key === "batches"
-                ? activeBatches.length
-                : metric.key === "tasks"
-                  ? isDemoMode ? 6 : 0
-                  : metric.key === "agenda"
-                    ? isDemoMode ? 3 : 0
-                    : isDemoMode ? "€12k" : "—";
+      <section className="grid grid-cols-3 gap-2.5">
+        {METRICS.map((metric) => {
+          const value =
+            metric.key === "batches"
+              ? activeBatches.length
+              : metric.key === "tasks"
+                ? isDemoMode ? 6 : 0
+                : isDemoMode ? 3 : 0;
 
-            return (
-              <div key={metric.key} className="rounded-2xl border border-primary/8 bg-page/70 px-3.5 py-3">
-                <p className="text-[10px] uppercase tracking-[0.08em] text-tertiary">{metric.label}</p>
-                <p className="mt-1 text-[27px] leading-none font-semibold text-primary tabular">{value}</p>
-                <p className="mt-1.5 text-[11px] leading-snug text-secondary">{metric.description}</p>
-              </div>
-            );
-          })}
-        </div>
-        <button
-          onClick={() => navigate("/batches")}
-          className="interactive mt-3 ml-1 text-footnote text-secondary inline-flex items-center gap-1"
-        >
-          See production details <ArrowRight size={12} weight="bold" />
-        </button>
+          return (
+            <div key={metric.key} className="rounded-[20px] border border-white/80 bg-surface/80 px-3 py-3.5 shadow-[0_6px_18px_rgba(15,23,42,0.08)]">
+              <p className="text-[12px] text-secondary leading-tight">{metric.label}</p>
+              <p className="mt-1.5 text-[28px] font-semibold leading-none tracking-[-0.03em] text-primary tabular">{value}</p>
+              <p className="mt-2 text-[11px] text-tertiary leading-[1.25]">{metric.description}</p>
+            </div>
+          );
+        })}
       </section>
 
-      <SectionHeader title="Operational previews" />
-      <Card className="p-0 rounded-[22px] border border-primary/10">
+      <SectionHeader title="Preview" />
+      <Card className="p-0 rounded-[26px] border-white/80">
         <GroupedList>
           <ListRow
-            icon={<Flask size={20} weight="regular" />}
+            icon={<Flask size={18} weight="regular" />}
             label="Batch states"
             secondaryLabel={activeBatches[0] ? `${activeBatches[0].recipeName} in progress` : "No active production"}
             value={
@@ -111,28 +86,28 @@ export default function OperationsPage() {
             onClick={() => navigate("/batches")}
           />
           <ListRow
-            icon={<Checks size={20} weight="regular" />}
+            icon={<Checks size={18} weight="regular" />}
             label="Task queue"
-            secondaryLabel="Continue unresolved cellar and packaging tasks"
+            secondaryLabel="Continue unresolved cellar and packaging work"
             showChevron
             onClick={() => navigate("/brew")}
           />
           <ListRow
-            icon={<CalendarBlank size={20} weight="regular" />}
+            icon={<CalendarBlank size={18} weight="regular" />}
             label="Agenda"
-            secondaryLabel="Upcoming deadlines and brewing windows"
+            secondaryLabel="Upcoming windows and operational checkpoints"
             showChevron
             onClick={() => navigate("/brew")}
           />
           <ListRow
-            icon={<Receipt size={20} weight="regular" />}
+            icon={<Receipt size={18} weight="regular" />}
             label="Financials"
-            secondaryLabel="Tax, declarations, and cost performance"
+            secondaryLabel="Tax, declarations, margin snapshots"
             showChevron
             onClick={() => navigate("/settings")}
           />
           <ListRow
-            icon={<BookOpen size={20} weight="regular" />}
+            icon={<BookOpen size={18} weight="regular" />}
             label="Recipes"
             secondaryLabel="Browse and tune formulation baselines"
             showChevron
@@ -141,9 +116,9 @@ export default function OperationsPage() {
         </GroupedList>
       </Card>
 
-      <p className="px-1 text-footnote text-secondary leading-relaxed inline-flex items-start gap-2">
-        <ChartLineUp size={16} weight="regular" className="mt-0.5 shrink-0" />
-        Ops remains read-first. Execute through Let&apos;s Brew to keep guided flow and traceability intact.
+      <p className="px-1 text-[13px] text-secondary leading-relaxed inline-flex items-start gap-2.5">
+        <ChartLineUp size={16} weight="regular" className="mt-0.5 shrink-0 text-tertiary" />
+        Ops remains overview-only. Execute actions in On brasse for guided continuity.
       </p>
     </PageLayout>
   );
