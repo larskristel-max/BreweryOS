@@ -6,18 +6,18 @@
   --font-family-sans: -apple-system, BlinkMacSystemFont, 'Inter', sans-serif;
 
   /* ── Color: page & surface ── */
-  --color-page: #ECEEF4;
+  --color-page: #f1f5f9;
   --color-surface: #FFFFFF;
 
   /* ── Color: text tiers (named for Tailwind class access) ── */
-  --color-primary: #000000;
-  --color-secondary: rgba(60, 60, 67, 0.6);
-  --color-tertiary: rgba(60, 60, 67, 0.3);
-  --color-placeholder: rgba(60, 60, 67, 0.25);
+  --color-primary: #111827;
+  --color-secondary: #6b7280;
+  --color-tertiary: #9ca3af;
+  --color-placeholder: rgba(107, 114, 128, 0.45);
 
   /* ── Color: accent amber ── */
-  --color-amber: #B45309;
-  --color-amber-tint: rgba(180, 83, 9, 0.10);
+  --color-amber: #111827;
+  --color-amber-tint: rgba(17, 24, 39, 0.08);
 
   /* ── Color: status ── */
   --color-success: #34C759;
@@ -26,12 +26,12 @@
   --color-warning-tint: rgba(255, 149, 0, 0.10);
   --color-danger: #FF3B30;
   --color-danger-tint: rgba(255, 59, 48, 0.10);
-  --color-info: #007AFF;
-  --color-info-tint: rgba(0, 122, 255, 0.10);
-  --color-neutral-tint: rgba(60, 60, 67, 0.08);
+  --color-info: #2563eb;
+  --color-info-tint: rgba(37, 99, 235, 0.10);
+  --color-neutral-tint: rgba(17, 24, 39, 0.07);
 
   /* ── Color: divider / hairline ── */
-  --color-hairline: rgba(0, 0, 0, 0.08);
+  --color-hairline: rgba(17, 24, 39, 0.1);
 
   /* ── Color: status text (darker for readability on tint bg) ── */
   --color-success-text: #1a7a35;
@@ -58,9 +58,9 @@
   --radius-sheet: 24px;
 
   /* ── Shadows ── */
-  --shadow-card: 0 8px 22px rgba(15, 23, 42, 0.08), 0 1px 3px rgba(15, 23, 42, 0.05);
-  --shadow-fab: 0 12px 26px rgba(180, 83, 9, 0.35), 0 3px 10px rgba(180, 83, 9, 0.22);
-  --shadow-fab-press: 0 5px 14px rgba(180, 83, 9, 0.28), 0 2px 5px rgba(180, 83, 9, 0.18);
+  --shadow-card: 0 1px 2px rgba(17, 24, 39, 0.05), 0 8px 22px rgba(17, 24, 39, 0.05);
+  --shadow-fab: 0 12px 24px rgba(15, 23, 42, 0.26), 0 2px 7px rgba(15, 23, 42, 0.16);
+  --shadow-fab-press: 0 6px 14px rgba(15, 23, 42, 0.2), 0 2px 4px rgba(15, 23, 42, 0.14);
   --shadow-modal: 0 8px 40px rgba(0, 0, 0, 0.18);
 }
 
@@ -78,7 +78,7 @@ html, body {
   width: 100%;
   height: 100dvh;
   overflow: hidden;
-  background: radial-gradient(140% 120% at 50% 0%, #F6F8FC 0%, #ECEEF4 64%, #E8EAF2 100%);
+  background: linear-gradient(180deg, #f8fafc 0%, #f1f5f9 100%);
   color: #000000;
 }
 
@@ -95,7 +95,7 @@ body {
   display: flex;
   flex-direction: column;
   overflow: hidden;
-  background: radial-gradient(140% 120% at 50% 0%, #F6F8FC 0%, #ECEEF4 64%, #E8EAF2 100%);
+  background: linear-gradient(180deg, #f8fafc 0%, #f1f5f9 100%);
 }
 
 /* ── iOS PWA mode ── */

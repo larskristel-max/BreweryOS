@@ -33,7 +33,7 @@ export function ListRow({
     >
       {icon && (
         <span
-          className={`shrink-0 w-7 h-7 flex items-center justify-center ${destructive ? "text-danger" : "text-amber"}`}
+          className={`shrink-0 w-7 h-7 flex items-center justify-center ${destructive ? "text-danger" : "text-secondary"}`}
         >
           {icon}
         </span>

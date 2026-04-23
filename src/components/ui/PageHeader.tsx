@@ -29,7 +29,7 @@ export function PageHeader({
   }, [scrollRef]);
 
   return (
-    <header className="flex items-end justify-between gap-2 pb-1.5">
+    <header className="flex items-end justify-between gap-2 pb-1">
       <div className="flex-1 min-w-0">
         {showBack && (
           <button
@@ -42,15 +42,15 @@ export function PageHeader({
         )}
         <h1
           className={`
-            font-bold tracking-tight text-primary truncate m-0
+            font-semibold tracking-[-0.02em] text-primary truncate m-0
             transition-[font-size,line-height] duration-200
-            ${compact ? "text-[20px] leading-[1.2]" : "text-[34px] leading-[1.06]"}
+            ${compact ? "text-[20px] leading-[1.2]" : "text-[26px] leading-[1.12]"}
           `}
         >
           {title}
         </h1>
         {subtitle && (
-          <p className="text-footnote text-secondary mt-0.5 font-normal">
+          <p className="text-[12px] tracking-[0.03em] uppercase text-tertiary mt-1 font-medium">
             {subtitle}
           </p>
         )}
