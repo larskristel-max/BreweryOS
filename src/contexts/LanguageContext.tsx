@@ -1,51 +1,36 @@
-import { createContext, useContext, useState, useCallback, type ReactNode } from "react";
-import { bundles, LANGUAGE_STORAGE_KEY, type SupportedLanguage, type TranslationKeys } from "@/i18n";
+import { createContext, useContext, useMemo, useState, type ReactNode } from "react";
+
+export type Language = "en" | "fr" | "de" | "nl";
 
 interface LanguageContextValue {
-  language: SupportedLanguage;
-  setLanguage: (lang: SupportedLanguage) => void;
-  bundle: TranslationKeys;
+  language: Language;
+  setLanguage: (next: Language) => void;
 }
 
+const LANGUAGE_KEY = "operon_language";
 const LanguageContext = createContext<LanguageContextValue | null>(null);
 
-function getStoredLanguage(): SupportedLanguage | null {
-  try {
-    const stored = localStorage.getItem(LANGUAGE_STORAGE_KEY);
-    if (stored === "en" || stored === "fr" || stored === "nl" || stored === "de") {
-      return stored;
-    }
-  } catch {
-  }
-  return null;
-}
-
 export function LanguageProvider({ children }: { children: ReactNode }) {
-  const [language, setLanguageState] = useState<SupportedLanguage>(
-    () => getStoredLanguage() ?? "en"
+  const [language, setLanguage] = useState<Language>(
+    () => (localStorage.getItem(LANGUAGE_KEY) as Language | null) ?? "en"
   );
 
-  const setLanguage = useCallback((lang: SupportedLanguage) => {
-    try {
-      localStorage.setItem(LANGUAGE_STORAGE_KEY, lang);
-    } catch {
-    }
-    setLanguageState(lang);
-  }, []);
-
-  const bundle = bundles[language];
-
-  return (
-    <LanguageContext.Provider value={{ language, setLanguage, bundle }}>
-      {children}
-    </LanguageContext.Provider>
+  const value = useMemo(
+    () => ({
+      language,
+      setLanguage: (next: Language) => {
+        localStorage.setItem(LANGUAGE_KEY, next);
+        setLanguage(next);
+      },
+    }),
+    [language]
   );
+
+  return <LanguageContext.Provider value={value}>{children}</LanguageContext.Provider>;
 }
 
-export function useLanguageContext(): LanguageContextValue {
+export function useLanguage(): LanguageContextValue {
   const ctx = useContext(LanguageContext);
-  if (!ctx) {
-    throw new Error("useLanguageContext must be used within a LanguageProvider");
-  }
+  if (!ctx) throw new Error("useLanguage must be used within <LanguageProvider>");
   return ctx;
 }

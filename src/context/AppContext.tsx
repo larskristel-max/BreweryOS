@@ -11,7 +11,6 @@ import type { Session } from "@supabase/supabase-js";
 import type { User, BreweryProfile } from "@/types/domain";
 import type { Role, Permissions } from "@/types/permissions";
 import { resolvePermissions } from "@/types/permissions";
-import { DEMO_BREWERY } from "@/data/demo";
 
 export interface BreweryContext {
   breweryId: string;
@@ -70,17 +69,17 @@ async function resolveBreweryContext(userId: string): Promise<BreweryContext | n
   };
 }
 
+const DEMO_MODE_KEY = "operon_demo_mode";
+
 export function AppProvider({ children }: { children: ReactNode }) {
   const [session, setSession] = useState<Session | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [isResolvingBrewery, setIsResolvingBrewery] = useState(false);
   const [brewery, setBrewery] = useState<BreweryProfile | null>(null);
-  const [breweryContextState, setBreweryContextState] = useState<BreweryContext | null>(
-    () => sessionStorage.getItem("operon_demo") === "1" ? DEMO_BREWERY : null
-  );
+  const [breweryContextState, setBreweryContextState] = useState<BreweryContext | null>(null);
   const [hasNoBrewery, setHasNoBrewery] = useState(false);
   const [isDemoMode, setIsDemoMode] = useState<boolean>(
-    () => sessionStorage.getItem("operon_demo") === "1"
+    () => sessionStorage.getItem(DEMO_MODE_KEY) === "1"
   );
 
   const setBreweryContext = useCallback((ctx: BreweryContext | null) => {
@@ -89,17 +88,13 @@ export function AppProvider({ children }: { children: ReactNode }) {
   }, []);
 
   const enterDemoMode = useCallback(() => {
-    sessionStorage.setItem("operon_demo", "1");
+    sessionStorage.setItem(DEMO_MODE_KEY, "1");
     setIsDemoMode(true);
-    setBreweryContextState(DEMO_BREWERY);
-    setHasNoBrewery(false);
   }, []);
 
   const exitDemoMode = useCallback(() => {
-    sessionStorage.removeItem("operon_demo");
+    sessionStorage.removeItem(DEMO_MODE_KEY);
     setIsDemoMode(false);
-    setBreweryContextState(null);
-    setHasNoBrewery(false);
   }, []);
 
   const refreshBreweryContext = useCallback(async () => {
@@ -108,6 +103,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
       setBreweryContext(null);
       return;
     }
+
     setIsResolvingBrewery(true);
     try {
       const ctx = await resolveBreweryContext(currentSession.user.id);
@@ -124,6 +120,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
 
     supabase.auth.getSession().then(async ({ data }) => {
       if (!mounted) return;
+
       const s = data.session;
       setSession(s);
       if (s?.user) {
@@ -144,6 +141,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
       data: { subscription },
     } = supabase.auth.onAuthStateChange(async (_event, s) => {
       if (!mounted) return;
+
       setSession(s);
       if (s?.user) {
         setIsResolvingBrewery(true);
@@ -155,10 +153,8 @@ export function AppProvider({ children }: { children: ReactNode }) {
         } finally {
           if (mounted) setIsResolvingBrewery(false);
         }
-      } else {
-        if (mounted) {
-          setBreweryContext(null);
-        }
+      } else if (mounted) {
+        setBreweryContext(null);
       }
     });
 
@@ -168,9 +164,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
     };
   }, [setBreweryContext]);
 
-  const role: Role = isDemoMode
-    ? DEMO_BREWERY.role
-    : (breweryContextState?.role ?? "viewer");
+  const role: Role = isDemoMode ? "viewer" : (breweryContextState?.role ?? "viewer");
   const permissions = resolvePermissions(role);
 
   const user: User | null = session?.user
@@ -179,7 +173,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
         breweryId: breweryContextState?.breweryId ?? "",
         email: session.user.email ?? "",
         displayName: session.user.user_metadata?.display_name ?? null,
-        role: role,
+        role,
         isActive: true,
         lastSeenAt: null,
         createdAt: session.user.created_at,
@@ -193,12 +187,12 @@ export function AppProvider({ children }: { children: ReactNode }) {
         session,
         user,
         brewery,
-        breweryContext: isDemoMode ? DEMO_BREWERY : breweryContextState,
+        breweryContext: breweryContextState,
         role,
         permissions,
         isLoading,
         isResolvingBrewery,
-        hasNoBrewery: isDemoMode ? false : hasNoBrewery,
+        hasNoBrewery,
         isDemoMode,
         enterDemoMode,
         exitDemoMode,
