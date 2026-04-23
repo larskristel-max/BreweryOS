@@ -6,3 +6,8 @@ node_modules/
 *.log
 .DS_Store
 .cache/
+*.tsbuildinfo
+.vite/
+attached_assets/
+.idea/
+.vscode/

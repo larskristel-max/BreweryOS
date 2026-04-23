@@ -3,6 +3,7 @@
 // No application-level brewery_id filter is required — the DB enforces isolation.
 
 import { createClient, type SupabaseClient } from "@supabase/supabase-js";
+import { SUPABASE_ANON_KEY, SUPABASE_URL, hasSupabaseEnv } from "@/config/env";
 import type {
   BreweryProfile,
   Ingredient,
@@ -453,16 +454,13 @@ function mapEventLog(r: DbEventLog): EventLog {
 
 // ── Client factory ──
 
-const supabaseUrl = (typeof import.meta !== "undefined" && import.meta.env?.VITE_SUPABASE_URL) as string | undefined;
-const supabaseAnonKey = (typeof import.meta !== "undefined" && import.meta.env?.VITE_SUPABASE_ANON_KEY) as string | undefined;
-
-if (!supabaseUrl || !supabaseAnonKey) {
+if (!hasSupabaseEnv()) {
   console.warn("[db] VITE_SUPABASE_URL or VITE_SUPABASE_ANON_KEY is not set.");
 }
 
 export const dbClient: SupabaseClient = createClient(
-  supabaseUrl ?? "https://placeholder.supabase.co",
-  supabaseAnonKey ?? "placeholder-anon-key"
+  SUPABASE_URL ?? "https://placeholder.supabase.co",
+  SUPABASE_ANON_KEY ?? "placeholder-anon-key"
 );
 
 // Helper: throw on Supabase error
