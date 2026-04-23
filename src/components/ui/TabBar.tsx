@@ -14,33 +14,19 @@ interface TabBarProps {
 }
 
 export function TabBar({ items, centerSlot }: TabBarProps) {
-  const half = Math.floor(items.length / 2);
-  const left  = items.slice(0, half);
-  const right = items.slice(half);
-
   return (
     <>
-      {/* Frosted glass backdrop — webkit-backdrop-filter via .tab-bar-blur CSS class */}
       <div
         aria-hidden="true"
-        className="fixed bottom-0 left-0 right-0 z-[940] border-t border-hairline
-                   h-[calc(64px+env(safe-area-inset-bottom,0px))]
-                   bg-white/85 backdrop-blur-xl backdrop-saturate-[180%] tab-bar-blur"
-      />
-
-      {/* Navigation row */}
-      <nav
-        className="fixed bottom-0 left-0 right-0 z-[950] flex items-stretch
-                   h-[calc(64px+env(safe-area-inset-bottom,0px))]
-                   pb-[env(safe-area-inset-bottom,0px)]"
+        className="fixed bottom-0 left-0 right-0 z-[940] h-[calc(70px+env(safe-area-inset-bottom,0px))]"
       >
-        {left.map((item) => (
-          <TabBarButton key={item.path} {...item} />
-        ))}
+        <div className="absolute inset-x-3 bottom-2 rounded-[26px] border border-white/60 bg-white/86 shadow-[0_12px_34px_rgba(15,23,42,0.16)] backdrop-blur-2xl" />
+      </div>
 
-        {centerSlot && <div className="w-[72px] shrink-0" />}
-
-        {right.map((item) => (
+      <nav
+        className="fixed bottom-0 left-0 right-0 z-[950] flex items-center justify-around px-3 pb-[calc(env(safe-area-inset-bottom,0px)+6px)] pt-2 h-[calc(70px+env(safe-area-inset-bottom,0px))]"
+      >
+        {items.map((item) => (
           <TabBarButton key={item.path} {...item} />
         ))}
       </nav>
@@ -56,17 +42,14 @@ function TabBarButton({ label, icon, isActive, onPress }: TabItem) {
       onClick={onPress}
       aria-current={isActive ? "page" : undefined}
       className={`
-        interactive flex-1 flex flex-col items-center justify-center gap-[3px]
-        bg-transparent border-0 cursor-pointer font-[inherit]
-        pt-2 pb-0 px-1 transition-colors duration-150
-        [WebkitTapHighlightColor:transparent]
-        ${isActive ? "text-amber" : "text-secondary"}
+        interactive flex flex-col items-center justify-center gap-1 min-w-[68px]
+        rounded-2xl px-2 py-1.5 bg-transparent border-0 cursor-pointer font-[inherit]
+        [WebkitTapHighlightColor:transparent] transition-all duration-200
+        ${isActive ? "text-primary bg-black/[0.04]" : "text-secondary"}
       `}
     >
       <span className="flex items-center justify-center">{icon}</span>
-      <span
-        className={`text-[10px] leading-none tracking-[0.01em] ${isActive ? "font-semibold" : "font-normal"}`}
-      >
+      <span className="text-[10px] leading-none tracking-[0.01em] font-medium">
         {label}
       </span>
     </button>

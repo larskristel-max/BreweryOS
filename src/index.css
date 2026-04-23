@@ -6,7 +6,7 @@
   --font-family-sans: -apple-system, BlinkMacSystemFont, 'Inter', sans-serif;
 
   /* ── Color: page & surface ── */
-  --color-page: #F2F2F7;
+  --color-page: #ECEEF4;
   --color-surface: #FFFFFF;
 
   /* ── Color: text tiers (named for Tailwind class access) ── */
@@ -58,9 +58,9 @@
   --radius-sheet: 24px;
 
   /* ── Shadows ── */
-  --shadow-card: 0 1px 3px rgba(0, 0, 0, 0.08);
-  --shadow-fab: 0 4px 16px rgba(180, 83, 9, 0.35), 0 1px 4px rgba(180, 83, 9, 0.2);
-  --shadow-fab-press: 0 2px 8px rgba(180, 83, 9, 0.25), 0 1px 2px rgba(180, 83, 9, 0.15);
+  --shadow-card: 0 8px 22px rgba(15, 23, 42, 0.08), 0 1px 3px rgba(15, 23, 42, 0.05);
+  --shadow-fab: 0 12px 26px rgba(180, 83, 9, 0.35), 0 3px 10px rgba(180, 83, 9, 0.22);
+  --shadow-fab-press: 0 5px 14px rgba(180, 83, 9, 0.28), 0 2px 5px rgba(180, 83, 9, 0.18);
   --shadow-modal: 0 8px 40px rgba(0, 0, 0, 0.18);
 }
 
@@ -78,7 +78,7 @@ html, body {
   width: 100%;
   height: 100dvh;
   overflow: hidden;
-  background: #F2F2F7;
+  background: radial-gradient(140% 120% at 50% 0%, #F6F8FC 0%, #ECEEF4 64%, #E8EAF2 100%);
   color: #000000;
 }
 
@@ -95,7 +95,7 @@ body {
   display: flex;
   flex-direction: column;
   overflow: hidden;
-  background: #F2F2F7;
+  background: radial-gradient(140% 120% at 50% 0%, #F6F8FC 0%, #ECEEF4 64%, #E8EAF2 100%);
 }
 
 /* ── iOS PWA mode ── */
@@ -121,6 +121,11 @@ button {
 }
 .page-enter {
   animation: page-enter 0.2s ease forwards;
+}
+
+@keyframes soft-rise {
+  from { opacity: 0; transform: translateY(10px); }
+  to { opacity: 1; transform: translateY(0); }
 }
 
 /* ── Tabular numbers ── */

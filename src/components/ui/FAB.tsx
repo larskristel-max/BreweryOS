@@ -23,17 +23,19 @@ export function FAB({ icon, label, onClick, disabled = false, disabledReason, ac
       onPointerLeave={() => setPressed(false)}
       className={`
         fixed left-1/2 -translate-x-1/2 z-[1000]
-        w-14 h-14 rounded-full border-0
-        bottom-[calc(env(safe-area-inset-bottom,0px)+40px)]
-        flex items-center justify-center text-white cursor-pointer font-[inherit]
+        bottom-[calc(env(safe-area-inset-bottom,0px)+76px)]
+        min-w-[186px] h-14 rounded-pill border border-amber/35
+        px-4 flex items-center justify-center gap-2.5 text-white cursor-pointer font-[inherit]
         [WebkitTapHighlightColor:transparent]
-        transition-[transform,box-shadow] duration-100 ease-out
-        ${pressed ? "scale-[0.93] shadow-[var(--shadow-fab-press)]" : "scale-100 shadow-[var(--shadow-fab)]"}
-        ${disabled ? "bg-tertiary opacity-50 cursor-not-allowed shadow-none" : "bg-amber"}
-        ${active && !disabled ? "ring-2 ring-amber ring-offset-2 ring-offset-white" : ""}
+        transition-[transform,box-shadow,background] duration-150 ease-out
+        ${pressed ? "scale-[0.97] shadow-[var(--shadow-fab-press)]" : "scale-100 shadow-[var(--shadow-fab)]"}
+        ${disabled ? "bg-tertiary opacity-50 cursor-not-allowed shadow-none border-transparent" : "bg-amber"}
+        ${active && !disabled ? "ring-2 ring-amber/30 ring-offset-2 ring-offset-page" : ""}
       `}
     >
-      {icon}
+      <span className="flex items-center justify-center">{icon}</span>
+      <span className="text-[15px] font-semibold tracking-[0.01em]">{label}</span>
+      {!disabled && <span className="w-1.5 h-1.5 rounded-full bg-white/90" aria-hidden="true" />}
     </button>
   );
 }
